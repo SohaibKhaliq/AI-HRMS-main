@@ -66,3 +66,20 @@ export const createDepartment = createAsyncThunk(
     }
   }
 );
+
+// Delete Department
+export const deleteDepartment = createAsyncThunk(
+  "department/deleteDepartment",
+  async (id, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.delete(`/departments/${id}`);
+      toast.success(data.message);
+      // return the deleted id so reducer can remove it from state
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data.message || "Failed to delete department"
+      );
+    }
+  }
+);

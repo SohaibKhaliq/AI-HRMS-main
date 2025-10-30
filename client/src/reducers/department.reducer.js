@@ -5,6 +5,7 @@ import {
   updateDepartment,
   getAllEmployeesForHead,
 } from "../services/department.service";
+import { deleteDepartment } from "../services/department.service";
 
 const initialState = {
   departments: [],
@@ -78,6 +79,23 @@ const departmentSlice = createSlice({
         state.loading = false;
       })
       .addCase(createDepartment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Handling the deleteDepartment action
+    builder
+      .addCase(deleteDepartment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteDepartment.fulfilled, (state, action) => {
+        state.departments = state.departments.filter(
+          (d) => d._id !== action.payload
+        );
+        state.loading = false;
+      })
+      .addCase(deleteDepartment.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

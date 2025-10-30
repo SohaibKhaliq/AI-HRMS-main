@@ -28,6 +28,8 @@ const DepartmentModal = ({ action, onClose, department }) => {
     }
   }, [action, department]);
 
+  const isView = action === "view";
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -59,7 +61,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
       >
         <div className="flex justify-between items-center border-b border-gray-200 pb-3">
           <h2 className="font-bold text-gray-600">
-            {action === "create" ? "Create" : "Update"} Department
+            {isView ? "View" : action === "create" ? "Create" : "Update"} Department
           </h2>
           <button
             type="button"
@@ -80,6 +82,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
               onChange={handleChange}
               placeholder="Department name"
               className="w-full bg-[#EFEFEF] text-sm sm:text-center p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
+              disabled={isView}
               required
             />
           </div>
@@ -93,6 +96,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
             value={formData.head}
             onChange={handleChange}
             className="w-full bg-[#EFEFEF] text-center text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
+            disabled={isView}
             required
           >
             <option value="">--- Select Head ---</option>
@@ -112,19 +116,22 @@ const DepartmentModal = ({ action, onClose, department }) => {
             onChange={handleChange}
             placeholder="Write your description"
             className="w-full p-4 bg-[#EFEFEF] text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700 resize-none medium"
+            disabled={isView}
             rows={4}
             required
           />
         </div>
 
-        <div className="w-full flex justify-end">
-          <button
-            type="submit"
-            className="bg-blue-500 w-full text-white text-sm p-4 font-semibold rounded-3xl shadow-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-400"
-          >
-            Submit
-          </button>
-        </div>
+        {!isView && (
+          <div className="w-full flex justify-end">
+            <button
+              type="submit"
+              className="bg-blue-500 w-full text-white text-sm p-4 font-semibold rounded-3xl shadow-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-400"
+            >
+              Submit
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

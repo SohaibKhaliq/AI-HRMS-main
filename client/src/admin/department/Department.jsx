@@ -1,138 +1,172 @@
 import { Helmet } from "react-helmet";
-import React, { useState } from "react";
-import { colors } from "../../constants";
-import { useSelector } from "react-redux";
-import { FaUsers, FaUserTie } from "react-icons/fa";
+import React, { useState, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import Loader from "../../components/shared/loaders/Loader";
-import RoleModal from "../../components/shared/modals/RoleModal";
 import FetchError from "../../components/shared/error/FetchError";
 import DepartmentModal from "../../components/shared/modals/DepartmentModal";
+import {
+  deleteDepartment,
+  // getDepartments is dispatched globally in admin app, state is already populated
+} from "../../services/department.service";
 
 const Department = () => {
-  const { roles, loading: roleLoading } = useSelector((state) => state.role);
+  const dispatch = useDispatch();
   const { departments, loading, error } = useSelector(
     (state) => state.department
   );
 
   const [action, setAction] = useState("");
-  const [roleModal, setRoleModal] = useState(null);
-  const [roleAction, setRoleAction] = useState("");
   const [departmentModal, setDepartmentModal] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8; // items per page
+
+  const filtered = useMemo(() => {
+    if (!searchQuery) return departments || [];
+    const q = searchQuery.toLowerCase();
+    return (departments || []).filter((d) => {
+      return (
+        d.name?.toLowerCase().includes(q) ||
+        d.description?.toLowerCase().includes(q) ||
+        d.head?.name?.toLowerCase().includes(q)
+      );
+    });
+  }, [departments, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+
+  const pageData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage]);
+
+  const openCreate = () => {
+    setAction("create");
+    setDepartmentModal({});
+  };
+
+  const openEdit = (dept) => {
+    setAction("update");
+    setDepartmentModal(dept);
+  };
+
+  const openView = (dept) => {
+    setAction("view");
+    setDepartmentModal(dept);
+  };
+
+  const handleDelete = (id) => {
+    if (!window.confirm("Are you sure you want to delete this department?"))
+      return;
+    dispatch(deleteDepartment(id));
+  };
 
   if (error) return <FetchError error={error} />;
 
   return (
     <>
       <Helmet>
-        <title>Depat & Role - Metro HR</title>
+        <title>Departments - Metro HR</title>
       </Helmet>
-      <section className="bg-gray-100 dark:bg-secondary p-3 sm:p-4 rounded-lg min-h-screen shadow">
-        {(loading || roleLoading) && <Loader />}
-        <div>
-          {/* <button
-          onClick={() => {
-            setAction("create");
-            setDepartmentModal(true);
-          }}
-        >
-          Create
-        </button> */}
-          <div className="flex flex-col md:flex-row flex-wrap gap-3">
-            {departments.map((department, index) => {
-              const color = colors[index % colors.length];
 
-              return (
-                <div
-                  key={department._id}
-                  className="group flex w-full md:h-[135px] md:w-[49%] bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div
-                    className={`w-[30%] flex items-center justify-center ${color.bg} ${color.darkBg}`}
-                  >
-                    <FaUsers className="text-white text-3xl sm:text-4xl" />
-                  </div>
+      <section className="bg-gray-100 dark:bg-secondary p-4 rounded-lg min-h-screen shadow">
+        {loading && <Loader />}
 
-                  <div className="w-[70%] p-4 relative">
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => {
-                          setAction("update");
-                          setDepartmentModal(department);
-                        }}
-                      >
-                        <i className="fas fa-pencil-alt text-sm"></i>
-                      </button>
-                    </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Departments</h2>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search by name, head or description"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-64 p-2 pl-10 rounded-full bg-white border border-gray-200 text-sm placeholder-gray-400"
+              />
+              <i className="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
 
-                    <h1 className="sm:text-lg font-bold text-gray-800 dark:text-white mb-1">
-                      {department.name}
-                    </h1>
-
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">
-                      {department.description.slice(0, 65) + "..."}
-                    </p>
-
-                    <p className="text-[0.85rem] text-gray-600 dark:text-gray-400 rounded-lg ">
-                      {department.head?.name || "No Head Assigned"}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+            <button
+              onClick={openCreate}
+              className="bg-blue-500 text-white text-sm px-4 py-2 rounded-full shadow-sm hover:bg-blue-600"
+            >
+              Create
+            </button>
           </div>
         </div>
 
-        <div className="mt-5">
-          {/* <button
-          onClick={() => {
-            setRoleAction("create");
-            setRoleModal(true);
-          }}
-        >
-          Create
-        </button> */}
-          <div className="flex flex-col md:flex-row flex-wrap gap-3">
-            {roles.map((role, index) => {
-              const color = colors[index % colors.length];
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pageData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                    No departments found
+                  </td>
+                </tr>
+              ) : (
+                pageData.map((department) => (
+                  <tr key={department._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{department.name}</div>
+                      <div className="text-xs text-gray-500">Head: {department.head?.name || "-"}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{department.description?.slice(0, 80)}{department.description && department.description.length>80?"...":""}</td>
+                    <td className="px-6 py-4 text-sm">
+                      {/* server model has no status field — derive from head presence */}
+                      <span className={`px-2 py-1 rounded-full text-xs ${department.head?"bg-green-100 text-green-700":"bg-gray-100 text-gray-600"}`}>
+                        {department.head ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(department.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right text-sm font-medium">
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        <button onClick={() => openView(department)} title="View" className="text-blue-600 hover:text-blue-800 p-2 rounded-full">
+                          <FaEye />
+                        </button>
+                        <button onClick={() => openEdit(department)} title="Edit" className="text-green-600 hover:text-green-800 p-2 rounded-full">
+                          <FaEdit />
+                        </button>
+                        <button onClick={() => handleDelete(department._id)} title="Delete" className="text-red-600 hover:text-red-800 p-2 rounded-full">
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-              return (
-                <div
-                  key={role._id}
-                  className="group flex w-full md:h-[135px] md:w-[49%] bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div
-                    className={`w-[30%] flex items-center justify-center ${color.bg} ${color.darkBg}`}
-                  >
-                    <FaUserTie className="text-white text-2xl sm:text-3xl" />
-                  </div>
-
-                  <div className="w-[70%] p-4 relative">
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => {
-                          setRoleAction("update");
-                          setRoleModal(role);
-                        }}
-                      >
-                        <i className="fas fa-pencil-alt text-sm"></i>
-                      </button>
-                    </div>
-
-                    <h1 className="sm:text-lg font-bold text-gray-800 dark:text-white mb-1">
-                      {role.name}
-                    </h1>
-
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-3">
-                      {role?.description?.slice(0, 65) + "..."}
-                    </p>
-
-                    <p className="text-[0.85rem] text-gray-600 dark:text-gray-400 rounded-lg">
-                      Total Employees : --
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-gray-600">Showing {pageData.length} of {filtered.length} departments</div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+            >Prev</button>
+            <span className="text-sm">{currentPage} / {totalPages}</span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+            >Next</button>
           </div>
         </div>
 
@@ -141,14 +175,6 @@ const Department = () => {
             action={action}
             department={departmentModal}
             onClose={() => setDepartmentModal(null)}
-          />
-        )}
-
-        {roleModal && (
-          <RoleModal
-            role={roleModal}
-            action={roleAction}
-            onClose={() => setRoleModal(null)}
           />
         )}
       </section>
