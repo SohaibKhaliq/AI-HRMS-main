@@ -14,16 +14,22 @@ const DepartmentModal = ({ action, onClose, department }) => {
     name: "",
     head: "",
     description: "",
+    status: "Active",
+    createdAt: "",
   });
 
   useEffect(() => {
-    if (action === "update" && department) {
+    if ((action === "update" || action === "view") && department) {
       setFormData({
         name: department.name || "",
         head: department?.head?._id || "",
         description:
           department.description ||
           "The Marketing Department is responsible for driving brand awareness",
+        status: department.status || "Active",
+        createdAt: department.createdAt
+          ? new Date(department.createdAt).toISOString().slice(0, 16)
+          : "",
       });
     }
   }, [action, department]);
@@ -88,6 +94,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
           </div>
         </div>
 
+        {/* Head select */}
         <div className="w-full relative">
           <i className="fa fa-building-columns text-sm icon absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600"></i>
           <select
@@ -106,6 +113,36 @@ const DepartmentModal = ({ action, onClose, department }) => {
                   {head.name}
                 </option>
               ))}
+          </select>
+        </div>
+
+        {/* Created At - editable only for edit (hidden in create/view) */}
+        {action === "update" && (
+          <div className="w-full relative">
+            <i className="fa fa-calendar text-sm icon absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600"></i>
+            <input
+              type="datetime-local"
+              name="createdAt"
+              value={formData.createdAt}
+              onChange={handleChange}
+              className="w-full bg-[#EFEFEF] text-sm p-[12px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
+            />
+          </div>
+        )}
+
+        <div className="w-full relative">
+          <i className="fa fa-toggle-off text-sm icon absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600"></i>
+          <select
+            id="status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="w-full bg-[#EFEFEF] text-center text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
+            disabled={isView}
+            required
+          >
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
           </select>
         </div>
 

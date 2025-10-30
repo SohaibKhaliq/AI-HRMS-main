@@ -4,15 +4,20 @@ import Employee from "../models/employee.model.js";
 import Department from "../models/department.model.js";
 
 const createDepartment = catchErrors(async (req, res) => {
-  const { name, head, description } = req.body;
+  const { name, head, description, status, createdAt } = req.body;
 
   if (!name || !head) throw new Error("Please provide all fields");
 
-  const department = await Department.create({
+  const departmentData = {
     name,
     head,
     description,
-  });
+    status: status || "Active",
+  };
+
+  if (createdAt) departmentData.createdAt = new Date(createdAt);
+
+  const department = await Department.create(departmentData);
 
   await department.populate("head", "name");
 
@@ -109,13 +114,16 @@ const deleteDepartment = catchErrors(async (req, res) => {
 
 const updateDepartment = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { name, head, description } = req.body;
+  const { name, head, description, status, createdAt } = req.body;
 
   if (!id) throw new Error("Please provide departmed Id");
 
+  const updateData = { name, head, description, status };
+  if (createdAt) updateData.createdAt = new Date(createdAt);
+
   const department = await Department.findByIdAndUpdate(
     id,
-    { name, head, description },
+    updateData,
     { new: true }
   ).populate("head", "name");
 

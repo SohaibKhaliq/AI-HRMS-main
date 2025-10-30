@@ -35,13 +35,15 @@ export const getAllEmployeesForHead = createAsyncThunk(
 // Update Department
 export const updateDepartment = createAsyncThunk(
   "department/updateDepartment",
-  async ({ id, department }, { rejectWithValue }) => {
+  async ({ id, department }, { rejectWithValue, dispatch }) => {
     try {
       const { data } = await axiosInstance.patch(
         `/departments/${id}`,
         department
       );
       toast.success(data.message);
+      // refresh departments list to ensure createdAt and other server-side changes are reflected
+      dispatch(getDepartments());
       return data.department;
     } catch (error) {
       return rejectWithValue(
@@ -54,10 +56,12 @@ export const updateDepartment = createAsyncThunk(
 // Create Department
 export const createDepartment = createAsyncThunk(
   "department/createDepartment",
-  async (department, { rejectWithValue }) => {
+  async (department, { rejectWithValue, dispatch }) => {
     try {
       const { data } = await axiosInstance.post(`/departments`, department);
       toast.success(data.message);
+      // refresh full list
+      dispatch(getDepartments());
       return data.department;
     } catch (error) {
       return rejectWithValue(
@@ -70,10 +74,12 @@ export const createDepartment = createAsyncThunk(
 // Delete Department
 export const deleteDepartment = createAsyncThunk(
   "department/deleteDepartment",
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, dispatch }) => {
     try {
       const { data } = await axiosInstance.delete(`/departments/${id}`);
       toast.success(data.message);
+      // refresh list
+      dispatch(getDepartments());
       // return the deleted id so reducer can remove it from state
       return id;
     } catch (error) {

@@ -126,12 +126,13 @@ const Department = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{department.description?.slice(0, 80)}{department.description && department.description.length>80?"...":""}</td>
                     <td className="px-6 py-4 text-sm">
-                      {/* server model has no status field — derive from head presence */}
-                      <span className={`px-2 py-1 rounded-full text-xs ${department.head?"bg-green-100 text-green-700":"bg-gray-100 text-gray-600"}`}>
-                        {department.head ? "Active" : "Inactive"}
+                      <span className={`px-2 py-1 rounded-full text-xs ${department.status === "Active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        {department.status || (department.head ? "Active" : "Inactive")}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(department.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {department.createdAt ? new Date(department.createdAt).toLocaleString() : "-"}
+                    </td>
                     <td className="px-6 py-4 text-right text-sm font-medium">
                       <div className="inline-flex items-center gap-2 justify-end">
                         <button onClick={() => openView(department)} title="View" className="text-blue-600 hover:text-blue-800 p-2 rounded-full">

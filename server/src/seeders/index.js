@@ -61,6 +61,23 @@ const startHrmsApplication = async () => {
       head: employee._id,
     });
 
+    // additional dummy departments
+    await Department.create({
+      name: "Human Resources",
+      description: "Handles recruitment, onboarding and employee relations",
+      head: employee._id,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30), // 30 days ago
+    });
+
+    await Department.create({
+      name: "Sales",
+      description: "Responsible for sales and client relationships",
+      head: employee._id,
+      status: "Inactive",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days ago
+    });
+
     await Employee.findByIdAndUpdate(employee._id, {
       department: department._id,
     });
