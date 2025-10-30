@@ -3,6 +3,7 @@ import authentication from "../reducers/authentication.reducer";
 import role from "../reducers/role.reducer";
 import employee from "../reducers/employee.reducer";
 import department from "../reducers/department.reducer";
+import designation from "../reducers/designation.reducer";
 import insight from "../reducers/inshights.reducer";
 import attendance from "../reducers/attendance.reducer";
 import leave from "../reducers/leave.reducer";
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
   feedback,
   complaint,
   department,
+  designation,
   attendance,
   performance,
   recruitment,

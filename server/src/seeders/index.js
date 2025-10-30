@@ -82,6 +82,24 @@ const startHrmsApplication = async () => {
       department: department._id,
     });
 
+    // Create some dummy designations
+    const { default: Designation } = await import("../models/designation.model.js");
+    await Designation.create({
+      name: "Marketing Executive",
+      description: "Handles campaigns and social media",
+      department: department._id,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
+    });
+
+    await Designation.create({
+      name: "HR Officer",
+      description: "Handles recruitment and employee relations",
+      department: department._id,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
+    });
+
     console.log("HRMS is ready to run, Have a nice day.");
   } catch (error) {
     console.error("Error setting up HRMS:", error);

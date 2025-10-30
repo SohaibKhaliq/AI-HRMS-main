@@ -7,6 +7,7 @@ import inshight from "./insights.routes.js";
 import complaint from "./complaint.routes.js";
 import attendance from "./attendance.routes.js";
 import department from "./department.routes.js";
+import designation from "./designation.routes.js";
 import performance from "./performance.routes.js";
 import recruitment from "./recruitment.routes.js";
 import authentication from "./authentication.routes.js";
@@ -21,6 +22,7 @@ export {
   complaint,
   attendance,
   department,
+  designation,
   performance,
   recruitment,
   authentication,

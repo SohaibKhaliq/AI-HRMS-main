@@ -10,6 +10,7 @@ const sidebarLinks = [
     iconClass: "far fa-user",
     childrens: [
       { name: "Employee Directory", link: "/employees" },
+      { name: "Designations", link: "/designations" },
       { name: "Add New Employee", link: "/employee/create" },
     ],
   },
