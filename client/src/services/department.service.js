@@ -42,8 +42,9 @@ export const updateDepartment = createAsyncThunk(
         department
       );
       toast.success(data.message);
-      // refresh departments list to ensure createdAt and other server-side changes are reflected
-      dispatch(getDepartments());
+  // refresh departments list to ensure createdAt and other server-side changes are reflected
+  // await the dispatch so callers get the latest data in store before resolving
+  await dispatch(getDepartments());
       return data.department;
     } catch (error) {
       return rejectWithValue(
@@ -60,8 +61,8 @@ export const createDepartment = createAsyncThunk(
     try {
       const { data } = await axiosInstance.post(`/departments`, department);
       toast.success(data.message);
-      // refresh full list
-      dispatch(getDepartments());
+  // refresh full list and wait for it to complete
+  await dispatch(getDepartments());
       return data.department;
     } catch (error) {
       return rejectWithValue(
@@ -78,8 +79,8 @@ export const deleteDepartment = createAsyncThunk(
     try {
       const { data } = await axiosInstance.delete(`/departments/${id}`);
       toast.success(data.message);
-      // refresh list
-      dispatch(getDepartments());
+  // refresh list and wait for it to complete
+  await dispatch(getDepartments());
       // return the deleted id so reducer can remove it from state
       return id;
     } catch (error) {

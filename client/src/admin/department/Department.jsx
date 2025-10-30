@@ -131,7 +131,10 @@ const Department = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {department.createdAt ? new Date(department.createdAt).toLocaleString() : "-"}
+                      {department.createdAt ? (() => {
+                        const dt = new Date(department.createdAt);
+                        return isNaN(dt.getTime()) ? "-" : dt.toLocaleString();
+                      })() : "-"}
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-medium">
                       <div className="inline-flex items-center gap-2 justify-end">
