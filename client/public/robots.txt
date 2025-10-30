@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /private/
+Sitemap: https://metrohrms.site/sitemap.xml

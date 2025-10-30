@@ -1,0 +1,331 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: "Poppins";
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.parallax-bg {
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+#transition {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.gradient {
+  background: linear-gradient(135deg, #111827, #1f2937);
+}
+
+body::-webkit-scrollbar,
+#overflow::-webkit-scrollbar {
+  display: none;
+}
+
+#refill input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #efefef inset;
+  -webkit-text-fill-color: #1f2937;
+  transition: background-color 5000s ease-in-out 0s;
+  font-family: "Poppins";
+}
+
+#change_refill input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #efefef inset;
+  -webkit-text-fill-color: #1f2937;
+  transition: background-color 5000s ease-in-out 0s;
+  font-family: "Poppins";
+}
+
+.no-scroll {
+  overflow: hidden;
+  height: auto;
+}
+
+/* Style for the toggle switch */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 50px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  border-radius: 50px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+td {
+  font-size: 0.83rem;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 2s ease-in-out infinite;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.loading-circle {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #1179bd;
+  animation: wave 1s infinite ease-in-out;
+}
+
+.loading-circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0%,
+  60%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.5);
+  }
+}
+
+#select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+@keyframes modal-appearance {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+#modal {
+  opacity: 0;
+  transform: scale(0.8);
+  animation: modal-appearance 0.3s ease-out forwards;
+}
+
+.handshake {
+  display: inline-block;
+  animation: handshake 2s infinite alternate ease-in-out;
+}
+
+@keyframes handshake {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.scan-overlay {
+  position: absolute;
+  top: -30px;
+  left: 250px;
+  right: 0;
+  bottom: 110px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.scan-line {
+  width: 230px;
+  height: 5px;
+  border-radius: 100%;
+  background-color: rgba(0, 255, 0, 0.7);
+  position: absolute;
+  animation: scanAnimation 3s ease-in-out infinite,
+    glowEffect 1.5s ease-out infinite;
+}
+
+@keyframes scanAnimation {
+  0% {
+    top: 29%;
+  }
+  50% {
+    top: 50%;
+  }
+  100% {
+    top: 70%;
+  }
+}
+
+@keyframes glowEffect {
+  0% {
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(0, 255, 0, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.filter_bar {
+  animation: slideIn 0.3s ease-in-out forwards;
+}
+
+@keyframes slideDown {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  50% {
+    max-height: 300px;
+    opacity: 0.5;
+    transform: translateY(10px);
+  }
+  100% {
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    max-height: 300px;
+    opacity: 0.5;
+    transform: translateY(10px);
+  }
+  100% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+.dropdown-active {
+  animation: slideDown 0.5s ease-in-out forwards;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-wave {
+  animation: wave 0.6s infinite ease-in-out;
+}

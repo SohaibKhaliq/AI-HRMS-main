@@ -1,0 +1,183 @@
+import { Helmet } from "react-helmet";
+import { Link } from "react-router-dom";
+import { formatDate } from "../../utils";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../components/shared/loaders/Loader";
+import { setFetchFlag } from "../../reducers/recruitment.reducer";
+import FetchError from "../../components/shared/error/FetchError";
+import { getJobOpenings } from "../../services/recruitment.service";
+import { jobOpeningHead, recruitmentButtons } from "../../constants";
+import NoDataMessage from "../../components/shared/error/NoDataMessage";
+import FilterButton from "../../components/shared/buttons/FilterButton";
+import JobOpeningModal from "../../components/shared/modals/JobOpeningModal";
+
+function JobOpenings() {
+  const dispatch = useDispatch();
+
+  const { jobs, loading, error, fetch } = useSelector(
+    (state) => state.recruitment
+  );
+
+  const [reviewFilter, setReviewFilter] = useState("");
+  const [toggleModal, setToggleModal] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [setSelectedJob, setsetSelectedJob] = useState(null);
+
+  const handleClick = (job) => {
+    if (job) {
+      setToggleModal(true);
+      setsetSelectedJob(job);
+    }
+  };
+
+  const handleReviewFilter = (filter) => {
+    dispatch(setFetchFlag(true));
+    setReviewFilter(filter);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    if (fetch) {
+      dispatch(
+        getJobOpenings({ status: reviewFilter.toLowerCase(), deadline: "" })
+      );
+    }
+  }, [reviewFilter, fetch]);
+
+  if (error) return <FetchError error={error} />;
+
+  return (
+    <>
+      <Helmet>
+        <title>{reviewFilter} Recruitments - Metro HR</title>
+      </Helmet>
+
+      {loading && <Loader />}
+
+      <section className="bg-gray-100 dark:bg-secondary p-3 sm:p-4 rounded-lg min-h-screen shadow">
+        <div className="mb-4 sm:px-4 flex flex-wrap items-center gap-2 sm:gap-3">
+          {recruitmentButtons.map((filter, i) => (
+            <FilterButton
+              key={i}
+              setState={handleReviewFilter}
+              state={reviewFilter}
+              filter={filter}
+            />
+          ))}
+        </div>
+
+        <div id="overflow" className="overflow-x-auto sm:min-h-[80vh]">
+          <table className="min-w-full text-left table-auto border-collapse text-sm whitespace-nowrap">
+            <thead>
+              <tr className="dark:bg-head bg-headLight text-primary">
+                {jobOpeningHead.map((header, i) => (
+                  <th key={i} className="py-3 px-4 border-b border-secondary">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.length > 0 &&
+                jobs.map((job, index) => (
+                  <tr
+                    key={job._id}
+                    className="dark:even:bg-gray-800 odd:bg-gray-200 dark:odd:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  >
+                    <td className="py-3 px-4 border-b border-secondary">
+                      {job.title}
+                    </td>
+                    <td className="py-3 px-4 border-b border-secondary">
+                      {job.role.name}
+                    </td>
+
+                    <td className="py-3 px-4 border-b border-secondary">
+                      Rs - {job.minSalary}
+                    </td>
+                    <td className="py-3 px-4 border-b border-secondary">
+                      {job.type}
+                    </td>
+
+                    {/* Description with Tooltip */}
+                    <td
+                      className="py-3 px-4 border-b border-secondary relative cursor-pointer"
+                      onMouseEnter={() => setHoveredIndex(index)}
+                      onMouseLeave={() => setHoveredIndex(null)}
+                    >
+                      {job.description?.slice(0, 12) + "...."}
+
+                      {hoveredIndex === index && (
+                        <div className="absolute left-0 top-full mt-1 max-w-[300px] h-auto bg-gray-900 dark:bg-gray-200 dark:text-black text-white text-xs p-2 rounded shadow-lg z-10 break-words whitespace-normal">
+                          <i className="fas fa-quote-left dark:text-gray-700 text-white mr-2"></i>
+                          {job.description}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 border-b border-secondary">
+                      {formatDate(job.deadline)}
+                    </td>
+
+                    <td className="py-3 px-6 border-b border-secondary">
+                      {job?.applicants?.length > 0 ? (
+                        <Link
+                          to={`/applications/${job._id}`}
+                          className="text-blue-500 hover:text-blue-700 underline"
+                        >
+                          {job.applicants.length} Applic..
+                          {job.applicants.length > 1 ? "s" : ""}
+                        </Link>
+                      ) : (
+                        <span
+                          className="text-gray-400"
+                          title="No applicants yet"
+                        >
+                          0 Applic..
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="py-3 border-b border-secondary font-semibold">
+                      <span
+                        className={`inline-flex items-center px-8 py-1 text-xs font-semibold text-white rounded-full  bg-gradient-to-r ${
+                          job.status === "Open"
+                            ? "from-green-500 to-green-600"
+                            : job.status === "Paused"
+                            ? "from-yellow-500 to-yellow-600"
+                            : "from-red-500 to-red-600"
+                        }`}
+                      >
+                        {job.status}
+                      </span>
+                    </td>
+
+                    <td className="pl-7 px-4 border-b border-secondary">
+                      <button
+                        title="Update Job"
+                        onClick={() => handleClick(job)}
+                      >
+                        <i className="fa-solid fa-sliders"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+
+          {!loading && !error && jobs.length === 0 && (
+            <NoDataMessage message={"No Job opening found"} />
+          )}
+        </div>
+
+        {toggleModal && (
+          <JobOpeningModal
+            onClose={() => setToggleModal(false)}
+            job={setSelectedJob}
+          />
+        )}
+      </section>
+    </>
+  );
+}
+
+export default JobOpenings;

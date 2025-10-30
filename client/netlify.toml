@@ -1,0 +1,13 @@
+[[redirects]]
+  from = "https://metrohrms.netlify.app/*"
+  to = "https://metrohrms.site/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build]
+  image = "ubuntu-22.04"
