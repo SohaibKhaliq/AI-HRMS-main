@@ -13,6 +13,7 @@ const Feedback = () => {
   const loading = useSelector((state) => state.feedback.loading);
 
   const [rating, setRating] = useState(0);
+  const [category, setCategory] = useState("");
 
   const {
     register,
@@ -24,11 +25,17 @@ const Feedback = () => {
   });
 
   const onSubmit = (data) => {
-    dispatch(createFeedback(data))
+    const payload = {
+      ...data,
+      // Prepend selected category to suggestion text for easier triage without changing backend contract
+      suggestion: category ? `[${category}] ${data.suggestion}` : data.suggestion,
+    };
+    dispatch(createFeedback(payload))
       .unwrap()
       .then(() => {
         reset();
         setRating(0);
+        setCategory("");
       })
       .catch((error) => {
         console.error("Error creating feedback:", error);
@@ -55,6 +62,26 @@ const Feedback = () => {
               className="flex flex-col items-center gap-2 pb-8"
               onSubmit={handleSubmit(onSubmit)}
             >
+              <div className="w-[85%] relative">
+                <select
+                  id="feedback-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className={`w-full bg-[#EFEFEF] text-center text-sm p-[18px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-[500]`}
+                  disabled={loading}
+                >
+                  <option value="">--- Select Category (optional) ---</option>
+                  <option value="Work Environment">Work Environment</option>
+                  <option value="Compensation & Benefits">Compensation & Benefits</option>
+                  <option value="Management & Leadership">Management & Leadership</option>
+                  <option value="Career Growth">Career Growth</option>
+                  <option value="Training & Development">Training & Development</option>
+                  <option value="Policies & Compliance">Policies & Compliance</option>
+                  <option value="Facilities & Tools">Facilities & Tools</option>
+                  <option value="Work-Life Balance">Work-Life Balance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
               <div className="w-[85%] relative">
                 <select
                   id="select"

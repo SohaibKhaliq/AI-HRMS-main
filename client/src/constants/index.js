@@ -298,6 +298,7 @@ const feedbackHead = [
   "Description",
   "Date",
   "Rating",
+  "Action",
 ];
 
 const payrollHead = [
