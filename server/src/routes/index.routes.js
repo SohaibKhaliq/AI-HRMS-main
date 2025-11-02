@@ -13,6 +13,7 @@ import recruitment from "./recruitment.routes.js";
 import authentication from "./authentication.routes.js";
 import documentType from "./documentType.routes.js";
 import promotion from "./promotion.routes.js";
+import resignation from "./resignation.routes.js";
 
 export {
   role,
@@ -30,4 +31,5 @@ export {
   authentication,
   documentType,
   promotion,
+  resignation,
 };

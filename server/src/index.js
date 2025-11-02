@@ -24,6 +24,7 @@ import {
   recruitment,
   authentication,
   promotion,
+  resignation,
 } from "./routes/index.routes.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
 // import {
@@ -86,6 +87,7 @@ app.use("/api/departments", department);
 app.use("/api/designations", designation);
 app.use("/api/document-types", documentType);
 app.use("/api/promotions", promotion);
+app.use("/api/resignations", resignation);
 app.use("/api/performance", performance);
 app.use("/api/recruitment", recruitment);
 

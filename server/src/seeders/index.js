@@ -196,7 +196,33 @@ const startHrmsApplication = async () => {
       status: "Pending",
       remarks: "Under review",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    });    await Employee.create({
+    });
+
+    // Create some dummy resignations
+    const { default: Resignation } = await import("../models/resignation.model.js");
+    await Resignation.create({
+      employee: emp1._id,
+      resignationDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
+      lastWorkingDay: new Date(Date.now() + 1000 * 60 * 60 * 24 * 20),
+      noticePeriod: 30,
+      reason: "Seeking better opportunities",
+      status: "Approved",
+      remarks: "Approved by HR",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
+    });
+
+    await Resignation.create({
+      employee: emp2._id,
+      resignationDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+      lastWorkingDay: new Date(Date.now() + 1000 * 60 * 60 * 24 * 27),
+      noticePeriod: 30,
+      reason: "Relocation",
+      status: "Pending",
+      remarks: "Under review",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+    });
+
+    await Employee.create({
       employeeId: "002",
       name: "Omar Malik",
       dob: "1988-11-02T00:00:00.000Z",

@@ -6,6 +6,7 @@ import department from "../reducers/department.reducer";
 import designation from "../reducers/designation.reducer";
 import documentType from "../reducers/documentType.reducer";
 import promotion from "../reducers/promotion.reducer";
+import resignation from "../reducers/resignation.reducer";
 import insight from "../reducers/inshights.reducer";
 import attendance from "../reducers/attendance.reducer";
 import leave from "../reducers/leave.reducer";
@@ -30,6 +31,7 @@ const rootReducer = combineReducers({
   designation,
   documentType,
   promotion,
+  resignation,
   attendance,
   performance,
   recruitment,
