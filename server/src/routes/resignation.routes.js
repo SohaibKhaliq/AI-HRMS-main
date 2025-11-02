@@ -1,5 +1,6 @@
 import express from "express";
 import { verifyAdminToken } from "../middlewares/index.js";
+import { uploadDocument } from "../config/index.js";
 import {
   createResignation,
   getAllResignations,
@@ -10,10 +11,10 @@ import {
 
 const router = express.Router();
 
-router.post("/", verifyAdminToken, createResignation);
+router.post("/", verifyAdminToken, uploadDocument.single("document"), createResignation);
 router.get("/", verifyAdminToken, getAllResignations);
 router.get("/:id", verifyAdminToken, getResignationById);
-router.patch("/:id", verifyAdminToken, updateResignation);
+router.patch("/:id", verifyAdminToken, uploadDocument.single("document"), updateResignation);
 router.delete("/:id", verifyAdminToken, deleteResignation);
 
 export default router;

@@ -8,6 +8,13 @@ const createResignation = catchErrors(async (req, res) => {
     throw new Error("Missing required fields: employee, resignationDate, lastWorkingDay");
   }
 
+  let finalDocumentUrl = documentUrl || null;
+
+  // Handle file upload if document is provided
+  if (req.file) {
+    finalDocumentUrl = req.file.path;
+  }
+
   const data = {
     employee,
     resignationDate: new Date(resignationDate),
@@ -15,7 +22,7 @@ const createResignation = catchErrors(async (req, res) => {
     noticePeriod: noticePeriod || 0,
     reason: reason || "",
     status: status || "Pending",
-    documentUrl: documentUrl || null,
+    documentUrl: finalDocumentUrl,
     remarks: remarks || "",
   };
   if (createdAt) data.createdAt = new Date(createdAt);
@@ -64,9 +71,15 @@ const updateResignation = catchErrors(async (req, res) => {
   if (noticePeriod !== undefined) updateData.noticePeriod = noticePeriod;
   if (reason !== undefined) updateData.reason = reason;
   if (status) updateData.status = status;
-  if (documentUrl !== undefined) updateData.documentUrl = documentUrl;
   if (remarks !== undefined) updateData.remarks = remarks;
   if (createdAt) updateData.createdAt = new Date(createdAt);
+
+  // Handle file upload if document is provided
+  if (req.file) {
+    updateData.documentUrl = req.file.path;
+  } else if (documentUrl !== undefined) {
+    updateData.documentUrl = documentUrl;
+  }
 
   const resignation = await Resignation.findByIdAndUpdate(id, updateData, { new: true })
     .populate("employee", "name firstName lastName employeeId email profilePicture");

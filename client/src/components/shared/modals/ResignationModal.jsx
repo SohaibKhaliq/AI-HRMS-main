@@ -7,6 +7,8 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
   const dispatch = useDispatch();
   const { employees: storeEmployees } = useSelector((state) => state.employee || {});
   const employees = propEmployees || storeEmployees || [];
+  const [documentFile, setDocumentFile] = useState(null);
+  const [documentPreview, setDocumentPreview] = useState(null);
   
   const [formData, setFormData] = useState({
     employee: "",
@@ -42,6 +44,8 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
         documentUrl: resignation.documentUrl || "",
         remarks: resignation.remarks || "",
       });
+      setDocumentPreview(resignation.documentUrl);
+      setDocumentFile(null);
     } else {
       setFormData({
         employee: "",
@@ -53,6 +57,8 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
         documentUrl: "",
         remarks: "",
       });
+      setDocumentFile(null);
+      setDocumentPreview(null);
     }
   }, [resignation, isOpen]);
 
@@ -61,9 +67,40 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleDocumentChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDocumentFile(file);
+      setDocumentPreview(file.name);
+      // Create a URL for preview
+      const fileUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({ ...prev, documentUrl: fileUrl }));
+    }
+  };
+
+  const handleRemoveDocument = () => {
+    setDocumentFile(null);
+    setDocumentPreview(null);
+    setFormData((prev) => ({ ...prev, documentUrl: "" }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (onSubmit) onSubmit(formData);
+    if (onSubmit) {
+      // Create FormData to handle file upload
+      const submitData = new FormData();
+      submitData.append("employee", formData.employee);
+      submitData.append("resignationDate", formData.resignationDate);
+      submitData.append("lastWorkingDay", formData.lastWorkingDay);
+      submitData.append("noticePeriod", formData.noticePeriod);
+      submitData.append("reason", formData.reason);
+      submitData.append("status", formData.status);
+      submitData.append("remarks", formData.remarks);
+      if (documentFile) {
+        submitData.append("document", documentFile);
+      }
+      onSubmit(submitData);
+    }
   };
 
   const isViewMode = action === "view";
@@ -211,22 +248,55 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
               </select>
             </div>
 
-            {/* Document URL */}
+            {/* Document Upload */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Document URL
+                Upload Resignation Letter or Document
               </label>
-              <input
-                type="text"
-                name="documentUrl"
-                value={formData.documentUrl}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-                }`}
-                placeholder="Link to resignation letter or document"
-              />
+              <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
+                isViewMode ? "bg-gray-100" : "bg-gray-50 hover:bg-gray-100 cursor-pointer"
+              }`}>
+                {documentPreview ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <i className="fa-solid fa-file text-green-600 text-xl"></i>
+                      <span className="text-sm font-medium text-gray-700">
+                        {documentPreview}
+                      </span>
+                    </div>
+                    {!isViewMode && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveDocument}
+                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Remove File
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <label className={`block ${isViewMode ? "" : "cursor-pointer"}`}>
+                    <div className="flex flex-col items-center gap-2 text-gray-500">
+                      <i className="fa-solid fa-cloud-arrow-up text-2xl text-gray-400"></i>
+                      <span className="text-sm">
+                        {isViewMode ? "No document uploaded" : "Click to upload or drag and drop"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        PDF, DOC, DOCX, JPG, PNG (max 5MB)
+                      </span>
+                    </div>
+                    {!isViewMode && (
+                      <input
+                        type="file"
+                        onChange={handleDocumentChange}
+                        disabled={isViewMode}
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      />
+                    )}
+                  </label>
+                )}
+              </div>
             </div>
 
             {/* Remarks */}

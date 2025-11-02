@@ -116,6 +116,11 @@ const navbarLinks = [
     iconClass: "fa-regular fa-calendar-check",
     link: "/update",
   },
+  {
+    name: "Submit Resignation",
+    iconClass: "fa-solid fa-person-walking-arrow-loop-left",
+    link: "/resignation",
+  },
 ];
 
 const complaintButtons = [
