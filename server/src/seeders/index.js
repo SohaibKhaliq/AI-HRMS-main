@@ -115,7 +115,7 @@ const startHrmsApplication = async () => {
 
     // Create some dummy designations
     const { default: Designation } = await import("../models/designation.model.js");
-    await Designation.create({
+    const des1 = await Designation.create({
       name: "Marketing Executive",
       description: "Handles campaigns and social media",
       department: department._id,
@@ -123,7 +123,7 @@ const startHrmsApplication = async () => {
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
     });
 
-    await Designation.create({
+    const des2 = await Designation.create({
       name: "HR Officer",
       description: "Handles recruitment and employee relations",
       department: department._id,
@@ -131,8 +131,16 @@ const startHrmsApplication = async () => {
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
     });
 
+    const des3 = await Designation.create({
+      name: "Senior Marketing Manager",
+      description: "Manages marketing team and strategies",
+      department: department._id,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+    });
+
     // Create a couple of dummy employees for UI/demo
-    await Employee.create({
+    const emp1 = await Employee.create({
       employeeId: "001",
       name: "Ayesha Khan",
       dob: "1992-07-12T00:00:00.000Z",
@@ -148,7 +156,47 @@ const startHrmsApplication = async () => {
       salary: 50000,
     });
 
-    await Employee.create({
+    const emp2 = await Employee.create({
+      employeeId: "002",
+      name: "Omar Malik",
+      dob: "1988-11-02T00:00:00.000Z",
+      email: "omar.malik@example.com",
+      password: "$2b$10$k.1v4SeBsR.UYT4chI/O8OTkK5CO.MilaR8yCACtodqTZKm429rWG",
+      profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
+      phoneNumber: "+923009998877",
+      address: { street: "Street 2", city: "Karachi", state: "Sindh", postalCode: "75500", country: "Pakistan" },
+      role: role._id,
+      department: department._id,
+      dateOfJoining: "2019-08-01T00:00:00.000Z",
+      status: "Active",
+      salary: 45000,
+    });
+
+    // Create some dummy promotions
+    const { default: Promotion } = await import("../models/promotion.model.js");
+    await Promotion.create({
+      employee: emp1._id,
+      previousDesignation: des1._id,
+      newDesignation: des3._id,
+      promotionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+      effectiveDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+      salaryAdjustment: 10000,
+      status: "Approved",
+      remarks: "Well deserved promotion based on performance",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+    });
+
+    await Promotion.create({
+      employee: emp2._id,
+      previousDesignation: des2._id,
+      newDesignation: des3._id,
+      promotionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+      effectiveDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      salaryAdjustment: 8000,
+      status: "Pending",
+      remarks: "Under review",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+    });    await Employee.create({
       employeeId: "002",
       name: "Omar Malik",
       dob: "1988-11-02T00:00:00.000Z",

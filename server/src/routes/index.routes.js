@@ -12,6 +12,7 @@ import performance from "./performance.routes.js";
 import recruitment from "./recruitment.routes.js";
 import authentication from "./authentication.routes.js";
 import documentType from "./documentType.routes.js";
+import promotion from "./promotion.routes.js";
 
 export {
   role,
@@ -28,4 +29,5 @@ export {
   recruitment,
   authentication,
   documentType,
+  promotion,
 };
