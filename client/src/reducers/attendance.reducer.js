@@ -7,6 +7,9 @@ import {
   generateQRCodeForAttendance,
   getEmployeeAttendanceByDepartment,
   getEmployeeMonthlyAttendanceByDepartment,
+  registerFaceDescriptor,
+  getFaceDescriptor,
+  markAttendanceUsingFace,
 } from "../services/attendance.service.js";
 
 const initialState = {
@@ -16,6 +19,7 @@ const initialState = {
   error: null,
   qrcode: null,
   fetch: true,
+  faceDescriptor: null,
 };
 
 const attendanceSlice = createSlice({
@@ -135,7 +139,49 @@ const attendanceSlice = createSlice({
           state.loading = false;
           state.error = action.payload;
         }
-      );
+      )
+
+      // Handling registerFaceDescriptor
+      .addCase(registerFaceDescriptor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerFaceDescriptor.fulfilled, (state, action) => {
+        state.loading = false;
+        state.fetch = true;
+      })
+      .addCase(registerFaceDescriptor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Handling getFaceDescriptor
+      .addCase(getFaceDescriptor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getFaceDescriptor.fulfilled, (state, action) => {
+        state.loading = false;
+        state.faceDescriptor = action.payload;
+      })
+      .addCase(getFaceDescriptor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Handling markAttendanceUsingFace
+      .addCase(markAttendanceUsingFace.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(markAttendanceUsingFace.fulfilled, (state) => {
+        state.loading = false;
+        state.fetch = true;
+      })
+      .addCase(markAttendanceUsingFace.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

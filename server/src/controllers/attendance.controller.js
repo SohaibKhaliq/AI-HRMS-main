@@ -540,6 +540,90 @@ const getEmployeeAttendanceByMonth = async (employeeId, year) => {
   return formattedData;
 };
 
+// Register face descriptor for employee
+const registerFaceDescriptor = catchErrors(async (req, res) => {
+  const employeeId = req.user.id;
+  const { faceDescriptor } = req.body;
+
+  if (!faceDescriptor || !Array.isArray(faceDescriptor)) {
+    throw new Error("Valid face descriptor is required");
+  }
+
+  const employee = await Employee.findById(employeeId);
+  
+  if (!employee) {
+    throw new Error("Employee not found");
+  }
+
+  employee.faceDescriptor = faceDescriptor;
+  await employee.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Face registered successfully",
+  });
+});
+
+// Get face descriptor for employee
+const getFaceDescriptor = catchErrors(async (req, res) => {
+  const employeeId = req.user.id;
+
+  const employee = await Employee.findById(employeeId).select("faceDescriptor");
+  
+  if (!employee) {
+    throw new Error("Employee not found");
+  }
+
+  return res.status(200).json({
+    success: true,
+    faceDescriptor: employee.faceDescriptor,
+  });
+});
+
+// Mark attendance using face recognition
+const markAttendanceByFace = catchErrors(async (req, res) => {
+  const employeeId = req.user.id;
+  const { latitude, longitude } = req.body;
+
+  // Check if attendance already marked
+  const isPresent = await Attendance.findOne({
+    employee: employeeId,
+    date: {
+      $gte: today,
+      $lt: tomorrow,
+    },
+  });
+
+  if (isPresent) {
+    throw new Error("Attendance already marked");
+  }
+
+  // Validate location if provided
+  if (latitude && longitude) {
+    const distance = getLocation(latitude, longitude);
+    
+    if (distance > 1000) {
+      throw new Error(
+        "You are not within the allowed location radius to mark attendance."
+      );
+    }
+  }
+
+  // Mark attendance
+  await Attendance.create({
+    employee: employeeId,
+    status: "Present",
+    date: today,
+  });
+
+  myCache.del("insights");
+
+  return res.status(201).json({
+    success: true,
+    message: "Attendance marked successfully using face recognition",
+  });
+});
+
 export {
   markAttendance,
   getAttendanceList,
@@ -553,4 +637,7 @@ export {
   getDepartmentAttendancePercentage,
   getEmployeeAttendanceByDepartment,
   getEmployeeMonthAttendanceByDepartment,
+  registerFaceDescriptor,
+  getFaceDescriptor,
+  markAttendanceByFace,
 };

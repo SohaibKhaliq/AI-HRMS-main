@@ -127,3 +127,51 @@ export const markAttendanceUsingQrCode = createAsyncThunk(
     }
   }
 );
+
+// Register Face Descriptor
+export const registerFaceDescriptor = createAsyncThunk(
+  "attendance/registerFaceDescriptor",
+  async (faceDescriptor, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/attendance/face/register", {
+        faceDescriptor,
+      });
+      toast.success(data.message);
+      return data;
+    } catch (error) {
+      toast.error(error.response?.data.message || "An error occurred.");
+      return rejectWithValue(error.response?.data.message || error.message);
+    }
+  }
+);
+
+// Get Face Descriptor
+export const getFaceDescriptor = createAsyncThunk(
+  "attendance/getFaceDescriptor",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.get("/attendance/face/descriptor");
+      return data.faceDescriptor;
+    } catch (error) {
+      return rejectWithValue(error.response?.data.message || error.message);
+    }
+  }
+);
+
+// Mark Attendance using Face Recognition
+export const markAttendanceUsingFace = createAsyncThunk(
+  "attendance/markAttendanceUsingFace",
+  async ({ latitude, longitude }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/attendance/mark/face", {
+        latitude,
+        longitude,
+      });
+      toast.success(data.message);
+      return data;
+    } catch (error) {
+      toast.error(error.response?.data.message || "An error occurred.");
+      return rejectWithValue(error.response?.data.message || error.message);
+    }
+  }
+);
