@@ -36,9 +36,9 @@ const JobApplications = lazy(() =>
 );
 const JobOpenings = lazy(() => import("../admin/recruitment/JobOpenings"));
 const PostJob = lazy(() => import("../admin/recruitment/PostJob"));
+const JobRequisitions = lazy(() => import("../admin/recruitment/JobRequisitions"));
 const JobCategories = lazy(() => import("../admin/recruitment/JobCategories"));
 const JobTypes = lazy(() => import("../admin/recruitment/JobTypes"));
-const JobLocations = lazy(() => import("../admin/recruitment/JobLocations"));
 const Performance = lazy(() => import("../admin/performance/Performance"));
 const Report = lazy(() => import("../admin/report/Report"));
 const Payroll = lazy(() => import("../admin/payroll/Payroll"));
@@ -81,11 +81,12 @@ const AdminApp = () => {
             <Route path="/leave/active" element={<EmployeeOnLeave />} />
             <Route path="/performances" element={<Performance />} />
             <Route path="/recruitments" element={<JobOpenings />} />
+            <Route path="/recruitment/requisitions" element={<JobRequisitions />} />
+            <Route path="/recruitment/requisitions/add" element={<JobRequisitions />} />
             <Route path="/applications/:id" element={<JobApplications />} />
             <Route path="/recruitment/create" element={<PostJob />} />
             <Route path="/recruitment/categories" element={<JobCategories />} />
             <Route path="/recruitment/types" element={<JobTypes />} />
-            <Route path="/recruitment/locations" element={<JobLocations />} />
             <Route path="/recruitment/requisitions" element={<PostJob />} />
             <Route path="/payrolls" element={<Payroll />} />
             <Route path="/feedbacks" element={<Feedback />} />

@@ -61,7 +61,6 @@ const sidebarLinks = [
       { name: "Job Categories", link: "/recruitment/categories" },
       { name: "Job Requisitions", link: "/recruitment/requisitions" },
       { name: "Job Types", link: "/recruitment/types" },
-      { name: "Job Locations", link: "/recruitment/locations" },
       { name: "Job Postings", link: "/recruitments" },
     ],
   },

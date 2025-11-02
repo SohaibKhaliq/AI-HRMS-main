@@ -178,6 +178,15 @@ const Login = () => {
                   </span>
                 </Link>
               </div>
+
+              <div className="text-[0.85rem] font-medium mt-3">
+                Are you a job seeker?
+                <Link to={"/careers"}>
+                  <span className="text-xs font-semibold text-blue-600 hover:text-blue-700 pl-1">
+                    Explore Careers
+                  </span>
+                </Link>
+              </div>
             </form>
           </div>
         </main>
