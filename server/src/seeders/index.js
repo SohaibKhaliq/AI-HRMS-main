@@ -501,6 +501,215 @@ const generateTerminationData = async () => {
   }
 };
 
+const generateComplaintData = async () => {
+  try {
+    const Complaint = (await import("../models/complaint.model.js")).default;
+    const employees = await Employee.find({ status: "Active" }).limit(15);
+
+    if (employees.length < 2) {
+      console.log("Not enough employees to generate complaints");
+      return;
+    }
+
+    const complaintTypes = [
+      "Leave",
+      "Workplace",
+      "Payroll",
+      "Harassment",
+      "Scheduling",
+      "Misconduct",
+      "Discrimination",
+      "Safety",
+      "Other",
+    ];
+
+    const subjects = [
+      "Racial Discrimination",
+      "Sexual Harassment",
+      "Poor Communication",
+      "Unsafe Working Conditions",
+      "Unfair Leave Policy",
+      "Payroll Discrepancy",
+      "Workplace Bullying",
+      "Lack of Resources",
+      "Unequal Treatment",
+      "Overtime Payment Issue",
+    ];
+
+    const complaints = [
+      "I believe I have been treated unfairly due to my ethnicity in the recent promotion process.",
+      "There have been several instances of inappropriate behavior and comments from my supervisor.",
+      "The management fails to communicate decisions effectively, causing confusion and frustration.",
+      "The office lacks basic safety equipment and proper ventilation.",
+      "My leave request was rejected unfairly despite meeting all company requirements.",
+      "There is a significant discrepancy in my salary payment this month.",
+      "I have witnessed bullying behavior towards junior employees.",
+      "The department lacks essential resources to complete projects on time.",
+      "I feel I am being treated differently based on my background.",
+      "Overtime hours are not being compensated as per company policy.",
+    ];
+
+    const statuses = ["Pending", "In Progress", "Resolved", "Closed", "Escalated"];
+    const assignees = employees.slice(0, 3); // Assign to first 3 employees
+
+    for (let i = 0; i < 7; i++) {
+      const complainantIdx = Math.floor(Math.random() * employees.length);
+      let againstIdx = Math.floor(Math.random() * employees.length);
+      while (againstIdx === complainantIdx) {
+        againstIdx = Math.floor(Math.random() * employees.length);
+      }
+
+      const createdDate = new Date();
+      createdDate.setDate(createdDate.getDate() - Math.floor(Math.random() * 60));
+
+      await Complaint.create({
+        employee: employees[complainantIdx]._id,
+        againstEmployee: Math.random() > 0.3 ? employees[againstIdx]._id : null,
+        complainType: complaintTypes[Math.floor(Math.random() * complaintTypes.length)],
+        complainSubject: subjects[Math.floor(Math.random() * subjects.length)],
+        complaintDetails: complaints[Math.floor(Math.random() * complaints.length)],
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        assignComplaint: assignees[Math.floor(Math.random() * assignees.length)]._id,
+        remarks: "Complaint received and logged in the system for review and investigation.",
+        createdAt: createdDate,
+      });
+    }
+
+    console.log("Complaint data generated successfully");
+  } catch (error) {
+    console.error("Error generating complaint data:", error);
+  }
+};
+
+const generateHolidayData = async () => {
+  try {
+    const Holiday = (await import("../models/holiday.model.js")).default;
+
+    const holidays = [
+      {
+        holidayName: "New Year's Day",
+        date: new Date("2025-01-01"),
+        category: "National",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "Celebrate the beginning of the new year with a day off.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Republic Day",
+        date: new Date("2025-01-26"),
+        category: "National",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "National holiday celebrating the adoption of the Constitution.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Holi",
+        date: new Date("2025-03-14"),
+        category: "Religious",
+        branches: ["Main Office", "Branch 1"],
+        type: "Full Day",
+        description: "Festival of colors - a joyful celebration of spring.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Good Friday",
+        date: new Date("2025-04-18"),
+        category: "Religious",
+        branches: ["Main Office", "Branch 1", "Branch 2"],
+        type: "Full Day",
+        description: "Christian holiday commemorating the crucifixion of Jesus.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Eid ul-Fitr",
+        date: new Date("2025-04-01"),
+        category: "Religious",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "Islamic festival marking the end of Ramadan.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Labour Day",
+        date: new Date("2025-05-01"),
+        category: "National",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "International holiday celebrating workers and their contributions.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Independence Day",
+        date: new Date("2025-08-15"),
+        category: "National",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "National holiday celebrating India's independence.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Janmashtami",
+        date: new Date("2025-08-26"),
+        category: "Religious",
+        branches: ["Main Office", "Branch 1"],
+        type: "Full Day",
+        description: "Hindu festival celebrating the birth of Lord Krishna.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Diwali",
+        date: new Date("2025-11-01"),
+        category: "Religious",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "Festival of lights - one of the most important Hindu festivals.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Company Foundation Day",
+        date: new Date("2025-06-15"),
+        category: "Company Specific",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Half Day",
+        description: "Special half-day holiday celebrating the company's foundation anniversary.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Christmas",
+        date: new Date("2025-12-25"),
+        category: "Religious",
+        branches: ["Main Office", "Branch 2"],
+        type: "Full Day",
+        description: "Christian holiday celebrating the birth of Jesus Christ.",
+        isPaid: true,
+      },
+      {
+        holidayName: "Mahatma Gandhi Jayanti",
+        date: new Date("2025-10-02"),
+        category: "National",
+        branches: ["Main Office", "Branch 1", "Branch 2", "Branch 3"],
+        type: "Full Day",
+        description: "National holiday celebrating the birth of Mahatma Gandhi.",
+        isPaid: true,
+      },
+    ];
+
+    // Check if holidays already exist
+    const existingHolidays = await Holiday.countDocuments();
+    if (existingHolidays > 0) {
+      console.log("Holidays already exist in the database");
+      return;
+    }
+
+    await Holiday.insertMany(holidays);
+    console.log("Holiday data generated successfully");
+  } catch (error) {
+    console.error("Error generating holiday data:", error);
+  }
+};
+
 export {
   alterEmployeeData,
   startHrmsApplication,
@@ -511,4 +720,6 @@ export {
   deleteAllPerformanceRecords,
   generatePayrollDataForMonths,
   generateTerminationData,
+  generateComplaintData,
+  generateHolidayData,
 };

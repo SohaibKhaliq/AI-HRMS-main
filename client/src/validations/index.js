@@ -175,9 +175,11 @@ const feedbackSchema = z.object({
 });
 
 const complaintSchema = z.object({
+  employee: z.string().min(1, "* Complainant is required"),
+  againstEmployee: z.string().optional().or(z.literal("")),
   complainType: z
     .string()
-    .min(1, "Complaint type is required")
+    .min(1, "* Complaint type is required")
     .refine(
       (val) =>
         [
@@ -187,17 +189,39 @@ const complaintSchema = z.object({
           "Leave",
           "Scheduling",
           "Misconduct",
+          "Discrimination",
+          "Safety",
+          "Other",
         ].includes(val),
       {
-        message: "Invalid complaint type",
+        message: "* Invalid complaint type",
       }
     ),
   complainSubject: z
     .string()
-    .min(3, "* Complaint subject must be at least 3 characters"),
+    .min(1, "* Complaint subject is required")
+    .min(5, "* Complaint subject must be at least 5 characters")
+    .max(150, "* Complaint subject must not exceed 150 characters"),
   complaintDetails: z
     .string()
-    .min(10, "* Complaint details must be at least 10 characters"),
+    .min(1, "* Complaint details is required")
+    .min(10, "* Complaint details must be at least 10 characters")
+    .max(1000, "* Complaint details must not exceed 1000 characters"),
+  status: z
+    .string()
+    .refine(
+      (val) =>
+        ["Pending", "In Progress", "Resolved", "Closed", "Escalated"].includes(val),
+      {
+        message: "* Invalid status",
+      }
+    ),
+  assignComplaint: z.string().optional().or(z.literal("")),
+  remarks: z
+    .string()
+    .max(500, "* Remarks must not exceed 500 characters")
+    .optional()
+    .or(z.literal("")),
 });
 
 const leaveSchema = z
@@ -408,10 +432,54 @@ const terminationSchema = z
     }
   );
 
+const holidaySchema = z.object({
+  holidayName: z
+    .string()
+    .min(2, "* Holiday name must be at least 2 characters")
+    .max(100, "* Holiday name must not exceed 100 characters"),
+  date: z
+    .string()
+    .or(z.date())
+    .refine((val) => {
+      if (!val) return false;
+      const date = typeof val === "string" ? new Date(val) : val;
+      return !isNaN(date.getTime());
+    }, "* Valid date is required"),
+  category: z
+    .string()
+    .min(1, "* Category is required")
+    .refine(
+      (val) =>
+        ["National", "Religious", "Company Specific"].includes(val),
+      {
+        message: "* Invalid category",
+      }
+    ),
+  branches: z
+    .array(z.string())
+    .min(1, "* At least one branch is required"),
+  type: z
+    .string()
+    .min(1, "* Type is required")
+    .refine(
+      (val) =>
+        ["Full Day", "Half Day", "Floating"].includes(val),
+      {
+        message: "* Invalid type",
+      }
+    ),
+  description: z
+    .string()
+    .min(5, "* Description must be at least 5 characters")
+    .max(500, "* Description must not exceed 500 characters"),
+  isPaid: z.boolean().optional().default(true),
+});
+
 export {
   leaveSchema,
   feedbackSchema,
   complaintSchema,
+  holidaySchema,
   authenticationSchema,
   createEmployeeSchema,
   forgetPasswordSchema,

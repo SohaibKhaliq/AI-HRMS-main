@@ -13,6 +13,7 @@ import attendance from "../reducers/attendance.reducer";
 import leave from "../reducers/leave.reducer";
 import feedback from "../reducers/feedback.reducer";
 import complaint from "../reducers/complaint.reducer";
+import holiday from "../reducers/holiday.reducer";
 import update from "../reducers/update.reducer";
 import performance from "../reducers/performance.reducer";
 import payroll from "../reducers/payroll.reducer";
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
   employee,
   feedback,
   complaint,
+  holiday,
   department,
   designation,
   documentType,

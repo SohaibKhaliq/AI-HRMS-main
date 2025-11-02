@@ -5,6 +5,11 @@ const complaintSchema = new mongoose.Schema(
     employee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
+      required: true,
+    },
+    againstEmployee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
     },
     complainType: {
       type: String,
@@ -16,6 +21,9 @@ const complaintSchema = new mongoose.Schema(
         "Harassment",
         "Scheduling",
         "Misconduct",
+        "Discrimination",
+        "Safety",
+        "Other",
       ],
     },
     complainSubject: {
@@ -32,11 +40,14 @@ const complaintSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "Pending",
-      enum: ["Pending", "Resolved", "Closed"],
+      enum: ["Pending", "In Progress", "Resolved", "Closed", "Escalated"],
     },
     assignComplaint: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
+    },
+    documentUrl: {
+      type: String,
     },
   },
   {

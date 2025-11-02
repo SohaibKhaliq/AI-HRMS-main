@@ -16,6 +16,7 @@ import {
   feedback,
   inshight,
   complaint,
+  holiday,
   attendance,
   department,
   designation,
@@ -83,6 +84,7 @@ app.use("/api/employees", employee);
 app.use("/api/feedbacks", feedback);
 app.use("/api/auth", authentication);
 app.use("/api/complaints", complaint);
+app.use("/api/holidays", holiday);
 app.use("/api/attendance", attendance);
 app.use("/api/departments", department);
 app.use("/api/designations", designation);

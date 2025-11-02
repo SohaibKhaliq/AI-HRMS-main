@@ -29,6 +29,7 @@ const Feedback = lazy(() => import("../admin/feedback/Feedback"));
 const LeaveRequest = lazy(() => import("../admin/leave/LeaveRequest"));
 const EmployeeOnLeave = lazy(() => import("../admin/leave/EmployeeOnLeave"));
 const Complaint = lazy(() => import("../admin/complaint/Complaint"));
+const Holiday = lazy(() => import("../admin/holiday/Holiday"));
 const JobApplications = lazy(() =>
   import("../admin/recruitment/JobApplications")
 );
@@ -82,6 +83,7 @@ const AdminApp = () => {
             <Route path="/feedbacks" element={<Feedback />} />
             <Route path="/feedbacks" element={<Feedback />} />
             <Route path="/complaints" element={<Complaint />} />
+            <Route path="/holidays" element={<Holiday />} />
             <Route path="/reports" element={<Report />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

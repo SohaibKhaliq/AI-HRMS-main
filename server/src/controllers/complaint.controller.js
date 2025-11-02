@@ -18,7 +18,7 @@ const getComplaints = catchErrors(async (req, res) => {
     .sort({ createdAt: -1 })
     .populate({
       path: "employee",
-      select: "name employeeId department role",
+      select: "name employeeId department role designation",
       populate: [
         {
           path: "department",
@@ -28,7 +28,27 @@ const getComplaints = catchErrors(async (req, res) => {
           path: "role",
           select: "name",
         },
+        {
+          path: "designation",
+          select: "name",
+        },
       ],
+    })
+    .populate({
+      path: "againstEmployee",
+      select: "name employeeId designation",
+      populate: {
+        path: "designation",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "assignComplaint",
+      select: "name designation",
+      populate: {
+        path: "designation",
+        select: "name",
+      },
     })
     .skip(skip)
     .limit(limitNumber);
@@ -50,17 +70,26 @@ const getComplaints = catchErrors(async (req, res) => {
 });
 
 const createComplaint = catchErrors(async (req, res) => {
-  const employee = req.user.id;
-  const { complainType, complaintDetails, complainSubject } = req.body;
+  const { employee, againstEmployee, complainType, complaintDetails, complainSubject, assignComplaint, remarks } = req.body;
 
   if (!employee || !complainType || !complaintDetails || !complainSubject)
-    throw new Error("All fields are required");
+    throw new Error("All required fields are required");
+
+  let documentUrl = null;
+  if (req.file) {
+    documentUrl = req.file.path;
+  }
 
   const complaint = await Complaint.create({
     employee,
+    againstEmployee: againstEmployee || null,
     complainType,
     complainSubject,
     complaintDetails,
+    status: "Pending",
+    assignComplaint: assignComplaint || null,
+    documentUrl,
+    remarks: remarks || null,
   });
 
   myCache.del("insights");
@@ -138,6 +167,54 @@ const respondComplaint = catchErrors(async (req, res) => {
   });
 });
 
+const updateComplaint = catchErrors(async (req, res) => {
+  const { id } = req.params;
+  const { employee, againstEmployee, complainType, complainSubject, complaintDetails, status, assignComplaint, remarks } = req.body;
+
+  if (!id) throw new Error("Complaint ID is required");
+
+  const complaint = await Complaint.findById(id);
+
+  if (!complaint) throw new Error("Complaint not found");
+
+  if (employee) complaint.employee = employee;
+  if (againstEmployee) complaint.againstEmployee = againstEmployee;
+  if (complainType) complaint.complainType = complainType;
+  if (complainSubject) complaint.complainSubject = complainSubject;
+  if (complaintDetails) complaint.complaintDetails = complaintDetails;
+  if (status) complaint.status = status;
+  if (assignComplaint) complaint.assignComplaint = assignComplaint;
+  if (remarks) complaint.remarks = remarks;
+  if (req.file) complaint.documentUrl = req.file.path;
+
+  await complaint.save();
+
+  myCache.del("insights");
+
+  return res.status(200).json({
+    success: true,
+    message: "Complaint updated successfully",
+    complaint,
+  });
+});
+
+const deleteComplaintById = catchErrors(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) throw new Error("Complaint ID is required");
+
+  const complaint = await Complaint.findByIdAndDelete(id);
+
+  if (!complaint) throw new Error("Complaint not found");
+
+  myCache.del("insights");
+
+  return res.status(200).json({
+    success: true,
+    message: "Complaint deleted successfully",
+  });
+});
+
 const deleteComplaint = async (employee) => {
   if (!employee) throw new Error("Please provide employee Id");
 
@@ -154,4 +231,6 @@ export {
   createComplaint,
   respondComplaint,
   assignComplaintForResolution,
+  updateComplaint,
+  deleteComplaintById,
 };

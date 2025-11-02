@@ -1,0 +1,130 @@
+import Holiday from "../models/holiday.model.js";
+import { catchErrors, myCache } from "../utils/index.js";
+
+const getHolidays = catchErrors(async (req, res) => {
+  const { category, type, page = 1, limit = 12 } = req.query;
+
+  const query = {};
+
+  if (category) query.category = { $regex: category, $options: "i" };
+  if (type) query.type = { $regex: type, $options: "i" };
+
+  const pageNumber = Math.max(parseInt(page), 1);
+  const limitNumber = Math.max(parseInt(limit), 1);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const holidays = await Holiday.find(query)
+    .sort({ date: 1 })
+    .skip(skip)
+    .limit(limitNumber);
+
+  const totalHolidays = await Holiday.countDocuments(query);
+  const totalPages = Math.ceil(totalHolidays / limitNumber);
+
+  return res.status(200).json({
+    success: true,
+    message: "Holidays fetched successfully",
+    holidays,
+    pagination: {
+      currentPage: pageNumber,
+      totalPages,
+      totalHolidays,
+      limit: limitNumber,
+    },
+  });
+});
+
+const createHoliday = catchErrors(async (req, res) => {
+  const { holidayName, date, category, branches, type, description, isPaid } = req.body;
+
+  if (!holidayName || !date || !category || !type || !description)
+    throw new Error("All required fields are required");
+
+  const holiday = await Holiday.create({
+    holidayName,
+    date,
+    category,
+    branches: branches || ["Main Office"],
+    type,
+    description,
+    isPaid: isPaid !== undefined ? isPaid : true,
+  });
+
+  myCache.del("insights");
+
+  return res.status(201).json({
+    success: true,
+    message: "Holiday created successfully",
+    holiday,
+  });
+});
+
+const getHolidayById = catchErrors(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) throw new Error("Holiday ID is required");
+
+  const holiday = await Holiday.findById(id);
+
+  if (!holiday) throw new Error("Holiday not found");
+
+  return res.status(200).json({
+    success: true,
+    message: "Holiday fetched successfully",
+    holiday,
+  });
+});
+
+const updateHoliday = catchErrors(async (req, res) => {
+  const { id } = req.params;
+  const { holidayName, date, category, branches, type, description, isPaid } = req.body;
+
+  if (!id) throw new Error("Holiday ID is required");
+
+  const holiday = await Holiday.findById(id);
+
+  if (!holiday) throw new Error("Holiday not found");
+
+  if (holidayName) holiday.holidayName = holidayName;
+  if (date) holiday.date = date;
+  if (category) holiday.category = category;
+  if (branches) holiday.branches = branches;
+  if (type) holiday.type = type;
+  if (description) holiday.description = description;
+  if (isPaid !== undefined) holiday.isPaid = isPaid;
+
+  await holiday.save();
+
+  myCache.del("insights");
+
+  return res.status(200).json({
+    success: true,
+    message: "Holiday updated successfully",
+    holiday,
+  });
+});
+
+const deleteHolidayById = catchErrors(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) throw new Error("Holiday ID is required");
+
+  const holiday = await Holiday.findByIdAndDelete(id);
+
+  if (!holiday) throw new Error("Holiday not found");
+
+  myCache.del("insights");
+
+  return res.status(200).json({
+    success: true,
+    message: "Holiday deleted successfully",
+  });
+});
+
+export {
+  getHolidays,
+  createHoliday,
+  getHolidayById,
+  updateHoliday,
+  deleteHolidayById,
+};
