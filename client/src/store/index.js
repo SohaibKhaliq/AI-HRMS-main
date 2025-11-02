@@ -20,6 +20,7 @@ import performance from "../reducers/performance.reducer";
 import payroll from "../reducers/payroll.reducer";
 import recruitment from "../reducers/recruitment.reducer";
 import jobmeta from "../reducers/jobmeta.reducer";
+import notification from "../reducers/notification.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
   recruitment,
   jobmeta,
   authentication,
+  notification,
 });
 
 // Configure the store
