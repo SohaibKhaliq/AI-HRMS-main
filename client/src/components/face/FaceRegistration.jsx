@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import PropTypes from "prop-types";
 import toast from "react-hot-toast";
 import { loadModels, detectFaceFromVideo, getFaceDescriptor } from "../../utils/faceRecognition";
 
@@ -195,6 +196,11 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       </div>
     </div>
   );
+};
+
+FaceRegistration.propTypes = {
+  onFaceRegistered: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default FaceRegistration;

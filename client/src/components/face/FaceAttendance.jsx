@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
 import toast from "react-hot-toast";
 import { loadModels, detectFaceFromVideo, getFaceDescriptor, compareFaces } from "../../utils/faceRecognition";
 
@@ -13,18 +14,17 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   const [modelsReady, setModelsReady] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
 
-  useEffect(() => {
-    initializeCamera();
-    
-    return () => {
-      stopCamera();
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
+  const startContinuousDetection = useCallback(() => {
+    // Check for face every 500ms
+    detectionIntervalRef.current = setInterval(async () => {
+      if (videoRef.current && modelsReady && !isVerifying) {
+        const detection = await detectFaceFromVideo(videoRef.current);
+        setFaceDetected(!!detection);
       }
-    };
-  }, []);
+    }, 500);
+  }, [modelsReady, isVerifying]);
 
-  const initializeCamera = async () => {
+  const initializeCamera = useCallback(async () => {
     try {
       // Load models first
       await loadModels();
@@ -52,22 +52,23 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
       toast.error("Could not access camera. Please grant camera permissions.");
       setIsLoading(false);
     }
-  };
+  }, [startContinuousDetection]);
+
+  useEffect(() => {
+    initializeCamera();
+    
+    return () => {
+      stopCamera();
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+    };
+  }, [initializeCamera]);
 
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
     }
-  };
-
-  const startContinuousDetection = () => {
-    // Check for face every 500ms
-    detectionIntervalRef.current = setInterval(async () => {
-      if (videoRef.current && modelsReady && !isVerifying) {
-        const detection = await detectFaceFromVideo(videoRef.current);
-        setFaceDetected(!!detection);
-      }
-    }, 500);
   };
 
   const verifyFace = async () => {
@@ -218,6 +219,12 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
       </div>
     </div>
   );
+};
+
+FaceAttendance.propTypes = {
+  storedDescriptor: PropTypes.array,
+  onAttendanceMarked: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default FaceAttendance;

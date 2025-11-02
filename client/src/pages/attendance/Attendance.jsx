@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet";
 import { formatDate } from "../../utils";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { checkAttendanceHead } from "../../constants";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
