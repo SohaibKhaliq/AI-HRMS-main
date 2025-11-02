@@ -74,9 +74,14 @@ const employeeSchema = new mongoose.Schema(
       required: true,
     },
     shift: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shift",
+      default: null,
+    },
+    shiftLegacy: {
       type: String,
       enum: ["Morning", "Evening", "Night"],
-      required: true,
+      default: null,
     },
     status: {
       type: String,
