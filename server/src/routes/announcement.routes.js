@@ -13,8 +13,8 @@ const router = express.Router();
 
 router.get("/", getAnnouncements);
 router.get("/:id", getAnnouncementById);
-router.post("/", verifyAdminToken, uploadDocument.single("attachment"), createAnnouncement);
-router.patch("/:id", verifyAdminToken, uploadDocument.single("attachment"), updateAnnouncement);
+router.post("/", verifyAdminToken, uploadDocument.single("document"), createAnnouncement);
+router.patch("/:id", verifyAdminToken, uploadDocument.single("document"), updateAnnouncement);
 router.delete("/:id", verifyAdminToken, deleteAnnouncementById);
 
 export default router;

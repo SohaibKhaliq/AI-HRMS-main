@@ -29,7 +29,11 @@ export const createAnnouncement = createAsyncThunk(
   "announcements/createAnnouncement",
   async (announcement, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post("/announcements", announcement);
+      const { data } = await axiosInstance.post("/announcements", announcement, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       toast.success(data.message);
       return data.announcement;
     } catch (error) {
@@ -61,7 +65,11 @@ export const updateAnnouncement = createAsyncThunk(
   "announcements/updateAnnouncement",
   async ({ id, announcement }, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.patch(`/announcements/${id}`, announcement);
+      const { data } = await axiosInstance.patch(`/announcements/${id}`, announcement, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       toast.success(data.message);
       return data.announcement;
     } catch (error) {

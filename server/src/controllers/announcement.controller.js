@@ -43,7 +43,7 @@ const getAnnouncements = catchErrors(async (req, res) => {
 });
 
 const createAnnouncement = catchErrors(async (req, res) => {
-  const { title, category, description, startDate, endDate, targetDepartments, targetDesignations, priority, isActive } = req.body;
+  const { title, category, description, startDate, endDate, targetDepartments, priority, isActive } = req.body;
 
   if (!title || !category || !description || !startDate || !endDate)
     throw new Error("All required fields are required");
@@ -51,6 +51,18 @@ const createAnnouncement = catchErrors(async (req, res) => {
   let attachmentUrl = null;
   if (req.file) {
     attachmentUrl = req.file.path;
+  }
+
+  // Parse targetDesignations if it's a JSON string
+  let parsedTargetDesignations = ["All"];
+  if (req.body.targetDesignations) {
+    try {
+      parsedTargetDesignations = JSON.parse(req.body.targetDesignations);
+    } catch (e) {
+      parsedTargetDesignations = Array.isArray(req.body.targetDesignations) 
+        ? req.body.targetDesignations 
+        : ["All"];
+    }
   }
 
   const announcement = await Announcement.create({
@@ -61,10 +73,10 @@ const createAnnouncement = catchErrors(async (req, res) => {
     endDate,
     attachmentUrl,
     targetDepartments: targetDepartments || ["All"],
-    targetDesignations: targetDesignations || ["All"],
+    targetDesignations: parsedTargetDesignations,
     priority: priority || "Medium",
     isActive: isActive !== undefined ? isActive : true,
-    createdBy: req.user._id,
+    createdBy: req.user.id,
   });
 
   myCache.del("insights");
@@ -102,7 +114,7 @@ const getAnnouncementById = catchErrors(async (req, res) => {
 
 const updateAnnouncement = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { title, category, description, startDate, endDate, targetDepartments, targetDesignations, priority, isActive } = req.body;
+  const { title, category, description, startDate, endDate, targetDepartments, priority, isActive } = req.body;
 
   if (!id) throw new Error("Announcement ID is required");
 
@@ -116,7 +128,18 @@ const updateAnnouncement = catchErrors(async (req, res) => {
   if (startDate) announcement.startDate = startDate;
   if (endDate) announcement.endDate = endDate;
   if (targetDepartments) announcement.targetDepartments = targetDepartments;
-  if (targetDesignations) announcement.targetDesignations = targetDesignations;
+  
+  // Parse targetDesignations if it's a JSON string
+  if (req.body.targetDesignations) {
+    try {
+      announcement.targetDesignations = JSON.parse(req.body.targetDesignations);
+    } catch (e) {
+      announcement.targetDesignations = Array.isArray(req.body.targetDesignations) 
+        ? req.body.targetDesignations 
+        : announcement.targetDesignations;
+    }
+  }
+  
   if (priority) announcement.priority = priority;
   if (isActive !== undefined) announcement.isActive = isActive;
   if (req.file) announcement.attachmentUrl = req.file.path;

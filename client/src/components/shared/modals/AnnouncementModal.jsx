@@ -12,6 +12,7 @@ import {
 import { setFetchFlag } from "../../../reducers/announcement.reducer";
 import { announcementSchema } from "../../../validations";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 
 const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
   const dispatch = useDispatch();
@@ -33,9 +34,11 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
       startDate: "",
       endDate: "",
       priority: "Medium",
+      targetDesignations: [],
       attachment: null,
     },
   });
+  const { designations: allDesignations = [] } = useSelector((s) => s.designation || {});
 
   const announcementCategories = ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"];
   const priorityLevels = ["Low", "Medium", "High", "Critical"];
@@ -59,6 +62,7 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
           : ""
       );
       setValue("priority", announcement.priority || "Medium");
+      setValue("targetDesignations", announcement.targetDesignations || []);
     } else if (action === "create") {
       reset({
         title: "",
@@ -67,6 +71,7 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
         startDate: "",
         endDate: "",
         priority: "Medium",
+        targetDesignations: [],
         attachment: null,
       });
     }
@@ -84,6 +89,12 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
       formData.append("endDate", data.endDate);
       formData.append("priority", data.priority);
 
+      // Include target designations
+      const selectedDesignations = Array.isArray(data.targetDesignations)
+        ? data.targetDesignations
+        : [];
+      formData.append("targetDesignations", JSON.stringify(selectedDesignations));
+
       // Handle file upload
       if (data.attachment && data.attachment[0]) {
         formData.append("document", data.attachment[0]);
@@ -95,7 +106,7 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
         toast.success("Announcement created successfully!");
       } else if (action === "edit") {
         await dispatch(
-          updateAnnouncement({ id: announcement._id, data: formData })
+          updateAnnouncement({ id: announcement._id, announcement: formData })
         ).unwrap();
         toast.success("Announcement updated successfully!");
       }
@@ -189,6 +200,29 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                   {errors.category && (
                     <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
                   )}
+                </div>
+
+                {/* Target Designations */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Target Designations
+                  </label>
+                  <select
+                    multiple
+                    {...register("targetDesignations")}
+                    disabled={isReadOnly}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 min-h-24"
+                  >
+                    <option value="All">All</option>
+                    {allDesignations.map((d) => (
+                      <option key={d._id || d.name} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Hold Ctrl (Cmd on Mac) to select multiple designations.
+                  </p>
                 </div>
 
                 <div>

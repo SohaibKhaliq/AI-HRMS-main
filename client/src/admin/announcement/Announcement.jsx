@@ -6,6 +6,7 @@ import { FiSearch, FiEye, FiEdit, FiTrash2, FiFilter, FiFile } from "react-icons
 import { IoArrowDownOutline } from "react-icons/io5";
 import { BsMegaphone } from "react-icons/bs";
 import { getAnnouncements, deleteAnnouncement } from "../../services/announcement.service";
+import { getDesignations } from "../../services/designation.service";
 import { setFetchFlag } from "../../reducers/announcement.reducer";
 import AnnouncementModal from "../../components/shared/modals/AnnouncementModal";
 import Loader from "../../components/shared/loaders/Loader";
@@ -34,6 +35,7 @@ const Announcement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const [designationFilter, setDesignationFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState("view");
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
@@ -41,6 +43,16 @@ const Announcement = () => {
 
   const announcementCategories = ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"];
   const priorityLevels = ["Low", "Medium", "High", "Critical"];
+
+  // Designations list for filters and rendering
+  const { designations: allDesignations = [] } = useSelector((s) => s.designation || {});
+
+  useEffect(() => {
+    // prefetch designations to power filters/modals if not present
+    if (!allDesignations || allDesignations.length === 0) {
+      dispatch(getDesignations());
+    }
+  }, [dispatch]);
 
   // Fetch announcements
   useEffect(() => {
@@ -55,14 +67,19 @@ const Announcement = () => {
   }, [dispatch, currentPage, pageSize, categoryFilter, priorityFilter, fetch]);
 
   // Filter announcements based on search query
-  const filteredAnnouncements = announcements.filter((announcement) => {
+  const filteredAnnouncements = (announcements || []).filter((announcement) => {
     const title = announcement.title || "";
     const description = announcement.description || "";
     const searchLower = searchQuery.toLowerCase();
-    return (
+    const matchesText =
       title.toLowerCase().includes(searchLower) ||
-      description.toLowerCase().includes(searchLower)
-    );
+      description.toLowerCase().includes(searchLower);
+    const matchesDesignation = designationFilter
+      ? (announcement.targetDesignations || ["All"]).some((d) =>
+          d.toLowerCase() === designationFilter.toLowerCase()
+        ) || (designationFilter === "All" && (announcement.targetDesignations || ["All"]).includes("All"))
+      : true;
+    return matchesText && matchesDesignation;
   });
 
   const handleSearch = (e) => {
@@ -92,12 +109,13 @@ const Announcement = () => {
 
   const handleExportPDF = () => {
     // Create CSV export
-    let csvContent = "Title,Category,Date Range,Priority,Description\n";
+  let csvContent = "Title,Category,Date Range,Priority,Designations,Description\n";
     filteredAnnouncements.forEach((announcement) => {
       const startDate = new Date(announcement.startDate).toLocaleDateString("en-US");
       const endDate = new Date(announcement.endDate).toLocaleDateString("en-US");
       const dateRange = `${startDate} - ${endDate}`;
-      csvContent += `"${announcement.title}","${announcement.category}","${dateRange}","${announcement.priority}","${announcement.description}"\n`;
+  const desig = (announcement.targetDesignations || ["All"]).join("; ");
+  csvContent += `"${announcement.title}","${announcement.category}","${dateRange}","${announcement.priority}","${desig}","${announcement.description}"\n`;
     });
 
     const element = document.createElement("a");
@@ -112,7 +130,7 @@ const Announcement = () => {
     document.body.removeChild(element);
   };
 
-  const isAdmin = user?.admin || false;
+  // Note: Add/Edit/Delete buttons are visible to all users by request
 
   // Colors for display
   const categoryColors = {
@@ -178,15 +196,13 @@ const Announcement = () => {
               Export PDF
             </button>
 
-            {isAdmin && (
-              <button
-                onClick={() => handleOpenModal("create")}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
-              >
-                <MdAdd size={20} />
-                Add Announcement
-              </button>
-            )}
+            <button
+              onClick={() => handleOpenModal("create")}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+            >
+              <MdAdd size={20} />
+              Add Announcement
+            </button>
           </div>
         </div>
 
@@ -252,6 +268,29 @@ const Announcement = () => {
                 </select>
               </div>
 
+              {/* Designation Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Designation
+                </label>
+                <select
+                  value={designationFilter}
+                  onChange={(e) => {
+                    setDesignationFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">All Designations</option>
+                  <option value="All">All</option>
+                  {allDesignations.map((d) => (
+                    <option key={d._id || d.name} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Reset Filters */}
               <div className="flex items-end">
                 <button
@@ -259,6 +298,7 @@ const Announcement = () => {
                     setSearchQuery("");
                     setCategoryFilter("");
                     setPriorityFilter("");
+                    setDesignationFilter("");
                     setCurrentPage(1);
                   }}
                   className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium"
@@ -291,6 +331,9 @@ const Announcement = () => {
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
                       Date Range
+                    </th>
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
+                      Designation
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
                       Attachments
@@ -355,6 +398,18 @@ const Announcement = () => {
                         </div>
                       </td>
                       <td className="px-4 md:px-6 py-3 text-sm">
+                        <div className="flex flex-wrap gap-1">
+                          {(announcement.targetDesignations || ["All"]).map((d, i) => (
+                            <span
+                              key={`${announcement._id}-des-${i}`}
+                              className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                            >
+                              {d}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 text-sm">
                         {announcement.attachmentUrl ? (
                           <a
                             href={announcement.attachmentUrl}
@@ -378,24 +433,20 @@ const Announcement = () => {
                           >
                             <FiEye size={18} />
                           </button>
-                          {isAdmin && (
-                            <>
-                              <button
-                                onClick={() => handleOpenModal("edit", announcement)}
-                                className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-gray-600 rounded transition"
-                                title="Edit"
-                              >
-                                <FiEdit size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(announcement._id)}
-                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition"
-                                title="Delete"
-                              >
-                                <FiTrash2 size={18} />
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={() => handleOpenModal("edit", announcement)}
+                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-gray-600 rounded transition"
+                            title="Edit"
+                          >
+                            <FiEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(announcement._id)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition"
+                            title="Delete"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -423,9 +474,12 @@ const Announcement = () => {
         {!loading && filteredAnnouncements.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {(currentPage - 1) * pageSize + 1} to{" "}
-              {Math.min(currentPage * pageSize, pagination.totalAnnouncements)} of{" "}
-              {pagination.totalAnnouncements} announcements
+              {(() => {
+                const total = pagination?.totalAnnouncements || filteredAnnouncements.length;
+                const start = (currentPage - 1) * pageSize + 1;
+                const end = Math.min(currentPage * pageSize, total);
+                return `Showing ${start} to ${end} of ${total} announcements`;
+              })()}
             </div>
 
             <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -463,7 +517,7 @@ const Announcement = () => {
 
                 <div className="flex items-center gap-1">
                   {Array.from(
-                    { length: pagination.totalPages },
+                    { length: pagination?.totalPages || Math.ceil(filteredAnnouncements.length / pageSize) || 1 },
                     (_, i) => i + 1
                   ).map((page) => (
                     <button
@@ -481,12 +535,13 @@ const Announcement = () => {
                 </div>
 
                 <button
-                  onClick={() =>
-                    setCurrentPage(
-                      Math.min(currentPage + 1, pagination.totalPages)
-                    )
+                  onClick={() => {
+                    const totalPages = pagination?.totalPages || Math.ceil(filteredAnnouncements.length / pageSize) || 1;
+                    setCurrentPage(Math.min(currentPage + 1, totalPages));
+                  }}
+                  disabled={
+                    currentPage === (pagination?.totalPages || Math.ceil(filteredAnnouncements.length / pageSize) || 1)
                   }
-                  disabled={currentPage === pagination.totalPages}
                   className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition text-sm"
                 >
                   Next
