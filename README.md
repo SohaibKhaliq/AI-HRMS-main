@@ -38,6 +38,7 @@
 - _AI Sentiment Analysis_
 - _AI Substitute Assignment_ 
 - _QR Code-Based Attendance_
+- _Biometric Face Recognition Attendance_ 🆕
 - _GEMINI-Powered Chatbot_ 
 
 ## _Impact or Outcomes_ :
