@@ -31,7 +31,10 @@ const resignationSlice = createSlice({
         state.error = null;
       })
       .addCase(createResignation.fulfilled, (state, action) => {
-        if (action.payload) state.resignations = [...state.resignations, action.payload];
+        // Resign service now returns all resignations after creation
+        if (action.payload && Array.isArray(action.payload)) {
+          state.resignations = action.payload;
+        }
         state.loading = false;
       })
       .addCase(createResignation.rejected, (state, action) => {
@@ -44,9 +47,9 @@ const resignationSlice = createSlice({
         state.error = null;
       })
       .addCase(updateResignation.fulfilled, (state, action) => {
-        if (action.payload) {
-          const idx = state.resignations.findIndex(r => r._id === action.payload._id);
-          if (idx !== -1) state.resignations[idx] = action.payload;
+        // Update service now returns all resignations after update
+        if (action.payload && Array.isArray(action.payload)) {
+          state.resignations = action.payload;
         }
         state.loading = false;
       })
@@ -60,7 +63,10 @@ const resignationSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteResignation.fulfilled, (state, action) => {
-        if (action.payload) state.resignations = state.resignations.filter(r => r._id !== action.payload);
+        // Delete service now returns all resignations after deletion
+        if (action.payload && Array.isArray(action.payload)) {
+          state.resignations = action.payload;
+        }
         state.loading = false;
       })
       .addCase(deleteResignation.rejected, (state, action) => {

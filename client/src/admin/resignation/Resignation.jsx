@@ -4,9 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import FetchError from "../../components/shared/error/FetchError";
 import ResignationModal from "../../components/shared/modals/ResignationModal";
-import { getResignations, deleteResignation, updateResignation } from "../../services/resignation.service";
+import { getResignations, deleteResignation, updateResignation, createResignation } from "../../services/resignation.service";
 import { getAllEmployees } from "../../services/employee.service";
-import { FaEye, FaEdit, FaTrash, FaPlus, FaDownload } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaPlus, FaDownload, FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 
 const Resignation = () => {
   const dispatch = useDispatch();
@@ -22,11 +23,23 @@ const Resignation = () => {
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
     dispatch(getResignations());
     if (!employees || employees.length === 0) dispatch(getAllEmployees({ currentPage: 1, filters: {} }));
   }, []);
+
+  // Auto-close success popup after 2 seconds
+  useEffect(() => {
+    if (showSuccessPopup) {
+      const timer = setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessPopup]);
 
   const filtered = useMemo(() => {
     let result = resignations || [];
@@ -92,13 +105,19 @@ const Resignation = () => {
   };
 
   const handleModalSubmit = async (formData) => {
-    if (action === "update" && modalOpen?._id) {
+    if (action === "create") {
+      await dispatch(createResignation(formData));
+      setSuccessMessage("Resignation added successfully!");
+      setShowSuccessPopup(true);
+    } else if (action === "update" && modalOpen?._id) {
       await dispatch(
         updateResignation({
           id: modalOpen._id,
           data: formData,
         })
       );
+      setSuccessMessage("Resignation updated successfully!");
+      setShowSuccessPopup(true);
     }
     handleModalClose();
   };
@@ -117,6 +136,28 @@ const Resignation = () => {
   return (
     <>
       <Helmet><title>Resignations - Metro HR</title></Helmet>
+
+      {/* Success Popup Modal */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4 text-center animate-in fade-in zoom-in duration-300">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <FaCheck className="text-green-600 text-2xl" />
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Success!</h2>
+            <p className="text-gray-600 mb-6">{successMessage}</p>
+            <button
+              onClick={() => setShowSuccessPopup(false)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <section className="bg-gray-100 dark:bg-secondary p-4 rounded-lg min-h-screen shadow">
         {loading && <Loader />}
         <div className="flex items-center justify-between mb-4">

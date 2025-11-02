@@ -4,6 +4,7 @@ import { getMonthName } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
 import Department from "../models/department.model.js";
 import Performance from "../models/performance.model.js";
+import Termination from "../models/termination.model.js";
 import { calculateAverageAttendance } from "../controllers/attendance.controller.js";
 import Attendance from "../models/attendance.model.js";
 
@@ -451,6 +452,55 @@ const alterEmployeeData = async () => {
   console.log("Altered");
 };
 
+const generateTerminationData = async () => {
+  try {
+    // Get first 10 active employees
+    const employees = await Employee.find({ status: "Active" }).limit(10);
+
+    const terminationTypes = [
+      "retirement",
+      "resignation",
+      "termination",
+      "redundancy",
+      "voluntary",
+      "involuntary",
+    ];
+    const reasons = [
+      "Normal Retirement",
+      "Early Retirement Benefits",
+      "Voluntary Resignation",
+      "Performance Issues",
+      "Restructuring",
+      "Cost Reduction",
+      "Position Elimination",
+      "Lack of Skills",
+    ];
+    const statuses = ["In progress", "Completed", "Cancelled"];
+
+    for (let i = 0; i < employees.length; i++) {
+      const terminationDate = new Date();
+      terminationDate.setDate(terminationDate.getDate() + Math.floor(Math.random() * 180));
+
+      const noticeDate = new Date();
+      noticeDate.setDate(noticeDate.getDate() + Math.floor(Math.random() * 90));
+
+      await Termination.create({
+        employee: employees[i]._id,
+        type: terminationTypes[Math.floor(Math.random() * terminationTypes.length)],
+        terminationDate,
+        noticeDate,
+        reason: reasons[Math.floor(Math.random() * reasons.length)],
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        remarks: `Termination processed for employee ${employees[i].employeeId}`,
+      });
+    }
+
+    console.log("Termination data generated successfully");
+  } catch (error) {
+    console.error("Error generating termination data:", error);
+  }
+};
+
 export {
   alterEmployeeData,
   startHrmsApplication,
@@ -460,4 +510,5 @@ export {
   deleteTodayAttendanceRecords,
   deleteAllPerformanceRecords,
   generatePayrollDataForMonths,
+  generateTerminationData,
 };

@@ -18,6 +18,7 @@ const Designation = lazy(() => import("../admin/designation/Designation"));
 const DocumentTypes = lazy(() => import("../admin/documentType/DocumentType"));
 const Promotion = lazy(() => import("../admin/promotion/Promotion"));
 const Resignation = lazy(() => import("../admin/resignation/Resignation"));
+const Termination = lazy(() => import("../admin/termination/Termination"));
 const Attendance = lazy(() =>
   import("../admin/attendance/Attendance")
 );
@@ -68,6 +69,7 @@ const AdminApp = () => {
               <Route path="/document-types" element={<DocumentTypes />} />
               <Route path="/promotions" element={<Promotion />} />
               <Route path="/resignations" element={<Resignation />} />
+              <Route path="/terminations" element={<Termination />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance/check" element={<CheckAttendance />} />
             <Route path="/leaves" element={<LeaveRequest />} />

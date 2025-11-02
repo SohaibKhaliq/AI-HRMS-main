@@ -28,8 +28,8 @@ export const createResignation = createAsyncThunk(
       }
       const { data } = await axiosInstance.post(`/resignations`, resignation, config);
       toast.success(data.message);
-      await dispatch(getResignations());
-      return;
+      const result = await dispatch(getResignations());
+      return result.payload;
     } catch (error) {
       return rejectWithValue(
         error.response?.data.message || "Failed to create resignation"
@@ -49,8 +49,8 @@ export const updateResignation = createAsyncThunk(
       }
       const { data } = await axiosInstance.patch(`/resignations/${id}`, resignationData, config);
       toast.success(data.message);
-      await dispatch(getResignations());
-      return;
+      const result = await dispatch(getResignations());
+      return result.payload;
     } catch (error) {
       return rejectWithValue(
         error.response?.data.message || "Failed to update resignation"
@@ -66,8 +66,8 @@ export const deleteResignation = createAsyncThunk(
     try {
       const { data } = await axiosInstance.delete(`/resignations/${id}`);
       toast.success(data.message);
-      await dispatch(getResignations());
-      return;
+      const result = await dispatch(getResignations());
+      return result.payload;
     } catch (error) {
       return rejectWithValue(
         error.response?.data.message || "Failed to delete resignation"

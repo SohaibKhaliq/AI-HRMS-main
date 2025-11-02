@@ -213,6 +213,201 @@ const leaveSchema = z
     path: ["fromDate"],
   });
 
+const resignationSchema = z
+  .object({
+    employee: z.string().min(1, "* Employee is required"),
+    resignationDate: z
+      .string()
+      .min(1, "* Resignation date is required")
+      .refine((date) => {
+        const d = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, "* Resignation date must be today or in the future"),
+    lastWorkingDay: z
+      .string()
+      .min(1, "* Last working day is required")
+      .refine((date) => {
+        const d = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, "* Last working day must be today or in the future"),
+    noticePeriod: z
+      .string()
+      .refine((val) => {
+        const num = parseInt(val);
+        return num > 0 && num <= 365;
+      }, "* Notice period must be between 1 and 365 days"),
+    reason: z
+      .string()
+      .min(1, "* Resignation reason is required")
+      .refine(
+        (val) =>
+          [
+            "Career change",
+            "Better opportunities",
+            "Relocation",
+            "Further education",
+            "Personal reasons",
+            "Health reasons",
+            "Family matters",
+            "Other",
+          ].includes(val),
+        {
+          message: "* Invalid resignation reason",
+        }
+      ),
+    status: z
+      .string()
+      .refine(
+        (val) =>
+          ["Pending", "Approved", "Rejected", "Completed"].includes(val),
+        {
+          message: "* Invalid status",
+        }
+      ),
+    remarks: z.string().optional(),
+  })
+  .refine(
+    (data) => new Date(data.resignationDate) <= new Date(data.lastWorkingDay),
+    {
+      message: "* Last working day must be on or after resignation date",
+      path: ["lastWorkingDay"],
+    }
+  )
+  .refine((data) => {
+    const resignDate = new Date(data.resignationDate);
+    const lastDate = new Date(data.lastWorkingDay);
+    const diffTime = Math.abs(lastDate - resignDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays === parseInt(data.noticePeriod);
+  }, {
+    message:
+      "* Notice period must match the difference between resignation date and last working day",
+    path: ["noticePeriod"],
+  });
+
+const employeeResignationSchema = z
+  .object({
+    resignationDate: z
+      .string()
+      .min(1, "* Resignation date is required")
+      .refine((date) => {
+        const d = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, "* Resignation date must be today or in the future"),
+    noticePeriod: z
+      .string()
+      .refine((val) => {
+        const num = parseInt(val);
+        return num > 0 && num <= 365;
+      }, "* Notice period must be between 1 and 365 days"),
+    reason: z
+      .string()
+      .min(1, "* Resignation reason is required")
+      .refine(
+        (val) =>
+          [
+            "Career change",
+            "Better opportunities",
+            "Relocation",
+            "Further education",
+            "Personal reasons",
+            "Health reasons",
+            "Family matters",
+            "Other",
+          ].includes(val),
+        {
+          message: "* Invalid resignation reason",
+        }
+      ),
+    remarks: z.string().optional(),
+  });
+
+const terminationSchema = z
+  .object({
+    employee: z.string().min(1, "* Employee is required"),
+    type: z
+      .string()
+      .min(1, "* Termination type is required")
+      .refine(
+        (val) =>
+          [
+            "Retirement",
+            "Resignation",
+            "Termination",
+            "Redundancy",
+            "Voluntary",
+            "Involuntary",
+          ].includes(val),
+        {
+          message: "* Invalid termination type",
+        }
+      ),
+    terminationDate: z
+      .string()
+      .min(1, "* Termination date is required")
+      .refine((date) => {
+        if (!date) return false;
+        const d = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, "* Termination date must be today or in the future"),
+    noticeDate: z
+      .string()
+      .min(1, "* Notice date is required")
+      .refine((date) => {
+        if (!date) return false;
+        const d = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, "* Notice date must be today or in the future"),
+    reason: z
+      .string()
+      .min(1, "* Termination reason is required")
+      .min(10, "* Termination reason must be at least 10 characters")
+      .max(500, "* Termination reason must not exceed 500 characters"),
+    status: z
+      .string()
+      .min(1, "* Status is required")
+      .refine(
+        (val) => ["In progress", "Completed", "Cancelled"].includes(val),
+        {
+          message: "* Invalid status",
+        }
+      ),
+    remarks: z.string().max(500, "* Remarks must not exceed 500 characters").optional().or(z.literal("")),
+  })
+  .refine(
+    (data) => {
+      const noticeDate = new Date(data.noticeDate);
+      const terminationDate = new Date(data.terminationDate);
+      return noticeDate >= terminationDate;
+    },
+    {
+      message: "* Notice date must be on or after termination date",
+      path: ["noticeDate"],
+    }
+  )
+  .refine(
+    (data) => {
+      const noticeDate = new Date(data.noticeDate);
+      const terminationDate = new Date(data.terminationDate);
+      const daysDifference = Math.ceil((noticeDate - terminationDate) / (1000 * 60 * 60 * 24));
+      return daysDifference <= 365;
+    },
+    {
+      message: "* Notice period should not exceed 1 year (365 days)",
+      path: ["noticeDate"],
+    }
+  );
+
 export {
   leaveSchema,
   feedbackSchema,
@@ -223,4 +418,7 @@ export {
   updateEmployeeSchema,
   resetPasswordSchema,
   updatePasswordSchema,
+  resignationSchema,
+  employeeResignationSchema,
+  terminationSchema,
 };

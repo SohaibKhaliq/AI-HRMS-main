@@ -14,6 +14,7 @@ const sidebarLinks = [
       { name: "Document Types", link: "/document-types" },
       { name: "Promotions", link: "/promotions" },
       { name: "Resignations", link: "/resignations" },
+      { name: "Terminations", link: "/terminations" },
       { name: "Add New Employee", link: "/employee/create" },
     ],
   },

@@ -2,23 +2,23 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllEmployees } from "../../../services/employee.service";
 import { MdClose } from "react-icons/md";
-import { resignationSchema } from "../../../validations";
+import { terminationSchema } from "../../../validations";
 
-const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, action, employees: propEmployees }) => {
+const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, action, employees: propEmployees }) => {
   const dispatch = useDispatch();
   const { employees: storeEmployees } = useSelector((state) => state.employee || {});
   const employees = propEmployees || storeEmployees || [];
   const [documentFile, setDocumentFile] = useState(null);
   const [documentPreview, setDocumentPreview] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
-  
+
   const [formData, setFormData] = useState({
     employee: "",
-    resignationDate: "",
-    lastWorkingDay: "",
-    noticePeriod: "",
+    type: "",
+    terminationDate: "",
+    noticeDate: "",
     reason: "",
-    status: "Pending",
+    status: "In progress",
     documentUrl: "",
     remarks: "",
   });
@@ -30,33 +30,33 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
   }, [dispatch, storeEmployees]);
 
   useEffect(() => {
-    if (resignation && isOpen) {
-      const empId = resignation.employee?._id || resignation.employee;
+    if (termination && isOpen) {
+      const empId = termination.employee?._id || termination.employee;
       setFormData({
         employee: empId || "",
-        resignationDate: resignation.resignationDate
-          ? resignation.resignationDate.split("T")[0]
+        type: termination.type || "",
+        terminationDate: termination.terminationDate
+          ? termination.terminationDate.split("T")[0]
           : "",
-        lastWorkingDay: resignation.lastWorkingDay
-          ? resignation.lastWorkingDay.split("T")[0]
+        noticeDate: termination.noticeDate
+          ? termination.noticeDate.split("T")[0]
           : "",
-        noticePeriod: resignation.noticePeriod || "",
-        reason: resignation.reason || "",
-        status: resignation.status || "Pending",
-        documentUrl: resignation.documentUrl || "",
-        remarks: resignation.remarks || "",
+        reason: termination.reason || "",
+        status: termination.status || "In progress",
+        documentUrl: termination.documentUrl || "",
+        remarks: termination.remarks || "",
       });
-      setDocumentPreview(resignation.documentUrl);
+      setDocumentPreview(termination.documentUrl);
       setDocumentFile(null);
       setValidationErrors({});
     } else {
       setFormData({
         employee: "",
-        resignationDate: "",
-        lastWorkingDay: "",
-        noticePeriod: "",
+        type: "",
+        terminationDate: "",
+        noticeDate: "",
         reason: "",
-        status: "Pending",
+        status: "In progress",
         documentUrl: "",
         remarks: "",
       });
@@ -64,7 +64,7 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
       setDocumentPreview(null);
       setValidationErrors({});
     }
-  }, [resignation, isOpen]);
+  }, [termination, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -113,7 +113,7 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
 
   const validateForm = () => {
     try {
-      resignationSchema.parse(formData);
+      terminationSchema.parse(formData);
       setValidationErrors({});
       return true;
     } catch (error) {
@@ -129,7 +129,7 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -138,9 +138,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
       // Create FormData to handle file upload
       const submitData = new FormData();
       submitData.append("employee", formData.employee);
-      submitData.append("resignationDate", formData.resignationDate);
-      submitData.append("lastWorkingDay", formData.lastWorkingDay);
-      submitData.append("noticePeriod", formData.noticePeriod);
+      submitData.append("type", formData.type);
+      submitData.append("terminationDate", formData.terminationDate);
+      submitData.append("noticeDate", formData.noticeDate);
       submitData.append("reason", formData.reason);
       submitData.append("status", formData.status);
       submitData.append("remarks", formData.remarks);
@@ -161,7 +161,7 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
           <h2 className="text-xl font-semibold text-gray-900">
-            {action === "create" ? "Add New Resignation" : action === "update" ? "Edit Resignation" : "View Resignation"}
+            {action === "create" ? "Add New Termination" : action === "update" ? "Edit Termination" : "View Termination"}
           </h2>
           <button
             onClick={onClose}
@@ -206,105 +206,109 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
               )}
             </div>
 
-            {/* Resignation Date */}
+            {/* Termination Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Resignation Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="resignationDate"
-                value={formData.resignationDate}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full px-3 py-2 border ${
-                  validationErrors.resignationDate ? "border-red-500" : "border-gray-300"
-                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-                }`}
-                required
-              />
-              {validationErrors.resignationDate && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.resignationDate}</p>
-              )}
-            </div>
-
-            {/* Last Working Day */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Working Day <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="lastWorkingDay"
-                value={formData.lastWorkingDay}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full px-3 py-2 border ${
-                  validationErrors.lastWorkingDay ? "border-red-500" : "border-gray-300"
-                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-                }`}
-                required
-              />
-              {validationErrors.lastWorkingDay && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.lastWorkingDay}</p>
-              )}
-            </div>
-
-            {/* Notice Period */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notice Period (Days) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="noticePeriod"
-                value={formData.noticePeriod}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full px-3 py-2 border ${
-                  validationErrors.noticePeriod ? "border-red-500" : "border-gray-300"
-                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-                }`}
-                required
-              />
-              {validationErrors.noticePeriod && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.noticePeriod}</p>
-              )}
-            </div>
-
-            {/* Reason */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reason <span className="text-red-500">*</span>
+                Type <span className="text-red-500">*</span>
               </label>
               <select
-                name="reason"
-                value={formData.reason}
+                name="type"
+                value={formData.type}
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.reason ? "border-red-500" : "border-gray-300"
+                  validationErrors.type ? "border-red-500" : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
                 required
               >
-                <option value="">Select Reason</option>
-                <option value="Career change">Career change</option>
-                <option value="Better opportunities">Better opportunities</option>
-                <option value="Relocation">Relocation</option>
-                <option value="Further education">Further education</option>
-                <option value="Personal reasons">Personal reasons</option>
-                <option value="Health reasons">Health reasons</option>
-                <option value="Family matters">Family matters</option>
-                <option value="Other">Other</option>
+                <option value="">Select Type</option>
+                <option value="Retirement">Retirement</option>
+                <option value="Resignation">Resignation</option>
+                <option value="Termination">Termination</option>
+                <option value="Redundancy">Redundancy</option>
+                <option value="Voluntary">Voluntary</option>
+                <option value="Involuntary">Involuntary</option>
               </select>
-              {validationErrors.reason && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.reason}</p>
+              {validationErrors.type && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.type}</p>
               )}
+            </div>
+
+            {/* Termination Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Termination Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="terminationDate"
+                value={formData.terminationDate}
+                onChange={handleChange}
+                disabled={isViewMode}
+                className={`w-full px-3 py-2 border ${
+                  validationErrors.terminationDate ? "border-red-500" : "border-gray-300"
+                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+                }`}
+                required
+              />
+              {validationErrors.terminationDate && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.terminationDate}</p>
+              )}
+            </div>
+
+            {/* Notice Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notice Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="noticeDate"
+                value={formData.noticeDate}
+                onChange={handleChange}
+                disabled={isViewMode}
+                className={`w-full px-3 py-2 border ${
+                  validationErrors.noticeDate ? "border-red-500" : "border-gray-300"
+                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+                }`}
+                required
+              />
+              {validationErrors.noticeDate && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.noticeDate}</p>
+              )}
+            </div>
+
+            {/* Reason */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                name="reason"
+                value={formData.reason}
+                onChange={handleChange}
+                disabled={isViewMode}
+                rows="2"
+                className={`w-full px-3 py-2 border ${
+                  validationErrors.reason ? "border-red-500" : "border-gray-300"
+                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+                }`}
+                placeholder="Reason for termination (min 10 characters)"
+                required
+              />
+              <div className="flex justify-between items-start">
+                {validationErrors.reason && (
+                  <p className="text-red-500 text-xs mt-1">{validationErrors.reason}</p>
+                )}
+                <p className={`text-xs mt-1 ${formData.reason.length > 450 ? "text-red-500" : "text-gray-500"}`}>
+                  {formData.reason.length}/500
+                </p>
+              </div>
             </div>
 
             {/* Status */}
@@ -324,10 +328,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 }`}
                 required
               >
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
+                <option value="In progress">In progress</option>
                 <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
               {validationErrors.status && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.status}</p>
@@ -337,7 +340,7 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
             {/* Document Upload */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload Resignation Letter or Document
+                Upload Termination Document
               </label>
               <div className={`border-2 border-dashed rounded-lg p-4 ${
                 validationErrors.document ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"
@@ -402,11 +405,16 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
-                placeholder="Additional remarks or notes"
+                placeholder="Additional remarks or notes (optional)"
               />
-              {validationErrors.remarks && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.remarks}</p>
-              )}
+              <div className="flex justify-between items-start">
+                {validationErrors.remarks && (
+                  <p className="text-red-500 text-xs mt-1">{validationErrors.remarks}</p>
+                )}
+                <p className={`text-xs mt-1 ${formData.remarks.length > 450 ? "text-red-500" : "text-gray-500"}`}>
+                  {formData.remarks.length}/500
+                </p>
+              </div>
             </div>
           </div>
 
@@ -434,4 +442,4 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
   );
 };
 
-export default ResignationModal;
+export default TerminationModal;

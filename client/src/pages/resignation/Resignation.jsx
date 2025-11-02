@@ -5,7 +5,10 @@ import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 import { createResignation, getResignations } from "../../services/resignation.service";
+import { employeeResignationSchema } from "../../validations";
+import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
+import { FaCheck } from "react-icons/fa";
 
 const Resignation = () => {
   const dispatch = useDispatch();
@@ -15,6 +18,7 @@ const Resignation = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [documentFile, setDocumentFile] = useState(null);
   const [documentPreview, setDocumentPreview] = useState(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const {
     register,
@@ -22,9 +26,10 @@ const Resignation = () => {
     reset,
     formState: { errors },
   } = useForm({
+    resolver: zodResolver(employeeResignationSchema),
     defaultValues: {
       resignationDate: new Date().toISOString().split("T")[0],
-      noticePeriod: 30,
+      noticePeriod: "30",
       reason: "",
       remarks: "",
     },
@@ -91,7 +96,7 @@ const Resignation = () => {
       }
 
       await dispatch(createResignation(formData));
-      toast.success("Resignation submitted successfully!");
+      setShowSuccessPopup(true);
       setSubmitted(true);
       reset();
       setDocumentFile(null);
@@ -103,6 +108,16 @@ const Resignation = () => {
     }
   };
 
+  // Auto-close success popup after 2 seconds
+  useEffect(() => {
+    if (showSuccessPopup) {
+      const timer = setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessPopup]);
+
   if (loading) return <Loader />;
 
   return (
@@ -110,6 +125,28 @@ const Resignation = () => {
       <Helmet>
         <title>Resignation - Metro HR</title>
       </Helmet>
+
+      {/* Success Popup Modal */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full mx-4 text-center animate-in fade-in zoom-in duration-300">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <FaCheck className="text-green-600 text-2xl" />
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Success!</h2>
+            <p className="text-gray-600 mb-2">Resignation submitted successfully!</p>
+            <p className="text-sm text-gray-500 mb-6">Your resignation request has been submitted to HR. You will receive an update on your status.</p>
+            <button
+              onClick={() => setShowSuccessPopup(false)}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="h-screen overflow-hidden bg-gray-50">
         <main className="flex justify-center items-center w-full h-full text-black font-medium">

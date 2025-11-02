@@ -14,6 +14,7 @@ import authentication from "./authentication.routes.js";
 import documentType from "./documentType.routes.js";
 import promotion from "./promotion.routes.js";
 import resignation from "./resignation.routes.js";
+import termination from "./termination.routes.js";
 
 export {
   role,
@@ -32,4 +33,5 @@ export {
   documentType,
   promotion,
   resignation,
+  termination,
 };
