@@ -379,6 +379,20 @@ const updateProfile = catchErrors(async (req, res) => {
   });
 });
 
+const changeEmployeePassword = catchErrors(async (req, res) => {
+  const { id } = req.params;
+  const { password } = req.body;
+
+  if (!id) throw new Error("Please provide employee Id");
+  if (!password || password.length < 6) throw new Error("Password must be at least 6 characters");
+
+  const hashed = await bcrypt.hash(password, 10);
+  await Employee.findByIdAndUpdate(id, { password: hashed });
+  clearEmployeeCache();
+
+  return res.status(200).json({ success: true, message: "Password updated successfully" });
+});
+
 export {
   updateProfile,
   updateEmployee,
@@ -387,4 +401,5 @@ export {
   getAllEmployees,
   getEmployeeById,
   bulkCreateEmployees,
+  changeEmployeePassword,
 };

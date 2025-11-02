@@ -131,6 +131,39 @@ const startHrmsApplication = async () => {
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
     });
 
+    // Create a couple of dummy employees for UI/demo
+    await Employee.create({
+      employeeId: "001",
+      name: "Ayesha Khan",
+      dob: "1992-07-12T00:00:00.000Z",
+      email: "ayesha.khan@example.com",
+      password: "$2b$10$k.1v4SeBsR.UYT4chI/O8OTkK5CO.MilaR8yCACtodqTZKm429rWG",
+      profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
+      phoneNumber: "+923001112233",
+      address: { street: "Street 1", city: "Lahore", state: "Punjab", postalCode: "54000", country: "Pakistan" },
+      role: role._id,
+      department: department._id,
+      dateOfJoining: "2021-03-15T00:00:00.000Z",
+      status: "Active",
+      salary: 50000,
+    });
+
+    await Employee.create({
+      employeeId: "002",
+      name: "Omar Malik",
+      dob: "1988-11-02T00:00:00.000Z",
+      email: "omar.malik@example.com",
+      password: "$2b$10$k.1v4SeBsR.UYT4chI/O8OTkK5CO.MilaR8yCACtodqTZKm429rWG",
+      profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
+      phoneNumber: "+923009998877",
+      address: { street: "Street 2", city: "Karachi", state: "Sindh", postalCode: "75500", country: "Pakistan" },
+      role: role._id,
+      department: department._id,
+      dateOfJoining: "2019-08-01T00:00:00.000Z",
+      status: "Inactive",
+      salary: 45000,
+    });
+
     console.log("HRMS is ready to run, Have a nice day.");
   } catch (error) {
     console.error("Error setting up HRMS:", error);
