@@ -2,65 +2,65 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
 import { MdAdd } from "react-icons/md";
-import { FiSearch, FiEye, FiEdit, FiTrash2, FiFilter } from "react-icons/fi";
-import { BsCalendar3 } from "react-icons/bs";
+import { FiSearch, FiEye, FiEdit, FiTrash2, FiFilter, FiFile } from "react-icons/fi";
 import { IoArrowDownOutline } from "react-icons/io5";
-import { getHolidays, deleteHoliday } from "../../services/holiday.service";
-import { setFetchFlag } from "../../reducers/holiday.reducer";
-import HolidayModal from "../../components/shared/modals/HolidayModal";
+import { BsMegaphone } from "react-icons/bs";
+import { getAnnouncements, deleteAnnouncement } from "../../services/announcement.service";
+import { setFetchFlag } from "../../reducers/announcement.reducer";
+import AnnouncementModal from "../../components/shared/modals/AnnouncementModal";
 import Loader from "../../components/shared/loaders/Loader";
 import FetchError from "../../components/shared/error/FetchError";
 
-const Holiday = () => {
+const Announcement = () => {
   const dispatch = useDispatch();
-  const holidayState = useSelector((state) => state.holiday) || {};
+  const announcementState = useSelector((state) => state.announcement) || {};
   const auth = useSelector((state) => state.authentication) || {};
   const {
-    holidays = [],
+    announcements = [],
     loading = false,
     error = null,
     pagination = {
       currentPage: 1,
       totalPages: 1,
-      totalHolidays: 0,
+      totalAnnouncements: 0,
       limit: 10,
     },
     fetch = true,
-  } = holidayState;
+  } = announcementState;
   const { user = {} } = auth;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState("view");
-  const [selectedHoliday, setSelectedHoliday] = useState(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const holidayCategories = ["National", "Religious", "Company Specific"];
-  const holidayTypes = ["Full Day", "Half Day", "Floating"];
+  const announcementCategories = ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"];
+  const priorityLevels = ["Low", "Medium", "High", "Critical"];
 
-  // Fetch holidays
+  // Fetch announcements
   useEffect(() => {
     dispatch(
-      getHolidays({
+      getAnnouncements({
         currentPage,
         limit: pageSize,
         category: categoryFilter || undefined,
-        type: typeFilter || undefined,
+        priority: priorityFilter || undefined,
       })
     );
-  }, [dispatch, currentPage, pageSize, categoryFilter, typeFilter, fetch]);
+  }, [dispatch, currentPage, pageSize, categoryFilter, priorityFilter, fetch]);
 
-  // Filter holidays based on search query
-  const filteredHolidays = holidays.filter((holiday) => {
-    const name = holiday.holidayName || "";
-    const description = holiday.description || "";
+  // Filter announcements based on search query
+  const filteredAnnouncements = announcements.filter((announcement) => {
+    const title = announcement.title || "";
+    const description = announcement.description || "";
     const searchLower = searchQuery.toLowerCase();
     return (
-      name.toLowerCase().includes(searchLower) ||
+      title.toLowerCase().includes(searchLower) ||
       description.toLowerCase().includes(searchLower)
     );
   });
@@ -70,32 +70,34 @@ const Holiday = () => {
     setCurrentPage(1);
   };
 
-  const handleOpenModal = (action, holiday = null) => {
+  const handleOpenModal = (action, announcement = null) => {
     setModalAction(action);
-    setSelectedHoliday(holiday);
+    setSelectedAnnouncement(announcement);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedHoliday(null);
+    setSelectedAnnouncement(null);
     setModalAction("view");
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this holiday?")) {
-      dispatch(deleteHoliday(id)).then(() => {
+    if (window.confirm("Are you sure you want to delete this announcement?")) {
+      dispatch(deleteAnnouncement(id)).then(() => {
         dispatch(setFetchFlag(true));
       });
     }
   };
 
   const handleExportPDF = () => {
-    // Create a simple CSV export for now (can be extended to PDF)
-    let csvContent = "Holiday Name,Date,Category,Type,Description\n";
-    filteredHolidays.forEach((holiday) => {
-      const date = new Date(holiday.date).toLocaleDateString("en-US");
-      csvContent += `"${holiday.holidayName}","${date}","${holiday.category}","${holiday.type}","${holiday.description}"\n`;
+    // Create CSV export
+    let csvContent = "Title,Category,Date Range,Priority,Description\n";
+    filteredAnnouncements.forEach((announcement) => {
+      const startDate = new Date(announcement.startDate).toLocaleDateString("en-US");
+      const endDate = new Date(announcement.endDate).toLocaleDateString("en-US");
+      const dateRange = `${startDate} - ${endDate}`;
+      csvContent += `"${announcement.title}","${announcement.category}","${dateRange}","${announcement.priority}","${announcement.description}"\n`;
     });
 
     const element = document.createElement("a");
@@ -103,7 +105,7 @@ const Holiday = () => {
       "href",
       "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
     );
-    element.setAttribute("download", `holidays_${new Date().getTime()}.csv`);
+    element.setAttribute("download", `announcements_${new Date().getTime()}.csv`);
     element.style.display = "none";
     document.body.appendChild(element);
     element.click();
@@ -112,29 +114,29 @@ const Holiday = () => {
 
   const isAdmin = user?.admin || false;
 
-  // Status colors for display
+  // Colors for display
   const categoryColors = {
-    National: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    Religious: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    "Company Specific": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    General: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    Policy: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    Event: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    Training: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    Urgent: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    Benefits: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+    Recognition: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
   };
 
-  const typeColors = {
-    "Full Day": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    "Half Day": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    Floating: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-  };
-
-  const paidColors = {
-    Paid: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    Unpaid: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  const priorityColors = {
+    Low: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+    Medium: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    High: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    Critical: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   };
 
   if (error) {
     return (
       <>
         <Helmet>
-          <title>Holidays - HRMS</title>
+          <title>Announcements - HRMS</title>
         </Helmet>
         <FetchError error={error} />
       </>
@@ -144,7 +146,7 @@ const Holiday = () => {
   return (
     <>
       <Helmet>
-        <title>Holidays - HRMS</title>
+        <title>Announcements - HRMS</title>
       </Helmet>
 
       <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -152,10 +154,10 @@ const Holiday = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-              Holidays
+              Announcements
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Manage company holidays and special dates
+              Manage company announcements and communications
             </p>
           </div>
 
@@ -176,13 +178,15 @@ const Holiday = () => {
               Export PDF
             </button>
 
-            <button
-              onClick={() => handleOpenModal("create")}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
-            >
-              <MdAdd size={20} />
-              Add Holiday
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => handleOpenModal("create")}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+              >
+                <MdAdd size={20} />
+                Add Announcement
+              </button>
+            )}
           </div>
         </div>
 
@@ -192,7 +196,7 @@ const Holiday = () => {
             <FiSearch className="absolute left-3 top-3 text-gray-400 text-lg" />
             <input
               type="text"
-              placeholder="Search holidays by name or description..."
+              placeholder="Search announcements by title or description..."
               value={searchQuery}
               onChange={handleSearch}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -218,7 +222,7 @@ const Holiday = () => {
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">All Categories</option>
-                  {holidayCategories.map((cat) => (
+                  {announcementCategories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -226,23 +230,23 @@ const Holiday = () => {
                 </select>
               </div>
 
-              {/* Type Filter */}
+              {/* Priority Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Type
+                  Priority
                 </label>
                 <select
-                  value={typeFilter}
+                  value={priorityFilter}
                   onChange={(e) => {
-                    setTypeFilter(e.target.value);
+                    setPriorityFilter(e.target.value);
                     setCurrentPage(1);
                   }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
-                  <option value="">All Types</option>
-                  {holidayTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                  <option value="">All Priorities</option>
+                  {priorityLevels.map((priority) => (
+                    <option key={priority} value={priority}>
+                      {priority}
                     </option>
                   ))}
                 </select>
@@ -254,7 +258,7 @@ const Holiday = () => {
                   onClick={() => {
                     setSearchQuery("");
                     setCategoryFilter("");
-                    setTypeFilter("");
+                    setPriorityFilter("");
                     setCurrentPage(1);
                   }}
                   className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium"
@@ -270,7 +274,7 @@ const Holiday = () => {
         {loading && <Loader />}
 
         {/* Table */}
-        {!loading && filteredHolidays.length > 0 && (
+        {!loading && filteredAnnouncements.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -280,19 +284,16 @@ const Holiday = () => {
                       #
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-green-600">
-                      Holiday Name
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-green-600">
-                      Date
+                      Title
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
                       Category
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
-                      Type
+                      Date Range
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
-                      Description
+                      Attachments
                     </th>
                     <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-white">
                       Actions
@@ -300,70 +301,101 @@ const Holiday = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredHolidays.map((holiday, index) => (
+                  {filteredAnnouncements.map((announcement, index) => (
                     <tr
-                      key={holiday._id}
+                      key={announcement._id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                     >
                       <td className="px-4 md:px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {(currentPage - 1) * pageSize + index + 1}
                       </td>
-                      <td className="px-4 md:px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                        {holiday.holidayName}
+                      <td className="px-4 md:px-6 py-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {announcement.title}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                priorityColors[announcement.priority] ||
+                                "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {announcement.priority}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 text-sm">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            categoryColors[announcement.category] ||
+                            "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {announcement.category}
+                        </span>
                       </td>
                       <td className="px-4 md:px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(holiday.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        })}
+                        <div>
+                          <div className="font-medium">
+                            {new Date(announcement.startDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            to {new Date(announcement.endDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 md:px-6 py-3 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            categoryColors[holiday.category] ||
-                            "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {holiday.category}
-                        </span>
-                      </td>
-                      <td className="px-4 md:px-6 py-3 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            typeColors[holiday.type] ||
-                            "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {holiday.type}
-                        </span>
-                      </td>
-                      <td className="px-4 md:px-6 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-xs">
-                        {holiday.description}
+                        {announcement.attachmentUrl ? (
+                          <a
+                            href={announcement.attachmentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-blue-500 hover:text-blue-700 transition"
+                          >
+                            <FiFile size={16} />
+                            <span>Attachment</span>
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">No Attachment</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleOpenModal("view", holiday)}
+                            onClick={() => handleOpenModal("view", announcement)}
                             className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition"
                             title="View"
                           >
                             <FiEye size={18} />
                           </button>
-                          <button
-                            onClick={() => handleOpenModal("edit", holiday)}
-                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-gray-600 rounded transition"
-                            title="Edit"
-                          >
-                            <FiEdit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(holiday._id)}
-                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition"
-                            title="Delete"
-                          >
-                            <FiTrash2 size={18} />
-                          </button>
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={() => handleOpenModal("edit", announcement)}
+                                className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-gray-600 rounded transition"
+                                title="Edit"
+                              >
+                                <FiEdit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(announcement._id)}
+                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition"
+                                title="Delete"
+                              >
+                                <FiTrash2 size={18} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -375,11 +407,11 @@ const Holiday = () => {
         )}
 
         {/* Empty State */}
-        {!loading && filteredHolidays.length === 0 && (
+        {!loading && filteredAnnouncements.length === 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center mb-6">
-            <BsCalendar3 className="mx-auto text-4xl text-gray-400 mb-4" />
+            <BsMegaphone className="mx-auto text-4xl text-gray-400 mb-4" />
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              No holidays found
+              No announcements found
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
               Try adjusting your filters or search terms
@@ -388,12 +420,12 @@ const Holiday = () => {
         )}
 
         {/* Pagination */}
-        {!loading && filteredHolidays.length > 0 && (
+        {!loading && filteredAnnouncements.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Showing {(currentPage - 1) * pageSize + 1} to{" "}
-              {Math.min(currentPage * pageSize, pagination.totalHolidays)} of{" "}
-              {pagination.totalHolidays} holidays
+              {Math.min(currentPage * pageSize, pagination.totalAnnouncements)} of{" "}
+              {pagination.totalAnnouncements} announcements
             </div>
 
             <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -465,17 +497,17 @@ const Holiday = () => {
         )}
       </div>
 
-      {/* Holiday Modal */}
+      {/* Announcement Modal */}
       {isModalOpen && (
-        <HolidayModal
+        <AnnouncementModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           action={modalAction}
-          holiday={selectedHoliday}
+          announcement={selectedAnnouncement}
         />
       )}
     </>
   );
 };
 
-export default Holiday;
+export default Announcement;

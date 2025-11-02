@@ -14,6 +14,7 @@ import leave from "../reducers/leave.reducer";
 import feedback from "../reducers/feedback.reducer";
 import complaint from "../reducers/complaint.reducer";
 import holiday from "../reducers/holiday.reducer";
+import announcement from "../reducers/announcement.reducer";
 import update from "../reducers/update.reducer";
 import performance from "../reducers/performance.reducer";
 import payroll from "../reducers/payroll.reducer";
@@ -30,6 +31,7 @@ const rootReducer = combineReducers({
   feedback,
   complaint,
   holiday,
+  announcement,
   department,
   designation,
   documentType,

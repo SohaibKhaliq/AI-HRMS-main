@@ -455,9 +455,6 @@ const holidaySchema = z.object({
         message: "* Invalid category",
       }
     ),
-  branches: z
-    .array(z.string())
-    .min(1, "* At least one branch is required"),
   type: z
     .string()
     .min(1, "* Type is required")
@@ -475,11 +472,73 @@ const holidaySchema = z.object({
   isPaid: z.boolean().optional().default(true),
 });
 
+const announcementSchema = z.object({
+  title: z
+    .string()
+    .min(5, "* Title must be at least 5 characters")
+    .max(200, "* Title must not exceed 200 characters"),
+  category: z
+    .string()
+    .min(1, "* Category is required")
+    .refine(
+      (val) =>
+        ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"].includes(val),
+      {
+        message: "* Invalid category",
+      }
+    ),
+  description: z
+    .string()
+    .min(10, "* Description must be at least 10 characters")
+    .max(2000, "* Description must not exceed 2000 characters"),
+  startDate: z
+    .string()
+    .or(z.date())
+    .refine((val) => {
+      if (!val) return false;
+      const date = typeof val === "string" ? new Date(val) : val;
+      return !isNaN(date.getTime());
+    }, "* Valid start date is required"),
+  endDate: z
+    .string()
+    .or(z.date())
+    .refine((val) => {
+      if (!val) return false;
+      const date = typeof val === "string" ? new Date(val) : val;
+      return !isNaN(date.getTime());
+    }, "* Valid end date is required"),
+  targetDepartments: z.array(z.string()).optional().default(["All"]),
+  targetDesignations: z.array(z.string()).optional().default(["All"]),
+  priority: z
+    .string()
+    .refine(
+      (val) =>
+        ["Low", "Medium", "High", "Critical"].includes(val),
+      {
+        message: "* Invalid priority",
+      }
+    )
+    .optional()
+    .default("Medium"),
+  isActive: z.boolean().optional().default(true),
+}).refine(
+  (data) => {
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+    return endDate >= startDate;
+  },
+  {
+    message: "* End date must be after start date",
+    path: ["endDate"],
+  }
+);
+
 export {
   leaveSchema,
   feedbackSchema,
   complaintSchema,
   holidaySchema,
+  announcementSchema,
   authenticationSchema,
   createEmployeeSchema,
   forgetPasswordSchema,

@@ -15,10 +15,6 @@ const holidaySchema = new mongoose.Schema(
       required: true,
       enum: ["National", "Religious", "Company Specific"],
     },
-    branches: {
-      type: [String],
-      default: ["Main Office"],
-    },
     type: {
       type: String,
       required: true,

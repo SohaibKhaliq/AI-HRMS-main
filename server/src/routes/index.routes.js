@@ -6,6 +6,7 @@ import feedback from "./feedback.routes.js";
 import inshight from "./insights.routes.js";
 import complaint from "./complaint.routes.js";
 import holiday from "./holiday.routes.js";
+import announcement from "./announcement.routes.js";
 import attendance from "./attendance.routes.js";
 import department from "./department.routes.js";
 import designation from "./designation.routes.js";
@@ -26,6 +27,7 @@ export {
   inshight,
   complaint,
   holiday,
+  announcement,
   attendance,
   department,
   designation,

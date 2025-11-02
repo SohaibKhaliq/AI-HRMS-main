@@ -35,7 +35,7 @@ const getHolidays = catchErrors(async (req, res) => {
 });
 
 const createHoliday = catchErrors(async (req, res) => {
-  const { holidayName, date, category, branches, type, description, isPaid } = req.body;
+  const { holidayName, date, category, type, description, isPaid } = req.body;
 
   if (!holidayName || !date || !category || !type || !description)
     throw new Error("All required fields are required");
@@ -44,7 +44,6 @@ const createHoliday = catchErrors(async (req, res) => {
     holidayName,
     date,
     category,
-    branches: branches || ["Main Office"],
     type,
     description,
     isPaid: isPaid !== undefined ? isPaid : true,
@@ -77,7 +76,7 @@ const getHolidayById = catchErrors(async (req, res) => {
 
 const updateHoliday = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { holidayName, date, category, branches, type, description, isPaid } = req.body;
+  const { holidayName, date, category, type, description, isPaid } = req.body;
 
   if (!id) throw new Error("Holiday ID is required");
 
@@ -88,7 +87,6 @@ const updateHoliday = catchErrors(async (req, res) => {
   if (holidayName) holiday.holidayName = holidayName;
   if (date) holiday.date = date;
   if (category) holiday.category = category;
-  if (branches) holiday.branches = branches;
   if (type) holiday.type = type;
   if (description) holiday.description = description;
   if (isPaid !== undefined) holiday.isPaid = isPaid;

@@ -12,13 +12,11 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
 
   const holidayCategories = ["National", "Religious", "Company Specific"];
   const holidayTypes = ["Full Day", "Half Day", "Floating"];
-  const branches = ["Main Office", "Branch 1", "Branch 2", "Branch 3"]; // Add actual branches from your system
 
   const [formData, setFormData] = useState({
     holidayName: "",
     date: "",
     category: "",
-    branches: [],
     type: "",
     description: "",
     isPaid: true,
@@ -33,7 +31,6 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
         holidayName: holiday.holidayName || "",
         date: formattedDate || "",
         category: holiday.category || "",
-        branches: holiday.branches || ["Main Office"],
         type: holiday.type || "",
         description: holiday.description || "",
         isPaid: holiday.isPaid !== undefined ? holiday.isPaid : true,
@@ -44,7 +41,6 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
         holidayName: "",
         date: "",
         category: "",
-        branches: ["Main Office"],
         type: "",
         description: "",
         isPaid: true,
@@ -62,18 +58,6 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
     // Clear error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const handleBranchChange = (branch) => {
-    setFormData((prev) => {
-      const branches = prev.branches.includes(branch)
-        ? prev.branches.filter((b) => b !== branch)
-        : [...prev.branches, branch];
-      return { ...prev, branches };
-    });
-    if (validationErrors.branches) {
-      setValidationErrors((prev) => ({ ...prev, branches: "" }));
     }
   };
 
@@ -226,37 +210,6 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
             </select>
             {validationErrors.type && (
               <p className="text-red-500 text-sm mt-1">{validationErrors.type}</p>
-            )}
-          </div>
-
-          {/* Branches */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Branches *
-            </label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {branches.map((branch) => (
-                <label
-                  key={branch}
-                  className="flex items-center cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.branches.includes(branch)}
-                    onChange={() => handleBranchChange(branch)}
-                    disabled={action === "view"}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    {branch}
-                  </span>
-                </label>
-              ))}
-            </div>
-            {validationErrors.branches && (
-              <p className="text-red-500 text-sm mt-1">
-                {validationErrors.branches}
-              </p>
             )}
           </div>
 

@@ -17,6 +17,7 @@ const sidebarLinks = [
       { name: "Terminations", link: "/terminations" },
       { name: "Complaints", link: "/complaints" },
       { name: "Holidays", link: "/holidays" },
+      { name: "Announcements", link: "/announcements" },
       { name: "Add New Employee", link: "/employee/create" },
     ],
   },
