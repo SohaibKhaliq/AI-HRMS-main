@@ -82,6 +82,7 @@ app.use("/api/complaints", complaint);
 app.use("/api/attendance", attendance);
 app.use("/api/departments", department);
 app.use("/api/designations", designation);
+app.use("/api/document-types", documentType);
 app.use("/api/performance", performance);
 app.use("/api/recruitment", recruitment);
 

@@ -82,6 +82,37 @@ const startHrmsApplication = async () => {
       department: department._id,
     });
 
+    // Create some dummy document types
+    const { default: DocumentType } = await import("../models/documentType.model.js");
+    await DocumentType.create({
+      name: "Identity Proof",
+      description: "Government issued identity document such as passport, driver license, or national ID",
+      required: true,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40),
+    });
+    await DocumentType.create({
+      name: "Address Proof",
+      description: "Document verifying current residential address like utility bill or bank statement",
+      required: true,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
+    });
+    await DocumentType.create({
+      name: "Educational Certificates",
+      description: "Academic certificates, degrees, diplomas, and transcripts",
+      required: true,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
+    });
+    await DocumentType.create({
+      name: "Experience Letters",
+      description: "Previous employment experience and recommendation letters from former employers",
+      required: false,
+      status: "Active",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+    });
+
     // Create some dummy designations
     const { default: Designation } = await import("../models/designation.model.js");
     await Designation.create({
