@@ -10,6 +10,7 @@ const JobCategoryModal = ({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    status: "Active",
   });
   
   const isView = action === "view";
@@ -18,6 +19,7 @@ const JobCategoryModal = ({
     setFormData({
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
+      status: defaultValues?.status || "Active",
     });
   }, [defaultValues]);
 
@@ -77,6 +79,23 @@ const JobCategoryModal = ({
             rows={4}
             className="w-full bg-[#EFEFEF] text-sm p-4 rounded-2xl focus:outline focus:outline-2 focus:outline-gray-700 font-medium resize-none"
           />
+        </div>
+
+        <div className="w-full">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Status <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            disabled={isView}
+            required
+            className="w-full bg-[#EFEFEF] text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium"
+          >
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
         </div>
 
         {!isView && (

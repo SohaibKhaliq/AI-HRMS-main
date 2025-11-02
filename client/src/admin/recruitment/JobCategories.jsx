@@ -119,6 +119,9 @@ const JobCategories = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Description
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
+                    Status
+                  </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">
                     Actions
                   </th>
@@ -127,7 +130,7 @@ const JobCategories = () => {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                       No categories found
                     </td>
                   </tr>
@@ -145,6 +148,17 @@ const JobCategories = () => {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                         {category.description || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            category.status === "Active"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          }`}
+                        >
+                          {category.status || "Active"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex items-center justify-center gap-2">

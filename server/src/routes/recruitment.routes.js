@@ -15,6 +15,23 @@ import { uploadResume } from "../config/index.js";
 
 const router = express.Router();
 
+// Job meta endpoints (admin) - These must come BEFORE dynamic routes like /:id
+router.get("/categories", verifyAdminToken, categories.list);
+router.post("/categories", verifyAdminToken, categories.create);
+router.patch("/categories/:id", verifyAdminToken, categories.update);
+router.delete("/categories/:id", verifyAdminToken, categories.remove);
+
+router.get("/types", verifyAdminToken, types.list);
+router.post("/types", verifyAdminToken, types.create);
+router.patch("/types/:id", verifyAdminToken, types.update);
+router.delete("/types/:id", verifyAdminToken, types.remove);
+
+router.get("/locations", verifyAdminToken, locations.list);
+router.post("/locations", verifyAdminToken, locations.create);
+router.patch("/locations/:id", verifyAdminToken, locations.update);
+router.delete("/locations/:id", verifyAdminToken, locations.remove);
+
+// Job posting endpoints
 router.get("/", getAllJobs);
 router.get("/:id", getJobById);
 router.post("/", verifyAdminToken, createJob);
@@ -31,21 +48,5 @@ router.post(
   verifyAdminToken,
   inviteForInterview
 );
-
-// Job meta endpoints (admin)
-router.get("/categories", verifyAdminToken, categories.list);
-router.post("/categories", verifyAdminToken, categories.create);
-router.patch("/categories/:id", verifyAdminToken, categories.update);
-router.delete("/categories/:id", verifyAdminToken, categories.remove);
-
-router.get("/types", verifyAdminToken, types.list);
-router.post("/types", verifyAdminToken, types.create);
-router.patch("/types/:id", verifyAdminToken, types.update);
-router.delete("/types/:id", verifyAdminToken, types.remove);
-
-router.get("/locations", verifyAdminToken, locations.list);
-router.post("/locations", verifyAdminToken, locations.create);
-router.patch("/locations/:id", verifyAdminToken, locations.update);
-router.delete("/locations/:id", verifyAdminToken, locations.remove);
 
 export default router;
