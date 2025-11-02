@@ -9,6 +9,9 @@ import {
   getMonthlyAttendancePercentage,
   getEmployeeAttendanceByDepartment,
   getEmployeeMonthAttendanceByDepartment,
+  registerFaceDescriptor,
+  getFaceDescriptor,
+  markAttendanceByFace,
 } from "../controllers/attendance.controller.js";
 import {
   verifyAdminToken,
@@ -31,5 +34,10 @@ router.get(
   verifyAdminToken,
   getEmployeeMonthAttendanceByDepartment
 );
+
+// Face recognition routes
+router.post("/face/register", verifyEmployeeToken, registerFaceDescriptor);
+router.get("/face/descriptor", verifyEmployeeToken, getFaceDescriptor);
+router.post("/mark/face", verifyEmployeeToken, markAttendanceByFace);
 
 export default router;

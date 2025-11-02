@@ -105,6 +105,10 @@ const employeeSchema = new mongoose.Schema(
       default: false,
     },
     forgetPasswordToken: String,
+    faceDescriptor: {
+      type: [Number],
+      default: null,
+    },
   },
   {
     timestamps: true,
