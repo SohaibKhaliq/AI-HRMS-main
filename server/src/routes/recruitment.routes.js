@@ -9,6 +9,7 @@ import {
   inviteForInterview,
   updateApplicationStatus,
 } from "../controllers/recruitment.controller.js";
+import { categories, types, locations } from "../controllers/jobmeta.controller.js";
 import { verifyAdminToken } from "../middlewares/index.js";
 import { uploadResume } from "../config/index.js";
 
@@ -30,5 +31,21 @@ router.post(
   verifyAdminToken,
   inviteForInterview
 );
+
+// Job meta endpoints (admin)
+router.get("/categories", verifyAdminToken, categories.list);
+router.post("/categories", verifyAdminToken, categories.create);
+router.patch("/categories/:id", verifyAdminToken, categories.update);
+router.delete("/categories/:id", verifyAdminToken, categories.remove);
+
+router.get("/types", verifyAdminToken, types.list);
+router.post("/types", verifyAdminToken, types.create);
+router.patch("/types/:id", verifyAdminToken, types.update);
+router.delete("/types/:id", verifyAdminToken, types.remove);
+
+router.get("/locations", verifyAdminToken, locations.list);
+router.post("/locations", verifyAdminToken, locations.create);
+router.patch("/locations/:id", verifyAdminToken, locations.update);
+router.delete("/locations/:id", verifyAdminToken, locations.remove);
 
 export default router;

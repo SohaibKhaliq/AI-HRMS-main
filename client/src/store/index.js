@@ -19,6 +19,7 @@ import update from "../reducers/update.reducer";
 import performance from "../reducers/performance.reducer";
 import payroll from "../reducers/payroll.reducer";
 import recruitment from "../reducers/recruitment.reducer";
+import jobmeta from "../reducers/jobmeta.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -41,6 +42,7 @@ const rootReducer = combineReducers({
   attendance,
   performance,
   recruitment,
+  jobmeta,
   authentication,
 });
 
