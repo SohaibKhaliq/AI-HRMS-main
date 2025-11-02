@@ -22,7 +22,7 @@ const createResignation = catchErrors(async (req, res) => {
 
   const resignation = await Resignation.create(data);
   const populated = await Resignation.findById(resignation._id)
-    .populate("employee", "name employeeId email");
+    .populate("employee", "name firstName lastName employeeId email profilePicture");
 
   myCache.del("resignations");
 
@@ -37,7 +37,7 @@ const getAllResignations = catchErrors(async (req, res) => {
   }
 
   const resignations = await Resignation.find()
-    .populate("employee", "name employeeId email")
+    .populate("employee", "name firstName lastName employeeId email profilePicture")
     .lean();
   myCache.set(cacheKey, resignations);
 
@@ -48,7 +48,7 @@ const getResignationById = catchErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new Error("Please provide resignation id");
   const resignation = await Resignation.findById(id)
-    .populate("employee", "name employeeId email");
+    .populate("employee", "name firstName lastName employeeId email profilePicture");
   return res.status(200).json({ success: true, message: "Resignation fetched", resignation });
 });
 
@@ -69,7 +69,7 @@ const updateResignation = catchErrors(async (req, res) => {
   if (createdAt) updateData.createdAt = new Date(createdAt);
 
   const resignation = await Resignation.findByIdAndUpdate(id, updateData, { new: true })
-    .populate("employee", "name employeeId email");
+    .populate("employee", "name firstName lastName employeeId email profilePicture");
 
   myCache.del("resignations");
 

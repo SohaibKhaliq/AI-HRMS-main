@@ -205,9 +205,10 @@ const startHrmsApplication = async () => {
       resignationDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
       lastWorkingDay: new Date(Date.now() + 1000 * 60 * 60 * 24 * 20),
       noticePeriod: 30,
-      reason: "Seeking better opportunities",
+      reason: "Seeking better opportunities in corporate sector",
       status: "Approved",
-      remarks: "Approved by HR",
+      documentUrl: "https://example.com/resignation-ayesha.pdf",
+      remarks: "Approved by HR on 2024-10-25. Employee will transition roles smoothly.",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
     });
 
@@ -216,10 +217,39 @@ const startHrmsApplication = async () => {
       resignationDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
       lastWorkingDay: new Date(Date.now() + 1000 * 60 * 60 * 24 * 27),
       noticePeriod: 30,
-      reason: "Relocation",
+      reason: "Relocation to Dubai for family reasons",
       status: "Pending",
-      remarks: "Under review",
+      documentUrl: "https://example.com/resignation-omar.pdf",
+      remarks: "Pending HR director approval. Awaiting exit interview scheduling.",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+    });
+
+    const emp3 = await Employee.create({
+      employeeId: "003",
+      name: "Fatima Ahmed",
+      dob: "1995-03-20T00:00:00.000Z",
+      email: "fatima.ahmed@example.com",
+      password: "$2b$10$k.1v4SeBsR.UYT4chI/O8OTkK5CO.MilaR8yCACtodqTZKm429rWG",
+      profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
+      phoneNumber: "+923017776644",
+      address: { street: "Street 3", city: "Islamabad", state: "Federal", postalCode: "44000", country: "Pakistan" },
+      role: role._id,
+      department: department._id,
+      dateOfJoining: "2022-01-10T00:00:00.000Z",
+      status: "Active",
+      salary: 40000,
+    });
+
+    await Resignation.create({
+      employee: emp3._id,
+      resignationDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
+      lastWorkingDay: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15),
+      noticePeriod: 30,
+      reason: "Further education and career change",
+      status: "Rejected",
+      documentUrl: "https://example.com/resignation-fatima.pdf",
+      remarks: "Rejected by management due to ongoing critical project. Negotiating extension.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
     });
 
     await Employee.create({
