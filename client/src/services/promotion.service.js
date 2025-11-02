@@ -22,7 +22,11 @@ export const createPromotion = createAsyncThunk(
   "promotion/createPromotion",
   async (promotion, { rejectWithValue, dispatch }) => {
     try {
-      const { data } = await axiosInstance.post(`/promotions`, promotion);
+      const config = {};
+      if (promotion instanceof FormData) {
+        config.headers = { "Content-Type": "multipart/form-data" };
+      }
+      const { data } = await axiosInstance.post(`/promotions`, promotion, config);
       toast.success(data.message);
       await dispatch(getPromotions());
       return;
@@ -39,7 +43,11 @@ export const updatePromotion = createAsyncThunk(
   "promotion/updatePromotion",
   async ({ id, promotion }, { rejectWithValue, dispatch }) => {
     try {
-      const { data } = await axiosInstance.patch(`/promotions/${id}`, promotion);
+      const config = {};
+      if (promotion instanceof FormData) {
+        config.headers = { "Content-Type": "multipart/form-data" };
+      }
+      const { data } = await axiosInstance.patch(`/promotions/${id}`, promotion, config);
       toast.success(data.message);
       await dispatch(getPromotions());
       return;

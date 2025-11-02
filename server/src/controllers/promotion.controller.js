@@ -1,11 +1,19 @@
 import { catchErrors, myCache } from "../utils/index.js";
 import Promotion from "../models/promotion.model.js";
+import cloudinary from "cloudinary";
 
 const createPromotion = catchErrors(async (req, res) => {
   const { employee, previousDesignation, newDesignation, promotionDate, effectiveDate, salaryAdjustment, status, documentUrl, remarks, createdAt } = req.body;
 
   if (!employee || !previousDesignation || !newDesignation || !promotionDate || !effectiveDate) {
     throw new Error("Missing required fields: employee, previousDesignation, newDesignation, promotionDate, effectiveDate");
+  }
+
+  let finalDocumentUrl = documentUrl || null;
+
+  // Handle file upload if document is provided
+  if (req.file) {
+    finalDocumentUrl = req.file.path;
   }
 
   const data = {
@@ -16,7 +24,7 @@ const createPromotion = catchErrors(async (req, res) => {
     effectiveDate: new Date(effectiveDate),
     salaryAdjustment: salaryAdjustment || 0,
     status: status || "Pending",
-    documentUrl: documentUrl || null,
+    documentUrl: finalDocumentUrl,
     remarks: remarks || "",
   };
   if (createdAt) data.createdAt = new Date(createdAt);
@@ -72,9 +80,25 @@ const updatePromotion = catchErrors(async (req, res) => {
   if (effectiveDate) updateData.effectiveDate = new Date(effectiveDate);
   if (salaryAdjustment !== undefined) updateData.salaryAdjustment = salaryAdjustment;
   if (status) updateData.status = status;
-  if (documentUrl !== undefined) updateData.documentUrl = documentUrl;
   if (remarks !== undefined) updateData.remarks = remarks;
   if (createdAt) updateData.createdAt = new Date(createdAt);
+
+  // Handle file upload if document is provided
+  if (req.file) {
+    // Get existing promotion to delete old document if it exists
+    const existingPromotion = await Promotion.findById(id);
+    if (existingPromotion && existingPromotion.documentUrl) {
+      const publicId = existingPromotion.documentUrl.split("/").pop().split(".")[0];
+      try {
+        await cloudinary.v2.uploader.destroy(`promotion-documents/${publicId}`, { resource_type: "raw" });
+      } catch (err) {
+        console.log("Error deleting old document from Cloudinary:", err.message);
+      }
+    }
+    updateData.documentUrl = req.file.path;
+  } else if (documentUrl !== undefined) {
+    updateData.documentUrl = documentUrl;
+  }
 
   const promotion = await Promotion.findByIdAndUpdate(id, updateData, { new: true })
     .populate("employee", "name employeeId email")

@@ -80,6 +80,44 @@ const createResumeStorage = () => {
   });
 };
 
+const createDocumentStorage = () => {
+  return new CloudinaryStorage({
+    cloudinary: cloudinary.v2,
+    params: (req, file) => {
+      const allowedExtensions = [".pdf"];
+      const fileExt = path.extname(file.originalname).toLowerCase();
+
+      if (!allowedExtensions.includes(fileExt)) {
+        throw new Error("Only PDF files are allowed");
+      }
+
+      const parsedName = path.parse(file.originalname);
+      const sanitizedName = parsedName.name
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "");
+
+      return {
+        folder: "promotion-documents",
+        resource_type: "raw",
+        allowed_formats: ["pdf"],
+        public_id: `${sanitizedName}_${uuidv4().substring(0, 6)}`,
+        format: "pdf",
+        transformation: [
+          {
+            flags: "attachment:inline",
+            quality: "auto:best",
+            fetch_format: "auto",
+          },
+        ],
+        max_file_size: 5242880,
+        invalidate: true,
+        type: "authenticated",
+        disposition: "inline",
+      };
+    },
+  });
+};
+
 // Multer Initialization with Error Handling
 const initializeUploader = (storage, options = {}) => {
   return multer({
@@ -114,6 +152,7 @@ const initializeUploader = (storage, options = {}) => {
 // Configure uploaders
 const imageStorage = createImageStorage();
 const resumeStorage = createResumeStorage();
+const documentStorage = createDocumentStorage();
 
 const upload = initializeUploader(imageStorage, {
   allowedMimeTypes: ["image/jpeg", "image/png", "image/svg+xml"],
@@ -131,4 +170,10 @@ const uploadResume = initializeUploader(resumeStorage, {
   allowedTypes: "PDF, DOC, DOCX",
 });
 
-export { connectDB, disConnectDB, upload, uploadResume };
+const uploadDocument = initializeUploader(documentStorage, {
+  allowedMimeTypes: ["application/pdf"],
+  maxFileSize: 5242880,
+  allowedTypes: "PDF",
+});
+
+export { connectDB, disConnectDB, upload, uploadResume, uploadDocument };

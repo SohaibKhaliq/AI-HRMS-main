@@ -19,6 +19,9 @@ const PromotionModal = ({ action, onClose, promotion }) => {
     remarks: "",
   });
 
+  const [documentFile, setDocumentFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   useEffect(() => {
     if ((action === "update" || action === "view") && promotion) {
       setFormData({
@@ -42,10 +45,40 @@ const PromotionModal = ({ action, onClose, promotion }) => {
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      setDocumentFile(file);
+    } else {
+      alert("Please select a valid PDF file");
+      e.target.value = "";
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (action === "update") dispatch(updatePromotion({ id: promotion._id, promotion: formData }));
-    else dispatch(createPromotion(formData));
+    
+    const submitData = new FormData();
+    submitData.append("employee", formData.employee);
+    submitData.append("previousDesignation", formData.previousDesignation);
+    submitData.append("newDesignation", formData.newDesignation);
+    submitData.append("promotionDate", formData.promotionDate);
+    submitData.append("effectiveDate", formData.effectiveDate);
+    submitData.append("salaryAdjustment", formData.salaryAdjustment);
+    submitData.append("status", formData.status);
+    submitData.append("remarks", formData.remarks);
+    
+    if (documentFile) {
+      submitData.append("document", documentFile);
+    } else if (formData.documentUrl) {
+      submitData.append("documentUrl", formData.documentUrl);
+    }
+    
+    if (action === "update") {
+      dispatch(updatePromotion({ id: promotion._id, promotion: submitData }));
+    } else {
+      dispatch(createPromotion(submitData));
+    }
     onClose();
   };
 
@@ -108,8 +141,10 @@ const PromotionModal = ({ action, onClose, promotion }) => {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Document URL</label>
-            <input type="text" name="documentUrl" placeholder="PDF link or path" value={formData.documentUrl} onChange={handleChange} disabled={isView} className="w-full p-2 bg-[#EFEFEF] rounded-lg text-sm" />
+            <label className="text-sm font-medium">Document (PDF)</label>
+            <input type="file" accept=".pdf" onChange={handleFileChange} disabled={isView} className="w-full p-2 bg-[#EFEFEF] rounded-lg text-sm cursor-pointer" />
+            {documentFile && <p className="text-xs text-green-600 mt-1">✓ {documentFile.name}</p>}
+            {!documentFile && formData.documentUrl && <p className="text-xs text-blue-600 mt-1">📄 Current: {formData.documentUrl}</p>}
           </div>
         </div>
 

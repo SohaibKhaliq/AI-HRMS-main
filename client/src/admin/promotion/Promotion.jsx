@@ -18,6 +18,9 @@ const Promotion = () => {
   const [action, setAction] = useState("");
   const [modalOpen, setModalOpen] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -28,15 +31,34 @@ const Promotion = () => {
   }, []);
 
   const filtered = useMemo(() => {
-    if (!searchQuery) return promotions || [];
-    const q = searchQuery.toLowerCase();
-    return (promotions || []).filter(p => 
-      p.employee?.name?.toLowerCase().includes(q) || 
-      p.employee?.employeeId?.toLowerCase().includes(q) ||
-      p.previousDesignation?.name?.toLowerCase().includes(q) ||
-      p.newDesignation?.name?.toLowerCase().includes(q)
-    );
-  }, [promotions, searchQuery]);
+    let result = promotions || [];
+    
+    // Apply search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.employee?.name?.toLowerCase().includes(q) || 
+        p.employee?.employeeId?.toLowerCase().includes(q) ||
+        p.previousDesignation?.name?.toLowerCase().includes(q) ||
+        p.newDesignation?.name?.toLowerCase().includes(q)
+      );
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+      result = result.filter(p => p.status === statusFilter);
+    }
+    
+    // Apply date range filter
+    if (dateFrom) {
+      result = result.filter(p => new Date(p.promotionDate) >= new Date(dateFrom));
+    }
+    if (dateTo) {
+      result = result.filter(p => new Date(p.promotionDate) <= new Date(dateTo));
+    }
+    
+    return result;
+  }, [promotions, searchQuery, statusFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageData = useMemo(() => {
@@ -48,6 +70,14 @@ const Promotion = () => {
   const openEdit = (p) => { setAction("update"); setModalOpen(p); };
   const openView = (p) => { setAction("view"); setModalOpen(p); };
   const handleDelete = (id) => { if (!confirm("Are you sure?")) return; dispatch(deletePromotion(id)); };
+
+  const clearFilters = () => {
+    setStatusFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
 
   if (error) return <FetchError error={error} />;
 
@@ -85,6 +115,39 @@ const Promotion = () => {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Filters Panel */}
+        <div className="bg-white rounded-lg shadow p-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Status Filter</label>
+              <select value={statusFilter} onChange={e=>{setStatusFilter(e.target.value); setCurrentPage(1);}} className="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">From Date</label>
+              <input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value); setCurrentPage(1);}} className="w-full p-2 border border-gray-300 rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">To Date</label>
+              <input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value); setCurrentPage(1);}} className="w-full p-2 border border-gray-300 rounded-lg text-sm" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 opacity-0">Action</label>
+              <button onClick={clearFilters} className="bg-gray-400 hover:bg-gray-500 text-white text-sm px-3 py-2 rounded-lg">Clear Filters</button>
+            </div>
+          </div>
+          {(statusFilter || dateFrom || dateTo || searchQuery) && (
+            <div className="mt-2 text-sm text-blue-600">
+              Filters applied: {statusFilter && `Status="${statusFilter}"`} {dateFrom && `From="${dateFrom}"`} {dateTo && `To="${dateTo}"`}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-x-auto">
