@@ -304,7 +304,7 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                         className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {emp.firstName} {emp.lastName} {emp.employeeId && `(${emp.employeeId})`}
+                        {emp.name} {emp.employeeId && `(${emp.employeeId})`}
                       </span>
                     </label>
                   ))
