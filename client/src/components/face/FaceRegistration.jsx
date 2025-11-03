@@ -49,46 +49,73 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       
       // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera not supported in this browser");
+        throw new Error("Camera not supported in this browser. Please use Chrome, Firefox, or Safari.");
       }
 
       // Load models first
       toast.loading("Loading face detection models...", { id: "models" });
       await loadModels();
       setModelsReady(true);
-      toast.success("Models loaded successfully", { id: "models" });
+      toast.success("Models loaded!", { id: "models" });
 
-      // Start camera
-      toast.loading("Requesting camera access...", { id: "camera" });
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: "user" 
+      // Request camera access with simpler constraints
+      toast.loading("Accessing camera...", { id: "camera" });
+      
+      const constraints = {
+        video: {
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          facingMode: "user"
         },
-      });
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          setIsLoading(false);
-          toast.success("Camera ready!", { id: "camera" });
-        };
+        
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play()
+              .then(() => {
+                setIsLoading(false);
+                toast.success("Camera ready!", { id: "camera" });
+                resolve();
+              })
+              .catch((err) => {
+                console.error("Video play error:", err);
+                setIsLoading(false);
+                toast.dismiss("camera");
+              });
+          };
+        });
       }
     } catch (error) {
-      console.error("Error accessing camera:", error);
-      let errorMessage = "Could not access camera.";
+      console.error("Camera error details:", error);
+      let errorMessage = "Could not access camera. ";
+      let errorDetails = "";
       
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-        errorMessage = "Camera permission denied. Please allow camera access in your browser settings.";
+        errorMessage = "Camera permission was denied.";
+        errorDetails = "Please click 'Allow' when your browser asks for camera access.";
       } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
-        errorMessage = "No camera found. Please connect a camera and try again.";
+        errorMessage = "No camera detected.";
+        errorDetails = "Please connect a camera and try again.";
       } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
-        errorMessage = "Camera is already in use by another application.";
+        errorMessage = "Camera is busy.";
+        errorDetails = "Another application may be using your camera. Please close it and try again.";
+      } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+        errorMessage = "Camera doesn't meet requirements.";
+        errorDetails = "Your camera may not support the required resolution.";
+      } else {
+        errorMessage = "Failed to access camera.";
+        errorDetails = error.message || "Please check your browser settings and try again.";
       }
       
-      setCameraError(errorMessage);
+      setCameraError(errorMessage + " " + errorDetails);
       toast.error(errorMessage, { id: "camera" });
       setIsLoading(false);
     }
@@ -249,34 +276,77 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
         {/* Body */}
         <div className="p-6">
           {cameraError ? (
-            <div className="text-center py-12">
+            <div className="text-center py-8">
               <div className="text-red-500 mb-4">
-                <i className="fas fa-exclamation-circle text-6xl"></i>
+                <i className="fas fa-video-slash text-6xl"></i>
               </div>
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                Camera Access Required
+                Camera Access Issue
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-lg mx-auto">
                 {cameraError}
               </p>
-              <div className="space-y-3 text-left max-w-md mx-auto bg-blue-50 dark:bg-gray-700 p-4 rounded-lg">
-                <p className="font-semibold text-gray-800 dark:text-gray-200">
-                  <i className="fas fa-info-circle mr-2"></i>
-                  How to enable camera:
-                </p>
-                <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-6">
-                  <li>1. Click the camera icon in your browser's address bar</li>
-                  <li>2. Select "Allow" for camera permissions</li>
-                  <li>3. Reload the page</li>
-                </ol>
+              
+              <div className="space-y-4 text-left max-w-lg mx-auto">
+                {/* Chrome Instructions */}
+                <div className="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                    <i className="fab fa-chrome text-blue-500"></i>
+                    Chrome / Edge:
+                  </p>
+                  <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>Click the camera icon (🎥) in the address bar</li>
+                    <li>Select &ldquo;Always allow&rdquo; for this site</li>
+                    <li>Click &ldquo;Done&rdquo; and try again</li>
+                  </ol>
+                </div>
+
+                {/* Firefox Instructions */}
+                <div className="bg-orange-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                    <i className="fab fa-firefox text-orange-500"></i>
+                    Firefox:
+                  </p>
+                  <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>Click the crossed-out camera icon in address bar</li>
+                    <li>Click &ldquo;Allow&rdquo; when prompted</li>
+                    <li>Try again below</li>
+                  </ol>
+                </div>
+
+                {/* Safari Instructions */}
+                <div className="bg-purple-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                    <i className="fab fa-safari text-purple-500"></i>
+                    Safari:
+                  </p>
+                  <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>Click Safari → Settings → Websites</li>
+                    <li>Select &ldquo;Camera&rdquo; from left sidebar</li>
+                    <li>Set this website to &ldquo;Allow&rdquo;</li>
+                  </ol>
+                </div>
               </div>
-              <button
-                onClick={initializeCamera}
-                className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <i className="fas fa-redo mr-2"></i>
-                Try Again
-              </button>
+
+              <div className="flex gap-3 justify-center mt-6">
+                <button
+                  onClick={initializeCamera}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors shadow-lg font-semibold"
+                >
+                  <i className="fas fa-redo mr-2"></i>
+                  Try Again
+                </button>
+                <button
+                  onClick={() => {
+                    stopCamera();
+                    onClose();
+                  }}
+                  className="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors shadow-lg font-semibold"
+                >
+                  <i className="fas fa-times mr-2"></i>
+                  Close
+                </button>
+              </div>
             </div>
           ) : (
             <>
