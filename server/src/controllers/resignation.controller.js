@@ -4,9 +4,15 @@ import Employee from "../models/employee.model.js";
 import { sendFullNotification } from "../services/notification.service.js";
 
 const createResignation = catchErrors(async (req, res) => {
+  console.log("=== Create Resignation Request ===");
+  console.log("Request body:", req.body);
+  console.log("Request file:", req.file);
+  console.log("================================");
+  
   const { employee, resignationDate, lastWorkingDay, noticePeriod, reason, status, documentUrl, remarks, createdAt } = req.body;
 
   if (!employee || !resignationDate || !lastWorkingDay) {
+    console.error("Missing required fields:", { employee, resignationDate, lastWorkingDay });
     throw new Error("Missing required fields: employee, resignationDate, lastWorkingDay");
   }
 
@@ -29,28 +35,38 @@ const createResignation = catchErrors(async (req, res) => {
   };
   if (createdAt) data.createdAt = new Date(createdAt);
 
+  console.log("Creating resignation with data:", data);
+  
   const resignation = await Resignation.create(data);
+  console.log("Resignation created:", resignation._id);
+  
   const populated = await Resignation.findById(resignation._id)
     .populate("employee", "name firstName lastName employeeId email profilePicture");
+  console.log("Resignation populated:", populated);
 
-  // Send notification to employee
-  const employeeData = await Employee.findById(employee);
-  if (employeeData) {
-    await sendFullNotification({
-      employee: employeeData,
-      title: "Resignation Submitted",
-      message: "Your resignation has been submitted successfully and is under review.",
-      type: "resignation",
-      priority: "high",
-      link: "/resignation",
-      emailSubject: "Resignation Submitted",
-      emailTemplate: "resignationSubmitted",
-      emailData: {
-        resignationDate: formatDate(resignationDate),
-        lastWorkingDay: formatDate(lastWorkingDay),
-        noticePeriod: noticePeriod || 0,
-      },
-    });
+  // Send notification to employee (don't let notification errors break resignation creation)
+  try {
+    const employeeData = await Employee.findById(employee);
+    if (employeeData) {
+      await sendFullNotification({
+        employee: employeeData,
+        title: "Resignation Submitted",
+        message: "Your resignation has been submitted successfully and is under review.",
+        type: "resignation",
+        priority: "high",
+        link: "/resignation",
+        emailSubject: "Resignation Submitted",
+        emailTemplate: "resignationSubmitted",
+        emailData: {
+          resignationDate: formatDate(resignationDate),
+          lastWorkingDay: formatDate(lastWorkingDay),
+          noticePeriod: noticePeriod || 0,
+        },
+      });
+    }
+  } catch (notificationError) {
+    console.error("Failed to send notification:", notificationError);
+    // Continue even if notification fails
   }
 
   myCache.del("resignations");

@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyAdminToken } from "../middlewares/index.js";
+import { verifyAdminToken, verifyEmployeeToken } from "../middlewares/index.js";
 import { uploadDocument } from "../config/index.js";
 import {
   createResignation,
@@ -11,8 +11,11 @@ import {
 
 const router = express.Router();
 
-router.post("/", verifyAdminToken, uploadDocument.single("document"), createResignation);
-router.get("/", verifyAdminToken, getAllResignations);
+// Employees can view all resignations (frontend filters to show only their own) and create their own
+router.get("/", verifyEmployeeToken, getAllResignations);
+router.post("/", verifyEmployeeToken, uploadDocument.single("document"), createResignation);
+
+// Admin-only routes
 router.get("/:id", verifyAdminToken, getResignationById);
 router.patch("/:id", verifyAdminToken, uploadDocument.single("document"), updateResignation);
 router.delete("/:id", verifyAdminToken, deleteResignation);
