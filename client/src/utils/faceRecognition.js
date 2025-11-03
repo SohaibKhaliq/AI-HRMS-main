@@ -7,18 +7,35 @@ export const loadModels = async () => {
   if (modelsLoaded) return;
   
   try {
-    const MODEL_URL = "/models";
+    // Try local models first, fallback to CDN
+    let MODEL_URL = "/models";
+    
+    try {
+      // Test if local models are accessible
+      const testResponse = await fetch(`${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`);
+      if (!testResponse.ok) {
+        throw new Error("Local models not found");
+      }
+    } catch (localError) {
+      console.log("Local models not accessible, using CDN...");
+      // Use jsDelivr CDN as fallback
+      MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model";
+    }
+    
+    console.log("Loading face recognition models from:", MODEL_URL);
+    
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
       faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
     ]);
+    
     modelsLoaded = true;
-    console.log("Face recognition models loaded successfully");
+    console.log("✅ Face recognition models loaded successfully");
   } catch (error) {
-    console.error("Error loading face recognition models:", error);
-    throw error;
+    console.error("❌ Error loading face recognition models:", error);
+    throw new Error("Failed to load face recognition models. Please check your internet connection.");
   }
 };
 
