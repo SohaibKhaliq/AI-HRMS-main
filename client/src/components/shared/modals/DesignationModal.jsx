@@ -6,7 +6,7 @@ const DesignationModal = ({ action, onClose, designation }) => {
   const dispatch = useDispatch();
   const { departments } = useSelector((state) => state.department);
 
-  const [formData, setFormData] = useState({ name: "", description: "", department: "", status: "Active", createdAt: "" });
+  const [formData, setFormData] = useState({ name: "", description: "", department: "", status: "Active", createdAt: "", salary: "" });
 
   useEffect(() => {
     if ((action === "update" || action === "view") && designation) {
@@ -16,6 +16,7 @@ const DesignationModal = ({ action, onClose, designation }) => {
         department: designation.department?._id || "",
         status: designation.status || "Active",
         createdAt: designation.createdAt ? new Date(designation.createdAt).toISOString().slice(0,16) : "",
+        salary: designation.salary !== undefined && designation.salary !== null ? String(designation.salary) : "",
       });
     }
   }, [action, designation]);
@@ -29,8 +30,13 @@ const DesignationModal = ({ action, onClose, designation }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (action === "update") dispatch(updateDesignation({ id: designation._id, designation: formData }));
-    else dispatch(createDesignation(formData));
+    const payload = { ...formData };
+    // ensure salary is numeric if provided
+    if (payload.salary !== undefined && payload.salary !== null && payload.salary !== "") payload.salary = Number(payload.salary);
+    else delete payload.salary;
+
+    if (action === "update") dispatch(updateDesignation({ id: designation._id, designation: payload }));
+    else dispatch(createDesignation(payload));
     onClose();
   };
 
@@ -62,6 +68,10 @@ const DesignationModal = ({ action, onClose, designation }) => {
 
         <div>
           <textarea name="description" value={formData.description} onChange={handleChange} disabled={isView} rows={4} placeholder="Description" className="w-full p-3 bg-[#EFEFEF] rounded-lg" />
+        </div>
+
+        <div>
+          <input name="salary" value={formData.salary} onChange={handleChange} disabled={isView} placeholder="Salary (numeric)" type="number" className="w-full p-3 bg-[#EFEFEF] rounded-full" />
         </div>
 
         {action === "update" && (

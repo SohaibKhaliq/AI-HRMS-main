@@ -497,9 +497,9 @@ const AddEmployee = () => {
                       onChange={(e) => {
                         const val = e.target.value;
                         field.onChange(val);
-                        // find the selected designation and set salary
-                        const sel = designations.find((d) => d._id === val);
-                        if (sel && sel.salary !== undefined) {
+                        // find the selected designation and set salary (compare IDs as strings)
+                        const sel = designations.find((d) => String(d._id) === String(val));
+                        if (sel && (sel.salary !== undefined && sel.salary !== null)) {
                           setValue("salary", sel.salary);
                         }
                       }}
@@ -515,10 +515,11 @@ const AddEmployee = () => {
                           const dept = watch("department");
                           // if department selected, show designations that belong to it or those with no department
                           if (!dept) return true;
-                          return !d.department || d.department._id === dept || d.department === dept;
+                          const dDept = d.department && d.department._id ? String(d.department._id) : String(d.department || "");
+                          return !d.department || dDept === String(dept);
                         })
                         .map((d) => (
-                          <option key={d._id} value={d._id}>
+                          <option key={d._id} value={String(d._id)}>
                             {d.name}
                           </option>
                         ))}
