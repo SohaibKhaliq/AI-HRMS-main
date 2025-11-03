@@ -35,6 +35,7 @@ import {
   employeeDocument,
   timeEntry,
   leaveBalance,
+  documentCategory,
 } from "./routes/index.routes.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
 
@@ -166,6 +167,7 @@ app.use("/api/meetings", meeting);
 app.use("/api/employee-documents", employeeDocument);
 app.use("/api/time-entries", timeEntry);
 app.use("/api/leave-balances", leaveBalance);
+app.use("/api/document-categories", documentCategory);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

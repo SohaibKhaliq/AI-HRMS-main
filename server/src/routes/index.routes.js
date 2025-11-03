@@ -24,6 +24,7 @@ import meeting from "./meeting.routes.js";
 import employeeDocument from "./employeeDocument.routes.js";
 import timeEntry from "./timeEntry.routes.js";
 import leaveBalance from "./leaveBalance.routes.js";
+import documentCategory from "./documentCategory.routes.js";
 
 export {
   role,
@@ -52,4 +53,5 @@ export {
   employeeDocument,
   timeEntry,
   leaveBalance,
+  documentCategory,
 };
