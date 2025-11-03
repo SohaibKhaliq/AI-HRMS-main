@@ -20,6 +20,14 @@ import performance from "../reducers/performance.reducer";
 import payroll from "../reducers/payroll.reducer";
 import recruitment from "../reducers/recruitment.reducer";
 import jobmeta from "../reducers/jobmeta.reducer";
+import notification from "../reducers/notification.reducer";
+import shift from "../reducers/shift.reducer";
+import meeting from "../reducers/meeting.reducer";
+import leaveType from "../reducers/leaveType.reducer";
+import documentCategory from "../reducers/documentCategory.reducer";
+import timeEntry from "../reducers/timeEntry.reducer";
+import leaveBalance from "../reducers/leaveBalance.reducer";
+import employeeDocument from "../reducers/employeeDocument.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -44,6 +52,14 @@ const rootReducer = combineReducers({
   recruitment,
   jobmeta,
   authentication,
+  notification,
+  shift,
+  meeting,
+  leaveType,
+  documentCategory,
+  timeEntry,
+  leaveBalance,
+  employeeDocument,
 });
 
 // Configure the store

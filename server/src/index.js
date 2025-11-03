@@ -28,6 +28,13 @@ import {
   promotion,
   resignation,
   termination,
+  shift,
+  leaveType,
+  notification,
+  meeting,
+  employeeDocument,
+  timeEntry,
+  leaveBalance,
 } from "./routes/index.routes.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
 // import {
@@ -96,6 +103,13 @@ app.use("/api/resignations", resignation);
 app.use("/api/terminations", termination);
 app.use("/api/performance", performance);
 app.use("/api/recruitment", recruitment);
+app.use("/api/shifts", shift);
+app.use("/api/leave-types", leaveType);
+app.use("/api/notifications", notification);
+app.use("/api/meetings", meeting);
+app.use("/api/employee-documents", employeeDocument);
+app.use("/api/time-entries", timeEntry);
+app.use("/api/leave-balances", leaveBalance);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
