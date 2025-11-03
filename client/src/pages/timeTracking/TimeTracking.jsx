@@ -16,7 +16,7 @@ import { formatDate, formatTime } from "../../utils/dateUtils";
 const TimeTracking = () => {
   const dispatch = useDispatch();
   const { activeEntry, myEntries, loading } = useSelector((state) => state.timeEntry);
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.authentication);
 
   const [showFaceModal, setShowFaceModal] = useState(false);
   const [faceAction, setFaceAction] = useState(null); // 'clockIn', 'clockOut', 'breakIn', 'breakOut'
