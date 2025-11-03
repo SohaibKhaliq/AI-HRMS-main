@@ -47,6 +47,12 @@ function JobOpenings() {
     setCurrentPage(1);
   };
 
+  const handleRefresh = () => {
+    dispatch(
+      getJobOpenings({ status: reviewFilter.toLowerCase(), deadline: "" })
+    );
+  };
+
   // Filtered and paginated jobs
   const filteredJobs = useMemo(() => {
     if (!searchQuery) return jobs || [];
@@ -76,6 +82,16 @@ function JobOpenings() {
     }
   }, [reviewFilter, fetch, dispatch]);
 
+  // Auto-refresh every 10 seconds to pick up new applications
+  useEffect(() => {
+    const interval = setInterval(() => {
+      dispatch(
+        getJobOpenings({ status: reviewFilter.toLowerCase(), deadline: "" })
+      );
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [reviewFilter, dispatch]);
+
   if (error) return <FetchError error={error} />;
 
   return (
@@ -104,6 +120,13 @@ function JobOpenings() {
               />
               <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
+            <button
+              onClick={handleRefresh}
+              title="Refresh applicant counts"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
+            >
+              <i className="fas fa-sync-alt"></i>
+            </button>
             <button
               onClick={openCreate}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all"

@@ -67,7 +67,19 @@ const recruitmentSlice = createSlice({
         state.error = null;
       })
       .addCase(createJobApplication.fulfilled, (state, action) => {
+        // Mark for refetch so admin lists pick up new applicant counts
         state.loading = false;
+        state.fetch = true;
+        // Optional immediate UI update if job exists in cache
+        const jobId = action.meta?.arg?.jobId;
+        if (jobId) {
+          const jobIdx = state.jobs.findIndex((j) => j._id === jobId);
+          if (jobIdx !== -1) {
+            const applicants = state.jobs[jobIdx]?.applicants || [];
+            // Push a minimal placeholder to bump the count; data may be partial
+            state.jobs[jobIdx].applicants = [...applicants, { _id: Date.now().toString() }];
+          }
+        }
       })
       .addCase(createJobApplication.rejected, (state, action) => {
         state.loading = false;
