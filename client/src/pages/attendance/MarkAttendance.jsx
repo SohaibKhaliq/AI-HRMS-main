@@ -4,8 +4,6 @@ import { formatDate } from "../../utils";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  generateQRCodeForAttendance,
-  markAttendanceUsingQrCode,
   registerFaceDescriptor,
   getFaceDescriptor,
   markAttendanceUsingFace,
@@ -18,11 +16,10 @@ const MarkAttendance = () => {
   const dispatch = useDispatch();
 
   const [currentDate, setCurrentDate] = useState(null);
-  const [attendanceMethod, setAttendanceMethod] = useState(null); // 'qr' or 'face'
   const [showFaceRegistration, setShowFaceRegistration] = useState(false);
   const [showFaceAttendance, setShowFaceAttendance] = useState(false);
 
-  const { loading, qrcode, faceDescriptor } = useSelector((state) => state.attendance);
+  const { loading, faceDescriptor } = useSelector((state) => state.attendance);
 
   useEffect(() => {
     // Fetch face descriptor on mount
@@ -35,36 +32,12 @@ const MarkAttendance = () => {
     getDateFromAPI();
   }, [dispatch]);
 
-  const handleQrCodeGeneration = () => {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        dispatch(generateQRCodeForAttendance({ latitude, longitude }));
-        setAttendanceMethod('qr');
-      },
-      (error) => {
-        toast.error("Error getting location: " + error.message);
-      }
-    );
-  };
-
-  const handleMarkAttendanceUsingQr = () => {
-    dispatch(
-      markAttendanceUsingQrCode({
-        dispatch,
-        qrcode,
-      })
-    );
-  };
-
   const handleFaceAttendance = () => {
     if (!faceDescriptor) {
       toast.error("Please register your face first");
       setShowFaceRegistration(true);
     } else {
       setShowFaceAttendance(true);
-      setAttendanceMethod('face');
     }
   };
 
@@ -100,85 +73,36 @@ const MarkAttendance = () => {
 
       <section className="h-[80vh] sm:h-[90vh] bg-gray-100 dark:bg-primary p-4">
         <main className="flex justify-center items-center h-full">
-          {attendanceMethod === 'qr' && qrcode ? (
-            <div className="flex flex-col justify-center items-center gap-10">
-              <div className="flex flex-col justify-center items-center gap-3">
-                <img
-                  className="sm:w-[170px] h-[170px] rounded-xl"
-                  src={qrcode}
-                  alt="qrcode"
-                />
-                <button
-                  disabled={loading}
-                  onClick={handleMarkAttendanceUsingQr}
-                  className="text-sm py-3 mt-10 w-[300px] bg-green-600 rounded-3xl font-bold hover:bg-green-700 text-gray-300"
-                >
-                  {loading ? (
-                    <i className="fas fa-spinner fa-spin"></i>
-                  ) : (
-                    <>
-                      <i className="fas fa-qrcode mr-2"></i>
-                      Mark attendance for {formatDate(new Date())}
-                    </>
-                  )}
-                </button>
-                {loading && (
-                  <div className="scan-overlay">
-                    <div className="scan-line"></div>
-                  </div>
-                )}
-              </div>
+          <div className="flex flex-col gap-4 w-full max-w-md">
+            <div className="bg-white dark:bg-secondary rounded-lg shadow-lg p-6 mb-4">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                Mark Attendance
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {currentDate ? formatDate(currentDate) : "loading..."}
+              </p>
             </div>
-          ) : (
-            <div className="flex flex-col gap-4 w-full max-w-md">
-              <div className="bg-white dark:bg-secondary rounded-lg shadow-lg p-6 mb-4">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">
-                  Mark Attendance
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  {currentDate ? formatDate(currentDate) : "loading..."}
-                </p>
-              </div>
 
+            <button
+              disabled={loading}
+              onClick={handleFaceAttendance}
+              className="text-sm py-4 w-full bg-green-600 rounded-xl font-bold hover:bg-green-700 text-gray-200 shadow-lg transition-all"
+            >
+              <i className="fas fa-face-smile mr-2"></i>
+              Mark with Face Recognition
+            </button>
+
+            {!faceDescriptor && (
               <button
                 disabled={loading}
-                onClick={handleQrCodeGeneration}
-                className="text-sm py-4 w-full bg-blue-600 rounded-xl font-bold hover:bg-blue-700 text-gray-200 shadow-lg transition-all"
+                onClick={() => setShowFaceRegistration(true)}
+                className="text-sm py-4 w-full bg-purple-600 rounded-xl font-bold hover:bg-purple-700 text-gray-200 shadow-lg transition-all"
               >
-                {loading ? (
-                  <div className="flex gap-2 justify-center">
-                    Processing
-                    <i className="fas fa-spinner fa-spin"></i>
-                  </div>
-                ) : (
-                  <>
-                    <i className="fas fa-qrcode mr-2"></i>
-                    Mark with QR Code
-                  </>
-                )}
+                <i className="fas fa-user-plus mr-2"></i>
+                Register Your Face
               </button>
-
-              <button
-                disabled={loading}
-                onClick={handleFaceAttendance}
-                className="text-sm py-4 w-full bg-green-600 rounded-xl font-bold hover:bg-green-700 text-gray-200 shadow-lg transition-all"
-              >
-                <i className="fas fa-face-smile mr-2"></i>
-                Mark with Face Recognition
-              </button>
-
-              {!faceDescriptor && (
-                <button
-                  disabled={loading}
-                  onClick={() => setShowFaceRegistration(true)}
-                  className="text-sm py-4 w-full bg-purple-600 rounded-xl font-bold hover:bg-purple-700 text-gray-200 shadow-lg transition-all"
-                >
-                  <i className="fas fa-user-plus mr-2"></i>
-                  Register Your Face
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </section>
 
