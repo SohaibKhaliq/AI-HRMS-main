@@ -395,7 +395,6 @@ const updateProfile = catchErrors(async (req, res) => {
   const id = req.user.id;
   const { name, email } = req.body;
 
-  if (!name || !email) throw new Error("Please provide all fields");
 
   const employee = await Employee.findById(id);
 
@@ -411,15 +410,15 @@ const updateProfile = catchErrors(async (req, res) => {
     } else throw new Error("Invalid Cloudinary id");
   }
 
-  employee.name = name;
-  employee.email = email;
+  if (name) employee.name = name;
+  if (email) employee.email = email;
   if (req.file) employee.profilePicture = req.file.path;
 
   await employee.save();
 
   return res.status(200).json({
     success: true,
-    message: "Profile picture updated",
+    message: "Profile updated successfully",
     updatedProfile: {
       _id: employee._id,
       name: employee.name,

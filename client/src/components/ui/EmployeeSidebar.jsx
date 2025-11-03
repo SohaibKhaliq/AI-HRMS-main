@@ -10,6 +10,7 @@ import ProfileModal from "../shared/modals/ProfileModal";
 import { updateProfile } from "../../services/employee.service";
 import { logout, logoutAll } from "../../services/authentication.service";
 import NotificationBell from "../shared/notifications/NotificationBell";
+import { updateProfileState } from "../../reducers/authentication.reducer";
 
 const EmployeeSidebar = () => {
   const dispatch = useDispatch();
@@ -66,6 +67,8 @@ const EmployeeSidebar = () => {
 
   const handleClick = async () => {
     const formData = new FormData();
+      formData.append("name", user.name);
+      formData.append("email", user.email);
     formData.append("profilePicture", file);
 
     const updatedProfilePicture = await updateProfile(
@@ -73,7 +76,8 @@ const EmployeeSidebar = () => {
       formData
     );
     if (updatedProfilePicture) {
-      setImagePreview(updatedProfilePicture);
+        setImagePreview(updatedProfilePicture.profilePicture);
+         dispatch(updateProfileState(updatedProfilePicture));
     }
     setShowButton(false);
     setToggleModal(false);
