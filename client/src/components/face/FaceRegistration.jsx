@@ -49,7 +49,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       
       // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera not supported in this browser. Please use Chrome, Firefox, or Safari.");
+        throw new Error("Camera API not supported in this browser. Please use a modern browser.");
       }
 
       // Load models first
@@ -58,61 +58,73 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       setModelsReady(true);
       toast.success("Models loaded!", { id: "models" });
 
-      // Request camera access with simpler constraints
-      toast.loading("Accessing camera...", { id: "camera" });
+      // Request camera access with basic constraints first
+      toast.loading("Requesting camera access...", { id: "camera" });
       
-      const constraints = {
-        video: {
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 },
-          facingMode: "user"
-        },
-        audio: false
-      };
+      let stream;
+      try {
+        // Try with simple constraints first
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+      } catch (simpleError) {
+        console.log("Simple constraints failed, trying specific constraints:", simpleError);
+        // If simple fails, try with specific constraints
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { min: 640, ideal: 1280 },
+            height: { min: 480, ideal: 720 },
+            facingMode: "user"
+          },
+          audio: false
+        });
+      }
+      
+      if (!stream) {
+        throw new Error("Failed to get camera stream");
+      }
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Wait for video to be ready
-        await new Promise((resolve) => {
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current.play()
-              .then(() => {
-                setIsLoading(false);
-                toast.success("Camera ready!", { id: "camera" });
-                resolve();
-              })
-              .catch((err) => {
-                console.error("Video play error:", err);
-                setIsLoading(false);
-                toast.dismiss("camera");
-              });
-          };
-        });
+        // Simple play without promise
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play();
+          setTimeout(() => {
+            setIsLoading(false);
+            toast.success("Camera ready!", { id: "camera" });
+          }, 500);
+        };
       }
     } catch (error) {
-      console.error("Camera error details:", error);
-      let errorMessage = "Could not access camera. ";
+      console.error("Full camera error:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      
+      let errorMessage = "";
       let errorDetails = "";
       
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-        errorMessage = "Camera permission was denied.";
-        errorDetails = "Please click 'Allow' when your browser asks for camera access.";
+        errorMessage = "Camera permission denied.";
+        errorDetails = "Click the camera icon in your address bar and select 'Allow'.";
       } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
-        errorMessage = "No camera detected.";
-        errorDetails = "Please connect a camera and try again.";
+        errorMessage = "No camera found.";
+        errorDetails = "Please connect a webcam and refresh the page.";
       } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
         errorMessage = "Camera is busy.";
-        errorDetails = "Another application may be using your camera. Please close it and try again.";
+        errorDetails = "Close other apps using the camera (Teams, Zoom, etc.) and try again.";
       } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
         errorMessage = "Camera doesn't meet requirements.";
         errorDetails = "Your camera may not support the required resolution.";
+      } else if (error.name === "TypeError") {
+        errorMessage = "Browser security restriction.";
+        errorDetails = "Camera access requires HTTPS or localhost. Make sure you're using the correct URL.";
       } else {
         errorMessage = "Failed to access camera.";
-        errorDetails = error.message || "Please check your browser settings and try again.";
+        errorDetails = error.message || "Unknown error. Check browser console for details.";
       }
       
       setCameraError(errorMessage + " " + errorDetails);
@@ -326,6 +338,19 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                     <li>Set this website to &ldquo;Allow&rdquo;</li>
                   </ol>
                 </div>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-20 p-4 rounded-lg mt-4 max-w-lg mx-auto">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2 font-semibold">
+                  <i className="fas fa-lightbulb mr-2"></i>
+                  Quick Fixes:
+                </p>
+                <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside">
+                  <li>Make sure no other app is using your camera</li>
+                  <li>Try accessing from <code className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">http://localhost:8000</code> instead</li>
+                  <li>Check Windows Settings → Privacy → Camera (allow browser access)</li>
+                  <li>Restart your browser completely</li>
+                </ul>
               </div>
 
               <div className="flex gap-3 justify-center mt-6">
