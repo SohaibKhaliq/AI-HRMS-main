@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
-import { useSelector } from "react-redux";
 import Calendar from "../../components/shared/calendar/Calendar";
 import axiosInstance from "../../axios/axiosInstance";
 import toast from "react-hot-toast";
@@ -8,7 +7,6 @@ import ComponentLoader from "../../components/shared/loaders/ComponentLoader";
 import { formatDate } from "../../utils/calendarUtils";
 
 const CalendarView = () => {
-  const { user } = useSelector((state) => state.authentication);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -22,8 +20,8 @@ const CalendarView = () => {
     try {
       setLoading(true);
       
-      // Fetch leaves
-      const { data: leavesData } = await axiosInstance.get("/leaves");
+      // Fetch my leaves (employee-specific endpoint)
+      const { data: leavesData } = await axiosInstance.get("/leaves/my-leaves");
       const leaves = (leavesData.leaves || []).map(leave => ({
         ...leave,
         type: "leave",
@@ -31,8 +29,8 @@ const CalendarView = () => {
         date: leave.fromDate,
       }));
 
-      // Fetch meetings
-      const { data: meetingsData } = await axiosInstance.get("/meetings");
+      // Fetch my meetings (employee-specific endpoint)
+      const { data: meetingsData } = await axiosInstance.get("/meetings/my");
       const meetings = (meetingsData.meetings || []).map(meeting => ({
         ...meeting,
         type: "meeting",
@@ -40,7 +38,7 @@ const CalendarView = () => {
         date: meeting.startTime,
       }));
 
-      // Fetch holidays
+      // Fetch holidays (public endpoint)
       const { data: holidaysData } = await axiosInstance.get("/holidays");
       const holidays = (holidaysData.holidays || []).map(holiday => ({
         ...holiday,
@@ -51,14 +49,15 @@ const CalendarView = () => {
 
       setEvents([...leaves, ...meetings, ...holidays]);
     } catch (error) {
+      console.error("Calendar fetch error:", error);
       toast.error("Failed to load calendar events");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDateClick = (date) => {
-    // Date clicked - can be used for creating new events
+  const handleDateClick = () => {
+    // Date clicked - can be used for creating new events in future
   };
 
   const handleEventClick = (event) => {
