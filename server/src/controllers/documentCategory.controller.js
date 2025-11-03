@@ -20,7 +20,7 @@ const createDocumentCategory = catchErrors(async (req, res) => {
   return res.status(201).json({
     success: true,
     message: "Document category created successfully",
-    category,
+    data: category,
   });
 });
 
@@ -31,7 +31,7 @@ const getAllDocumentCategories = catchErrors(async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Document categories fetched (cache)",
-      categories: cached,
+      data: cached,
     });
   }
 
@@ -43,7 +43,7 @@ const getAllDocumentCategories = catchErrors(async (req, res) => {
   return res.status(200).json({
     success: true,
     message: "Document categories fetched successfully",
-    categories,
+    data: categories,
   });
 });
 
@@ -61,7 +61,7 @@ const updateDocumentCategory = catchErrors(async (req, res) => {
   return res.status(200).json({
     success: true,
     message: "Document category updated successfully",
-    category,
+    data: category,
   });
 });
 

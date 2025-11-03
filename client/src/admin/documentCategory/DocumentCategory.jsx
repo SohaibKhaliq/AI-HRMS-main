@@ -13,7 +13,7 @@ import {
 
 const DocumentCategory = () => {
   const dispatch = useDispatch();
-  const { categories, loading } = useSelector((state) => state.documentCategory);
+  const { categories = [], loading } = useSelector((state) => state.documentCategory);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -29,7 +29,7 @@ const DocumentCategory = () => {
   }, [dispatch]);
 
   // Filter categories
-  const filteredCategories = categories.filter((category) => {
+  const filteredCategories = (categories || []).filter((category) => {
     const matchesSearch =
       category.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       category.description?.toLowerCase().includes(searchTerm.toLowerCase());
