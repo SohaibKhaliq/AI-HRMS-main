@@ -1,10 +1,12 @@
 import Leave from "../models/leave.model.js";
 import Payroll from "../models/payroll.model.js";
 import Employee from "../models/employee.model.js";
+import LeaveType from "../models/leaveType.model.js";
 import { getSubstitute } from "../predictions/index.js";
 import { catchErrors, formatDate, myCache } from "../utils/index.js";
 import { leaveRespond, notifySubstituteEmployee } from "../templates/index.js";
 import { createUpdate } from "./update.controller.js";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const getLeaves = catchErrors(async (req, res) => {
   const { status = "pending" } = req.query;
@@ -87,14 +89,14 @@ const getMyLeaves = catchErrors(async (req, res) => {
 });
 
 const applyLeave = catchErrors(async (req, res) => {
-  const employee = req.user.id;
+  const employeeId = req.user.id;
   const { leaveType, duration, fromDate, toDate, description } = req.body;
 
-  if (!employee || !leaveType || !fromDate || !toDate)
+  if (!employeeId || !leaveType || !fromDate || !toDate)
     throw new Error("All fields are required");
 
   const leave = await Leave.create({
-    employee,
+    employee: employeeId,
     leaveType,
     fromDate,
     toDate,
@@ -102,6 +104,30 @@ const applyLeave = catchErrors(async (req, res) => {
     description,
     status: "Pending",
   });
+
+  // Get employee and leave type details for notification
+  const employee = await Employee.findById(employeeId);
+  const leaveTypeDoc = await LeaveType.findById(leaveType);
+
+  // Send notification with email
+  if (employee) {
+    await sendFullNotification({
+      employee,
+      title: "Leave Application Submitted",
+      message: `Your ${leaveTypeDoc?.name || 'leave'} application has been submitted successfully and is pending approval.`,
+      type: "leave",
+      priority: "medium",
+      link: "/leave",
+      emailSubject: "Leave Application Submitted",
+      emailTemplate: "leaveApplied",
+      emailData: {
+        leaveType: leaveTypeDoc?.name || "Leave",
+        fromDate: formatDate(fromDate),
+        toDate: formatDate(toDate),
+        duration: duration,
+      },
+    });
+  }
 
   myCache.del("insights");
 
@@ -124,13 +150,26 @@ const rejectLeave = async (leave, remarks) => {
     remarks: leave.remarks || "--",
   });
 
-  await leaveRespond({
-    email: leave.employee.email,
-    name: leave.employee.name,
-    type: leave.leaveType?.name || leave.leaveType,
-    status: leave.status,
-    remarks: leave.remarks,
-  });
+  // Send notification with email using new service
+  const employee = await Employee.findById(leave.employee._id);
+  if (employee) {
+    await sendFullNotification({
+      employee,
+      title: "Leave Application Rejected",
+      message: `Your ${leave.leaveType?.name || 'leave'} application has been rejected. ${remarks || ''}`,
+      type: "leave",
+      priority: "high",
+      link: "/leave",
+      emailSubject: "Leave Application Not Approved",
+      emailTemplate: "leaveRejected",
+      emailData: {
+        leaveType: leave.leaveType?.name || "Leave",
+        fromDate: formatDate(leave.fromDate),
+        toDate: formatDate(leave.toDate),
+        reason: remarks || "No specific reason provided",
+      },
+    });
+  }
 
   return {
     success: true,
@@ -253,12 +292,27 @@ const approveLeave = async (leave, employee) => {
     remarks: leave.remarks || "--",
   });
 
-  await leaveRespond({
-    email: leave.employee.email,
-    name: leave.employee.name,
-    type: leave.leaveType,
-    status: leave.status,
-  });
+  // Send notification with email using new service
+  const empData = await Employee.findById(leave.employee._id);
+  if (empData) {
+    await sendFullNotification({
+      employee: empData,
+      title: "Leave Application Approved",
+      message: `Your ${leave.leaveType?.name || 'leave'} application has been approved. ${subsMsg}.`,
+      type: "leave",
+      priority: "high",
+      link: "/leave",
+      emailSubject: "Leave Application Approved",
+      emailTemplate: "leaveApproved",
+      emailData: {
+        leaveType: leave.leaveType?.name || "Leave",
+        fromDate: formatDate(leave.fromDate),
+        toDate: formatDate(leave.toDate),
+        duration: leave.duration,
+        approverName: "HR Department",
+      },
+    });
+  }
 
   myCache.del("insights");
 

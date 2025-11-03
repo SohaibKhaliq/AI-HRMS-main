@@ -1,6 +1,8 @@
-import { catchErrors, myCache } from "../utils/index.js";
+import { catchErrors, myCache, formatDate } from "../utils/index.js";
 import Promotion from "../models/promotion.model.js";
+import Employee from "../models/employee.model.js";
 import cloudinary from "cloudinary";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const createPromotion = catchErrors(async (req, res) => {
   const { employee, previousDesignation, newDesignation, promotionDate, effectiveDate, salaryAdjustment, status, documentUrl, remarks, createdAt } = req.body;
@@ -34,6 +36,25 @@ const createPromotion = catchErrors(async (req, res) => {
     .populate("employee", "name employeeId email")
     .populate("previousDesignation", "name")
     .populate("newDesignation", "name");
+
+  // Send notification to employee
+  const employeeData = await Employee.findById(employee);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: "Promotion Notification",
+      message: `Congratulations! You have been promoted from ${populated.previousDesignation?.name || 'your previous position'} to ${populated.newDesignation?.name || 'new position'}. Effective from ${formatDate(effectiveDate)}.`,
+      type: "promotion",
+      priority: "high",
+      link: "/profile",
+      emailSubject: "Promotion Notification",
+      emailTemplate: "announcement",
+      emailData: {
+        title: "Congratulations on Your Promotion!",
+        message: `You have been promoted from ${populated.previousDesignation?.name || 'your previous position'} to ${populated.newDesignation?.name || 'new position'}. This promotion is effective from ${formatDate(effectiveDate)}. ${salaryAdjustment ? `Your new salary adjustment is $${salaryAdjustment}.` : ''} We wish you continued success in your new role!`,
+      },
+    });
+  }
 
   myCache.del("promotions");
 

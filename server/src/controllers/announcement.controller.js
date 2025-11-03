@@ -1,5 +1,7 @@
 import Announcement from "../models/announcement.model.js";
+import Employee from "../models/employee.model.js";
 import { catchErrors, myCache } from "../utils/index.js";
+import { createBulkNotifications, sendEmailNotification } from "../services/notification.service.js";
 
 const getAnnouncements = catchErrors(async (req, res) => {
   const { category, priority, page = 1, limit = 12 } = req.query;
@@ -78,6 +80,39 @@ const createAnnouncement = catchErrors(async (req, res) => {
     isActive: isActive !== undefined ? isActive : true,
     createdBy: req.user.id,
   });
+
+  // Send notification to all employees
+  try {
+    const employees = await Employee.find({}).select('_id name email');
+    
+    // Create bulk in-app notifications
+    await createBulkNotifications(
+      employees.map(emp => emp._id),
+      {
+        title: `New Announcement: ${title}`,
+        message: description.substring(0, 100) + (description.length > 100 ? '...' : ''),
+        type: "announcement",
+        priority: priority?.toLowerCase() || "medium",
+        link: "/announcements",
+      }
+    );
+
+    // Send emails to all employees (in background, don't wait)
+    Promise.all(employees.map(emp => 
+      sendEmailNotification({
+        email: emp.email,
+        subject: `Metro HRMS - ${title}`,
+        templateName: "announcement",
+        templateData: {
+          employeeName: emp.name,
+          title: title,
+          message: description,
+        },
+      }).catch(err => console.error(`Failed to send email to ${emp.email}:`, err))
+    ));
+  } catch (err) {
+    console.error("Error sending announcement notifications:", err);
+  }
 
   myCache.del("insights");
 
