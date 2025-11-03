@@ -48,9 +48,10 @@ const complaintsSlice = createSlice({
 
         const updatedComplaint = action.payload;
 
-        state.complaints = state.complaints.filter(
-          (complaint) => complaint._id !== updatedComplaint._id
-        );
+        // Replace the updated complaint in the list if present, otherwise push it
+        const idx = state.complaints.findIndex((c) => c._id === updatedComplaint._id);
+        if (idx !== -1) state.complaints[idx] = updatedComplaint;
+        else state.complaints.push(updatedComplaint);
       })
 
       .addCase(respondToComplaintRequest.rejected, (state, action) => {

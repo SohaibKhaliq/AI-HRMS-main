@@ -45,7 +45,8 @@ export const respondToComplaintRequest = createAsyncThunk(
   "complaints/respondToComplaintRequest",
   async ({ complaintID, status, remarks }, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.patch(`/complaints/${complaintID}`, {
+      // Use the dedicated status route so backend respondComplaint controller runs
+      const { data } = await axiosInstance.patch(`/complaints/${complaintID}/status`, {
         remarks,
         status,
       });
