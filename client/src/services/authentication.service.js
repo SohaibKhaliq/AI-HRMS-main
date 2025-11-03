@@ -105,13 +105,18 @@ export const logout = createAsyncThunk(
       toast.success(data.message);
       return data.success;
     } catch (error) {
+      // If unauthorized (401), it means token is expired/invalid
+      // Still consider logout successful and clear local data
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return true; // Return success to trigger logout flow
+      }
       toast.error(error.response?.data.message || error.message);
       return rejectWithValue(error.response?.data.message || error.message);
     }
   }
 );
 
-// Logout
+// Logout All
 export const logoutAll = createAsyncThunk(
   "auth/logoutALl",
   async (_, { rejectWithValue }) => {
@@ -120,6 +125,11 @@ export const logoutAll = createAsyncThunk(
       toast.success(data.message);
       return data.success;
     } catch (error) {
+      // If unauthorized (401), it means token is expired/invalid
+      // Still consider logout successful and clear local data
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return true; // Return success to trigger logout flow
+      }
       toast.error(error.response?.data.message || error.message);
       return rejectWithValue(error.response?.data.message || error.message);
     }
