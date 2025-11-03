@@ -7,7 +7,7 @@ import {
 } from "../services/notification.service.js";
 
 const getMyNotifications = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.user.id;
   const { limit } = req.query;
 
   const notifications = await getEmployeeNotifications(
@@ -38,7 +38,7 @@ const markNotificationAsRead = catchErrors(async (req, res) => {
 });
 
 const getUnreadNotificationCount = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.user.id;
   const count = await getUnreadCount(employeeId);
 
   return res.status(200).json({

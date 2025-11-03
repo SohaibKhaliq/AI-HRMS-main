@@ -64,10 +64,10 @@ const EmployeeMeetings = () => {
       filtered = filtered.filter((m) => new Date(m.startTime) >= now);
     }
 
-    // Sort by date
-    filtered.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    // Sort by date (create a copy to avoid mutating the original array)
+    const sorted = [...filtered].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
-    setFilteredMeetings(filtered);
+    setFilteredMeetings(sorted);
   };
 
   const getMeetingTypeColor = (type) => {

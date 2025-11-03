@@ -61,7 +61,8 @@ const AdminMeeting = () => {
       result = result.filter(m => new Date(m.startTime) <= new Date(dateTo + "T23:59:59"));
     }
     
-    return result.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    // Create a copy before sorting to avoid mutating the original array
+    return [...result].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
   }, [meetings, searchQuery, typeFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
