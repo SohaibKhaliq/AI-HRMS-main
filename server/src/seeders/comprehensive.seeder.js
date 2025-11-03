@@ -85,6 +85,27 @@ export const seedAdditionalEmployees = async () => {
   }
 };
 
+
+  export const syncEmployeeSalariesFromDesignation = async () => {
+    try {
+      const Designation = (await import("../models/designation.model.js")).default;
+      const employees = await Employee.find();
+
+      let updated = 0;
+      for (const emp of employees) {
+        if (!emp.designation) continue;
+        const designation = await Designation.findById(emp.designation).lean();
+        if (designation && designation.salary !== undefined && emp.salary !== designation.salary) {
+          await Employee.findByIdAndUpdate(emp._id, { salary: designation.salary });
+          updated++;
+        }
+      }
+
+      console.log(`✓ Synced salaries from designation for ${updated} employees`);
+    } catch (err) {
+      console.error("✗ Error syncing employee salaries:", err.message);
+    }
+  };
 export const seedShifts = async () => {
   try {
     const existingShifts = await Shift.countDocuments();
@@ -390,6 +411,51 @@ export const seedLeaves = async () => {
     console.log(`✓ Successfully seeded ${leaves.length} leave requests`);
   } catch (error) {
     console.error("✗ Error seeding leaves:", error.message);
+  }
+};
+
+export const seedLeaveBalancesForYear = async (year) => {
+  try {
+    const employees = await Employee.find({ status: "Active" }).limit(50);
+    const leaveTypes = await LeaveType.find({ isActive: true });
+
+    if (employees.length === 0 || leaveTypes.length === 0) {
+      console.log("✗ No employees or leave types found for leave balance seeding.");
+      return;
+    }
+
+    const ops = [];
+
+    for (const employee of employees) {
+      for (const leaveType of leaveTypes) {
+        const existing = await LeaveBalance.findOne({ employee: employee._id, leaveType: leaveType._id, year });
+        if (existing) continue; // skip if already exists
+
+        const totalAllotted = leaveType.maxDaysPerYear || 15;
+        const used = Math.floor(Math.random() * (totalAllotted / 3));
+        const pending = Math.floor(Math.random() * 3);
+        const carriedForward = Math.floor(Math.random() * 5);
+
+        ops.push({
+          employee: employee._id,
+          leaveType: leaveType._id,
+          year,
+          totalAllotted,
+          used,
+          pending,
+          carriedForward,
+        });
+      }
+    }
+
+    if (ops.length) {
+      await LeaveBalance.insertMany(ops);
+      console.log(`✓ Seeded ${ops.length} leave balances for year ${year}`);
+    } else {
+      console.log(`✓ No new leave balances needed for year ${year}`);
+    }
+  } catch (error) {
+    console.error("✗ Error seeding leave balances for year:", error.message);
   }
 };
 
@@ -1111,6 +1177,7 @@ export default {
   seedShifts,
   seedLeaveTypes,
   seedLeaveBalances,
+  seedLeaveBalancesForYear,
   seedLeaves,
   seedDocumentCategories,
   seedEmployeeDocuments,

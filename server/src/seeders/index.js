@@ -425,31 +425,32 @@ const generatePayrollDataForYear = async (year) => {
       return;
     }
 
-    const payrollData = [];
-
+    // Upsert payroll records per employee per month to avoid duplicates
+    let createdCount = 0;
     for (const employee of employees) {
       const baseSalary = employee.salary || 30000;
-
       for (let month = 1; month <= 12; month++) {
-        payrollData.push({
-          employee: employee._id,
-          month: month,
-          year: year,
-          baseSalary,
-          allowances: 0,
-          deductions: 0,
-          bonuses: 0,
-          netSalary: baseSalary,
-          isPaid: false,
-          paymentDate: null,
-        });
+        const filter = { employee: employee._id, month, year };
+        const update = {
+          $setOnInsert: {
+            employee: employee._id,
+            month,
+            year,
+            baseSalary,
+            allowances: 0,
+            deductions: 0,
+            bonuses: 0,
+            netSalary: baseSalary,
+            isPaid: false,
+            paymentDate: null,
+          },
+        };
+        const res = await Payroll.updateOne(filter, update, { upsert: true });
+        if (res.upsertedCount && res.upsertedCount > 0) createdCount++;
       }
     }
 
-    await Payroll.insertMany(payrollData);
-    console.log(
-      `Generated payroll data for all 12 months of ${year} for ${employees.length} employees.`
-    );
+    console.log(`Upserted payroll data for all 12 months of ${year}. New records created: ${createdCount}`);
   } catch (error) {
     console.error("Error generating yearly payroll data:", error);
   }
@@ -867,6 +868,7 @@ export {
   seedShifts,
   seedLeaveTypes,
   seedLeaveBalances,
+  seedLeaveBalancesForYear,
   seedLeaves,
   seedDocumentCategories,
   seedEmployeeDocuments,
@@ -879,6 +881,8 @@ export {
   seedPerformanceReviews,
   seedUpdates,
 } from "./comprehensive.seeder.js";
+
+export { syncEmployeeSalariesFromDesignation } from "./comprehensive.seeder.js";
 
 export {
   alterEmployeeData,

@@ -10,6 +10,9 @@ import {
   generateComplaintData,
   generateTerminationData,
   generatePayrollDataForYear,
+  seedLeaveBalances,
+  seedLeaveBalancesForYear,
+  syncEmployeeSalariesFromDesignation,
 } from "../src/seeders/index.js";
 
 /**
@@ -61,10 +64,30 @@ const seedDatabase = async () => {
     console.log("💰 Step 4: Generating payroll data (optional)");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     const currentYear = new Date().getFullYear();
-    console.log(`📊 Generating payroll for year ${currentYear}...`);
-    // Uncomment the line below to generate payroll data (can take 30+ seconds)
-    // await generatePayrollDataForYear(currentYear);
-    console.log("⚠️  Payroll generation skipped (uncomment in script to enable)\n");
+    console.log(`📊 Generating payroll for previous, current and upcoming year around ${currentYear}...`);
+    // Generate payroll for previous year (if supported), current year and next year
+    const yearsToGenerate = [];
+    if (currentYear - 1 >= 2024) yearsToGenerate.push(currentYear - 1);
+    yearsToGenerate.push(currentYear);
+    yearsToGenerate.push(currentYear + 1);
+
+    // Sync employee salaries from designation before generating payroll
+    console.log("🔁 Syncing employee salaries from designation where applicable...");
+    await syncEmployeeSalariesFromDesignation();
+
+    for (const y of yearsToGenerate) {
+      console.log(`→ Generating payroll for year ${y}...`);
+      await generatePayrollDataForYear(y);
+    }
+
+    // Ensure leave balances exist (will skip if already present)
+    console.log("📌 Seeding leave balances (current year)...");
+    await seedLeaveBalances();
+
+    // Also ensure leave balances for generated payroll years
+    for (const y of yearsToGenerate) {
+      await seedLeaveBalancesForYear(y);
+    }
 
     // Summary
     console.log("\n╔════════════════════════════════════════════════════╗");
