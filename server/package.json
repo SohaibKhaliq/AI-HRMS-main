@@ -9,18 +9,10 @@
     "dev": "nodemon src/index.js",
     "setup": "node src/setup/index.js",
     "seed": "node scripts/seedDatabase.js",
-    "seed:help": "echo 'Run npm run seed to populate the database with sample data'"
+    "seed:time": "node src/seeders/timeTracking.seeder.js",
+    "seed:help": "echo 'Run npm run seed to populate the database with sample data. Use npm run seed:time for time tracking data only.'"
   },
   "license": "ISC",
-  "author": "Obaid Ali Siddiqui",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/WhatsWrongOB/AI-HRMS"
-  },
-  "bugs": {
-    "url": "https://github.com/WhatsWrongOB/AI-HRMS/issues"
-  },
-  "homepage": "https://metrohrms.netlify.app",
   "keywords": [
     "HRMS",
     "AI",
