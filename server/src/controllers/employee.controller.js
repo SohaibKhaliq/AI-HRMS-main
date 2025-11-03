@@ -123,6 +123,13 @@ const createEmployee = catchErrors(async (req, res) => {
     throw new Error("Please provide all required fields.");
   }
 
+  // Handle shift conversion from string to ObjectId
+  let shiftId = shift;
+  if (shift && typeof shift === "string" && ["Morning", "Evening", "Night"].includes(shift)) {
+    const shiftDoc = await Shift.findOne({ name: shift });
+    shiftId = shiftDoc ? shiftDoc._id : null;
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const employee = await Employee.create({
@@ -140,7 +147,7 @@ const createEmployee = catchErrors(async (req, res) => {
     gender,
     martialStatus,
     employmentType,
-    shift,
+    shift: shiftId,
     status: status || "Active",
     salary,
     bankDetails,

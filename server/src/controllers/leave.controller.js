@@ -18,6 +18,7 @@ const getLeaves = catchErrors(async (req, res) => {
         { path: "role", select: "name" },
       ],
     })
+    .populate("leaveType", "name")
     .populate({
       path: "substitute",
       select: "name department role",
@@ -60,6 +61,7 @@ const getEmployeesOnLeave = catchErrors(async (req, res) => {
         },
       ],
     })
+    .populate("leaveType", "name")
     .populate("substitute", "name");
 
   return res.status(200).json({
@@ -242,7 +244,9 @@ const respondLeave = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { remarks, status } = req.body;
 
-  const leave = await Leave.findById(id).populate("employee", "name email");
+  const leave = await Leave.findById(id)
+    .populate("employee", "name email")
+    .populate("leaveType", "name");
 
   if (!leave) throw new Error("Leave not found");
 
