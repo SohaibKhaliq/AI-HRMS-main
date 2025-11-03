@@ -21,6 +21,9 @@ import shift from "./shift.routes.js";
 import leaveType from "./leaveType.routes.js";
 import notification from "./notification.routes.js";
 import meeting from "./meeting.routes.js";
+import employeeDocument from "./employeeDocument.routes.js";
+import timeEntry from "./timeEntry.routes.js";
+import leaveBalance from "./leaveBalance.routes.js";
 
 export {
   role,
@@ -46,4 +49,7 @@ export {
   leaveType,
   notification,
   meeting,
+  employeeDocument,
+  timeEntry,
+  leaveBalance,
 };
