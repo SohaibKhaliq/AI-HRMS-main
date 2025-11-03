@@ -51,7 +51,6 @@ const CalendarView = () => {
 
       setEvents([...leaves, ...meetings, ...holidays]);
     } catch (error) {
-      console.error("Error fetching calendar events:", error);
       toast.error("Failed to load calendar events");
     } finally {
       setLoading(false);
@@ -59,7 +58,7 @@ const CalendarView = () => {
   };
 
   const handleDateClick = (date) => {
-    console.log("Date clicked:", date);
+    // Date clicked - can be used for creating new events
   };
 
   const handleEventClick = (event) => {
