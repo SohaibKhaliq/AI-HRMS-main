@@ -10,6 +10,7 @@
     "setup": "node src/setup/index.js",
     "seed": "node scripts/seedDatabase.js",
     "seed:time": "node src/seeders/timeTracking.seeder.js",
+    "seed:designations": "node src/seeders/designation.seeder.js",
     "seed:help": "echo 'Run npm run seed to populate the database with sample data. Use npm run seed:time for time tracking data only.'"
   },
   "license": "ISC",

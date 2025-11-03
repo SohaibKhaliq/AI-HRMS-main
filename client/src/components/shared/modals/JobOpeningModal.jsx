@@ -7,6 +7,9 @@ const JobOpeningModal = ({ onClose, job, action }) => {
   const { departments } = useSelector((state) => state.department);
   const { designations } = useSelector((state) => state.designation);
 
+  console.log("Departments:", departments);
+  console.log("Designations:", designations);
+
   const [formData, setFormData] = useState({
     title: "",
     department: "",
@@ -80,13 +83,18 @@ const JobOpeningModal = ({ onClose, job, action }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Title */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1">Job Title *</label>
+            <label className="block text-sm font-medium mb-1">
+              Job Title *
+              <span className="text-xs text-gray-500 font-normal ml-2">
+                (Specific title for this job posting)
+              </span>
+            </label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="e.g. Senior Software Engineer"
+              placeholder="e.g. Senior Full Stack Developer - AI Team"
               className="w-full bg-gray-100 dark:bg-gray-700 text-sm p-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -113,7 +121,12 @@ const JobOpeningModal = ({ onClose, job, action }) => {
 
           {/* Role/Designation */}
           <div>
-            <label className="block text-sm font-medium mb-1">Role *</label>
+            <label className="block text-sm font-medium mb-1">
+              Position/Designation *
+              <span className="text-xs text-gray-500 font-normal ml-2">
+                (Organizational role)
+              </span>
+            </label>
             <select
               name="role"
               value={formData.role}
@@ -121,10 +134,10 @@ const JobOpeningModal = ({ onClose, job, action }) => {
               className="w-full bg-gray-100 dark:bg-gray-700 text-sm p-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
               required
             >
-              <option value="">Select Role</option>
+              <option value="">Select Position</option>
               {designations?.map((role) => (
                 <option key={role._id} value={role._id}>
-                  {role.title}
+                  {role.name}
                 </option>
               ))}
             </select>

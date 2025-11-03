@@ -7,6 +7,7 @@ import Loader from "../components/shared/loaders/Loader";
 import NotFound from "../components/shared/error/NotFound";
 import { getInsights } from "../services/insights.service";
 import { getDepartments } from "../services/department.service";
+import { getDesignations } from "../services/designation.service";
 
 const Dashboard = lazy(() => import("../admin/dashboard/Dashboard"));
 const Employee = lazy(() => import("../admin/employee/Employee"));
@@ -55,7 +56,8 @@ const AdminApp = () => {
     dispatch(getRoles());
     dispatch(getInsights());
     dispatch(getDepartments());
-  }, []);
+    dispatch(getDesignations());
+  }, [dispatch]);
 
   return (
     <div
