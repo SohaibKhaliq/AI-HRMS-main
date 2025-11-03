@@ -41,14 +41,15 @@ export const updateJob = createAsyncThunk(
   }
 );
 
-// Create Job
+// Create Job Application
 export const createJobApplication = createAsyncThunk(
   "recruitment/createJobApplication",
   async ({ jobId, application }, { rejectWithValue }) => {
     try {
-      // Public endpoint: no auth header required
+      // Public endpoint: using axios directly for multipart/form-data
+      const baseURL = import.meta.env.VITE_URL || "http://localhost:3000";
       const { data } = await axios.post(
-        `${import.meta.env.VITE_URL}/recruitment/${jobId}/apply`,
+        `${baseURL}/api/recruitment/${jobId}/apply`,
         application,
         {
           headers: {
@@ -58,6 +59,7 @@ export const createJobApplication = createAsyncThunk(
       );
 
       toast.success(data.message);
+      return data.application;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create application");
       return rejectWithValue(
