@@ -7,7 +7,7 @@ export const getMyLeaveBalances = createAsyncThunk(
   async ({ year }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`/leave-balances/my?year=${year}`);
-      return response.data.data;
+      return response.data.balances;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leave balances');
     }
@@ -24,8 +24,8 @@ export const getAllLeaveBalances = createAsyncThunk(
       if (year) params.append('year', year);
       if (leaveType) params.append('leaveType', leaveType);
       
-      const response = await axiosInstance.get(`/leave-balances?${params.toString()}`);
-      return response.data.data;
+      const response = await axiosInstance.get(`/leave-balances/all?${params.toString()}`);
+      return response.data.balances;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leave balances');
     }
@@ -38,7 +38,7 @@ export const initializeLeaveBalance = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/leave-balances/initialize', data);
-      return response.data.data;
+      return response.data.balances;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to initialize leave balance');
     }
@@ -51,7 +51,7 @@ export const adjustLeaveBalance = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/leave-balances/adjust', data);
-      return response.data.data;
+      return response.data.balance;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to adjust leave balance');
     }
@@ -64,7 +64,7 @@ export const carryForwardBalances = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/leave-balances/carry-forward', data);
-      return response.data.data;
+      return response.data.results;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to carry forward balances');
     }
@@ -74,10 +74,10 @@ export const carryForwardBalances = createAsyncThunk(
 // Get balance by employee and year (admin)
 export const getBalanceByEmployeeAndYear = createAsyncThunk(
   'leaveBalance/getBalanceByEmployeeAndYear',
-  async ({ employee, year }, { rejectWithValue }) => {
+  async ({ employeeId, year }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/leave-balances?employee=${employee}&year=${year}`);
-      return response.data.data;
+      const response = await axiosInstance.get(`/leave-balances/employee/${employeeId}?year=${year}`);
+      return response.data.balances;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch employee balance');
     }

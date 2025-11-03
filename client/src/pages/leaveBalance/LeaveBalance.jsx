@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyLeaveBalances } from '../../services/leaveBalance.service';
 import toast from 'react-hot-toast';
@@ -9,23 +9,19 @@ const LeaveBalance = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    fetchLeaveBalances();
-  }, [selectedYear]);
-
-  const fetchLeaveBalances = () => {
     dispatch(getMyLeaveBalances({ year: selectedYear }))
       .unwrap()
       .catch((error) => {
         toast.error(error || 'Failed to fetch leave balances');
       });
-  };
+  }, [selectedYear, dispatch]);
 
   // Calculate summary metrics
   const summary = {
-    totalTypes: myBalances.length,
-    totalAllocated: myBalances.reduce((sum, b) => sum + (b.allocated || 0), 0),
-    totalUsed: myBalances.reduce((sum, b) => sum + (b.used || 0), 0),
-    totalAvailable: myBalances.reduce((sum, b) => sum + (b.allocated - b.used || 0), 0),
+    totalTypes: myBalances?.length || 0,
+    totalAllocated: myBalances?.reduce((sum, b) => sum + (b.totalAllotted || 0), 0) || 0,
+    totalUsed: myBalances?.reduce((sum, b) => sum + (b.used || 0), 0) || 0,
+    totalAvailable: myBalances?.reduce((sum, b) => sum + (b.available || 0), 0) || 0,
   };
 
   // Get usage percentage and color
@@ -104,7 +100,7 @@ const LeaveBalance = () => {
             </div>
           </div>
         </div>
-      ) : myBalances.length === 0 ? (
+      ) : !myBalances || myBalances.length === 0 ? (
         // Empty State
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
           <div className="text-6xl mb-4">📅</div>
@@ -197,10 +193,11 @@ const LeaveBalance = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {myBalances.map((balance) => {
-                    const available = balance.allocated - balance.used;
-                    const usagePercentage = getUsagePercentage(balance.used, balance.allocated);
-                    const usageColor = getUsageColor(balance.used, balance.allocated);
+                  {myBalances && myBalances.map((balance) => {
+                    const available = balance.available || 0;
+                    const totalAllotted = balance.totalAllotted || 0;
+                    const usagePercentage = getUsagePercentage(balance.used, totalAllotted);
+                    const usageColor = getUsageColor(balance.used, totalAllotted);
 
                     return (
                       <tr
@@ -227,7 +224,7 @@ const LeaveBalance = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {balance.allocated} days
+                            {totalAllotted} days
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

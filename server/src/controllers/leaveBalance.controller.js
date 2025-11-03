@@ -97,7 +97,7 @@ const getEmployeeBalance = catchErrors(async (req, res) => {
 });
 
 const getMyBalance = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.user.id;
   const { year } = req.query;
 
   const currentYear = year ? parseInt(year) : new Date().getFullYear();
