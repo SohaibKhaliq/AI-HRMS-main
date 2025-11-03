@@ -18,17 +18,17 @@ export const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log(\`User connected: \${socket.id}\`);
+    console.log(`User connected: \${socket.id}`);
 
     // Join user to their personal room
     const userId = socket.handshake.auth.userId;
     if (userId) {
-      socket.join(\`user:\${userId}\`);
-      console.log(\`User \${userId} joined their room\`);
+      socket.join(`user:\${userId}`);
+      console.log(`User \${userId} joined their room`);
     }
 
     socket.on("disconnect", () => {
-      console.log(\`User disconnected: \${socket.id}\`);
+      console.log(`User disconnected: \${socket.id}`);
     });
   });
 
@@ -45,7 +45,7 @@ export const getIO = () => {
 // Helper function to send notification to specific user
 export const sendNotificationToUser = (userId, eventName, data) => {
   if (io) {
-    io.to(\`user:\${userId}\`).emit(eventName, data);
+    io.to(`user:${userId}`).emit(eventName, data);
   }
 };
 
