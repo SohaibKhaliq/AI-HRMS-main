@@ -16,10 +16,10 @@ const JobCard = ({ job, onApply }) => {
 
         <div className="flex flex-wrap gap-2">
           <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-            {job.department.name}
+            {job.department?.name || "N/A"}
           </span>
           <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-            {job.role.name}
+            {job.role?.name || "N/A"}
           </span>
         </div>
 
