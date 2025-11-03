@@ -35,10 +35,10 @@ const employeeDocumentSlice = createSlice({
       })
       .addCase(getMyDocuments.fulfilled, (state, action) => {
         state.loading = false;
-        state.myDocuments = action.payload.data || action.payload;
+        state.myDocuments = action.payload.documents || [];
         state.totalPages = action.payload.totalPages || 1;
         state.currentPage = action.payload.currentPage || 1;
-        state.totalDocuments = action.payload.total || action.payload.length;
+        state.totalDocuments = action.payload.total || (action.payload.documents?.length || 0);
       })
       .addCase(getMyDocuments.rejected, (state, action) => {
         state.loading = false;
@@ -52,10 +52,10 @@ const employeeDocumentSlice = createSlice({
       })
       .addCase(getAllEmployeeDocuments.fulfilled, (state, action) => {
         state.loading = false;
-        state.allDocuments = action.payload.data || action.payload;
+        state.allDocuments = action.payload.documents || [];
         state.totalPages = action.payload.totalPages || 1;
         state.currentPage = action.payload.currentPage || 1;
-        state.totalDocuments = action.payload.total || action.payload.length;
+        state.totalDocuments = action.payload.total || (action.payload.documents?.length || 0);
       })
       .addCase(getAllEmployeeDocuments.rejected, (state, action) => {
         state.loading = false;
@@ -69,7 +69,7 @@ const employeeDocumentSlice = createSlice({
       })
       .addCase(uploadEmployeeDocument.fulfilled, (state, action) => {
         state.loading = false;
-        state.allDocuments = [action.payload.data, ...state.allDocuments];
+        state.allDocuments = [action.payload.document, ...state.allDocuments];
       })
       .addCase(uploadEmployeeDocument.rejected, (state, action) => {
         state.loading = false;
@@ -78,25 +78,25 @@ const employeeDocumentSlice = createSlice({
 
       // Verify document
       .addCase(verifyDocument.fulfilled, (state, action) => {
-        const index = state.allDocuments.findIndex(doc => doc._id === action.payload.data._id);
+        const index = state.allDocuments.findIndex(doc => doc._id === action.payload.document._id);
         if (index !== -1) {
-          state.allDocuments[index] = action.payload.data;
+          state.allDocuments[index] = action.payload.document;
         }
-        const myIndex = state.myDocuments.findIndex(doc => doc._id === action.payload.data._id);
+        const myIndex = state.myDocuments.findIndex(doc => doc._id === action.payload.document._id);
         if (myIndex !== -1) {
-          state.myDocuments[myIndex] = action.payload.data;
+          state.myDocuments[myIndex] = action.payload.document;
         }
       })
 
       // Reject document
       .addCase(rejectDocument.fulfilled, (state, action) => {
-        const index = state.allDocuments.findIndex(doc => doc._id === action.payload.data._id);
+        const index = state.allDocuments.findIndex(doc => doc._id === action.payload.document._id);
         if (index !== -1) {
-          state.allDocuments[index] = action.payload.data;
+          state.allDocuments[index] = action.payload.document;
         }
-        const myIndex = state.myDocuments.findIndex(doc => doc._id === action.payload.data._id);
+        const myIndex = state.myDocuments.findIndex(doc => doc._id === action.payload.document._id);
         if (myIndex !== -1) {
-          state.myDocuments[myIndex] = action.payload.data;
+          state.myDocuments[myIndex] = action.payload.document;
         }
       })
 

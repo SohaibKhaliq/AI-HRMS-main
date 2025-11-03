@@ -15,7 +15,7 @@ const uploadDocument = catchErrors(async (req, res) => {
     tags,
   } = req.body;
 
-  const uploadedBy = req.employee._id;
+  const uploadedBy = req.user.id;
 
   if (!employee || !category || !title) {
     throw new Error("Employee, category, and title are required");
@@ -114,7 +114,7 @@ const getEmployeeDocuments = catchErrors(async (req, res) => {
 });
 
 const getMyDocuments = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.user.id;
   const { category, status } = req.query;
 
   const query = { employee: employeeId };
@@ -199,7 +199,7 @@ const updateDocument = catchErrors(async (req, res) => {
 const verifyDocument = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { status, rejectionReason } = req.body;
-  const verifiedBy = req.employee._id;
+  const verifiedBy = req.user.id;
 
   if (!id) throw new Error("Document ID is required");
   if (!status) throw new Error("Status is required");
