@@ -4,29 +4,26 @@ import Employee from "../models/employee.model.js";
 import Department from "../models/department.model.js";
 
 const createDepartment = catchErrors(async (req, res) => {
-  const { name, head, description, status, createdAt } = req.body;
+  const { name, description, status, createdAt } = req.body;
 
-  if (!name || !head) throw new Error("Please provide all fields");
+  if (!name) throw new Error("Please provide department name");
 
   const departmentData = {
     name,
-    head,
-    description,
     status: status || "Active",
   };
 
+  if (description) departmentData.description = description;
   if (createdAt) departmentData.createdAt = new Date(createdAt);
 
   const department = await Department.create(departmentData);
-
-  await department.populate("head", "name");
 
   myCache.del("insights");
   myCache.del("department");
 
   return res.status(201).json({
     success: true,
-    message: "Department created successfuly",
+    message: "Department created successfully",
     department,
   });
 });
@@ -43,7 +40,7 @@ const getAllDepartments = catchErrors(async (req, res) => {
     });
   }
 
-  const department = await Department.find().populate("head", "name").lean();
+  const department = await Department.find().lean();
 
   myCache.set(cacheKey, department);
 
@@ -56,45 +53,23 @@ const getAllDepartments = catchErrors(async (req, res) => {
   });
 });
 
-const getAllEmployeesForHead = catchErrors(async (req, res) => {
-  const employees = await Employee.find({ status: "Active" }).select("name");
-
-  if (employees.length === 0) throw new Error("No employee found");
-
-  return res.status(200).json({
-    success: true,
-    message: "Employees fetched successfully",
-    employees,
-  });
-});
+// Function to get department employees is deprecated when head was removed.
 
 const getDepartmentById = catchErrors(async (req, res) => {
   const { id } = req.params;
 
-  if (!id) throw new Error("Please provide departmed Id");
+  if (!id) throw new Error("Please provide department Id");
 
-  const department = await Department.findById(id).populate("head");
+  const department = await Department.findById(id).lean();
 
   return res.status(200).json({
     success: true,
-    message: "Department fetched successfuly",
+    message: "Department fetched successfully",
     department,
   });
 });
 
-const getDepartmentEmployees = catchErrors(async (req, res) => {
-  const { id } = req.params;
-
-  if (!id) throw new Error("Please provide departmed Id");
-
-  const department = await Department.findById(id).populate("head", "name");
-
-  return res.status(200).json({
-    success: true,
-    message: "Department fetched successfuly",
-    department,
-  });
-});
+// getDepartmentEmployees removed — department head concept removed
 
 const deleteDepartment = catchErrors(async (req, res) => {
   const { id } = req.params;
@@ -118,14 +93,12 @@ const updateDepartment = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Please provide departmed Id");
 
-  const updateData = { name, head, description, status };
+  const updateData = { name, description, status };
   if (createdAt) updateData.createdAt = new Date(createdAt);
 
-  const department = await Department.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true }
-  ).populate("head", "name");
+  const department = await Department.findByIdAndUpdate(id, updateData, {
+    new: true,
+  }).lean();
 
   myCache.del("insights");
   myCache.del("department");
@@ -137,12 +110,40 @@ const updateDepartment = catchErrors(async (req, res) => {
   });
 });
 
+const getDepartmentEmployees = catchErrors(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) throw new Error("Please provide department Id");
+
+  const cacheKey = `department_employees_${id}`;
+  const cachedEmployees = myCache.get(cacheKey);
+  if (cachedEmployees) {
+    return res.status(200).json({
+      success: true,
+      message: "Department employees fetched successfully (from cache)",
+      employees: cachedEmployees,
+    });
+  }
+
+  const department = await Department.findById(id).lean();
+  if (!department) throw new Error("Department not found");
+
+  const employees = await Employee.find({ department: id }).lean();
+
+  myCache.set(cacheKey, employees);
+
+  return res.status(200).json({
+    success: true,
+    message: "Department employees fetched successfully",
+    employees,
+  });
+});
+
 export {
   createDepartment,
   getAllDepartments,
   getDepartmentById,
   deleteDepartment,
   updateDepartment,
-  getAllEmployeesForHead,
   getDepartmentEmployees,
 };

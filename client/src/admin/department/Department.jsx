@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet";
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import Loader from "../../components/shared/loaders/Loader";
@@ -28,8 +28,7 @@ const Department = () => {
     return (departments || []).filter((d) => {
       return (
         d.name?.toLowerCase().includes(q) ||
-        d.description?.toLowerCase().includes(q) ||
-        d.head?.name?.toLowerCase().includes(q)
+        d.description?.toLowerCase().includes(q)
       );
     });
   }, [departments, searchQuery]);
@@ -122,12 +121,12 @@ const Department = () => {
                   <tr key={department._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{department.name}</div>
-                      <div className="text-xs text-gray-500">Head: {department.head?.name || "-"}</div>
+                      <div className="text-xs text-gray-500">&nbsp;</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{department.description?.slice(0, 80)}{department.description && department.description.length>80?"...":""}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs ${department.status === "Active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                        {department.status || (department.head ? "Active" : "Inactive")}
+                        {department.status || "Active"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">

@@ -2,8 +2,8 @@ import { useTheme } from "../../context";
 import Modal from "../shared/modals/Modal";
 import Loader from "../shared/loaders/Loader";
 import { sidebarLinks } from "../../constants";
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import SettingModal from "../shared/modals/SettingModal";
 import { logout, logoutAll } from "../../services/authentication.service";
@@ -55,6 +55,21 @@ const Sidebar = () => {
       document.body.classList.remove("no-scroll");
     }
   }, [showSidebar]);
+
+  // Auto open submenu when the current route matches a child's link
+  const location = useLocation();
+  useEffect(() => {
+    const path = location.pathname || "/";
+    const matchIndex = sidebarLinks.findIndex((item) => {
+      if (item.childrens && item.childrens.length > 0) {
+        return item.childrens.some((c) => path.startsWith(c.link));
+      }
+      if (item.link) return path.startsWith(item.link);
+      return false;
+    });
+
+    if (matchIndex !== -1) setOpenSubMenuIndex(matchIndex);
+  }, [location.pathname]);
 
   return (
     <div className="text-white">
@@ -123,9 +138,13 @@ const Sidebar = () => {
             >
               <div className="flex justify-between items-center">
                 <Link
-                  to={item.link}
+                  to={item.link || '#'}
                   onClick={() => setShowSidebar(false)}
-                  className="flex items-center hover:text-primary"
+                  className={`flex items-center ${
+                    (location.pathname.startsWith(item.link || '') || (item.childrens && item.childrens.some(c => location.pathname.startsWith(c.link))))
+                      ? 'text-primary'
+                      : 'hover:text-primary'
+                  }`}
                 >
                   <i
                     className={`${item.iconClass} mr-3 text-[0.9rem] text-gray-200`}
@@ -162,7 +181,9 @@ const Sidebar = () => {
                         <li
                           key={subIndex}
                           onClick={() => setShowSidebar(false)}
-                          className="hover:text-gray-300 cursor-pointer flex items-center py-[3px]"
+                          className={`cursor-pointer flex items-center py-[3px] ${
+                            location.pathname.startsWith(subLink.link) ? 'text-primary font-semibold' : 'hover:text-gray-300'
+                          }`}
                         >
                           {subLink.name}
                         </li>

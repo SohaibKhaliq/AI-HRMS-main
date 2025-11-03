@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { assignSustitute } from "../../../services/leave.service";
-import { getAllEmployeesForHead } from "../../../services/department.service";
+import { getAllEmployees } from "../../../services/employee.service";
 
 const SubstituteModal = ({ onClose, leaveId }) => {
   const dispatch = useDispatch();
-  const { heads } = useSelector((state) => state.department);
+  const { employees } = useSelector((state) => state.employee);
 
   const [employee, setEmployee] = useState("");
 
@@ -18,8 +19,9 @@ const SubstituteModal = ({ onClose, leaveId }) => {
   };
 
   useEffect(() => {
-    dispatch(getAllEmployeesForHead());
-  }, []);
+    // load a simple list of employees to pick a substitute from
+    dispatch(getAllEmployees({ currentPage: 1, filters: {} }));
+  }, [dispatch]);
 
   return (
     <div className="fixed inset-0 z-40 bg-gray-800 bg-opacity-50 flex justify-center items-center">
@@ -50,10 +52,10 @@ const SubstituteModal = ({ onClose, leaveId }) => {
             required
           >
             <option value="">--- Select Substitute ---</option>
-            {heads.length > 0 &&
-              heads.map((head) => (
-                <option key={head._id} value={head._id}>
-                  {head.name}
+            {employees &&
+              employees.map((emp) => (
+                <option key={emp._id} value={emp._id}>
+                  {emp.name}
                 </option>
               ))}
           </select>
@@ -73,3 +75,8 @@ const SubstituteModal = ({ onClose, leaveId }) => {
 };
 
 export default SubstituteModal;
+
+SubstituteModal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  leaveId: PropTypes.string,
+};

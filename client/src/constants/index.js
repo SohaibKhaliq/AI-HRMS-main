@@ -24,7 +24,10 @@ const sidebarLinks = [
   {
     name: "Departments & Roles",
     iconClass: "far fa-building",
-    link: "/department",
+    childrens: [
+  { name: "Departments", link: "/department" },
+      { name: "Roles", link: "/roles" },
+    ],
   },
   {
     name: "Attendance Tracking",

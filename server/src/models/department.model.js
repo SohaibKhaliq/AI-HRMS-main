@@ -7,14 +7,10 @@ const departmentSchema = new mongoose.Schema(
       unique: true,
       required: true,
     },
-    head: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-      required: true,
-    },
+    // Removed 'head' field: department head was deprecated and is managed via roles/users
     description: {
       type: String,
-      required: true,
+      required: false,
     },
     status: {
       type: String,

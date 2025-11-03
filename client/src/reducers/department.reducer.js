@@ -3,13 +3,11 @@ import {
   getDepartments,
   createDepartment,
   updateDepartment,
-  getAllEmployeesForHead,
+  deleteDepartment,
 } from "../services/department.service";
-import { deleteDepartment } from "../services/department.service";
 
 const initialState = {
   departments: [],
-  heads: [],
   loading: false,
   error: null,
 };
@@ -34,19 +32,7 @@ const departmentSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Handling the getAllEmployeesForHead action
-      .addCase(getAllEmployeesForHead.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getAllEmployeesForHead.fulfilled, (state, action) => {
-        state.heads = action.payload;
-        state.loading = false;
-      })
-      .addCase(getAllEmployeesForHead.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      // (removed getAllEmployeesForHead — department head removed from model)
 
       // Handling the updateDepartment action
       .addCase(updateDepartment.pending, (state) => {

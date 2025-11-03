@@ -18,19 +18,7 @@ export const getDepartments = createAsyncThunk(
 );
 
 // Fetch Head
-export const getAllEmployeesForHead = createAsyncThunk(
-  "department/getAllEmployeesForHead",
-  async (_, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosInstance.get(`/departments/head`);
-      return data.employees;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data.message || "Failed to fetch heads"
-      );
-    }
-  }
-);
+
 
 // Update Department
 export const updateDepartment = createAsyncThunk(

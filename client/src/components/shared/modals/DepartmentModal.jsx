@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import { useDispatch } from "react-redux";
 import {
   createDepartment,
-  getAllEmployeesForHead,
   updateDepartment,
 } from "../../../services/department.service";
 
 const DepartmentModal = ({ action, onClose, department }) => {
   const dispatch = useDispatch();
-  const { heads } = useSelector((state) => state.department);
-
   const [formData, setFormData] = useState({
     name: "",
-    head: "",
     description: "",
     status: "Active",
     createdAt: "",
@@ -22,7 +19,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
     if ((action === "update" || action === "view") && department) {
       setFormData({
         name: department.name || "",
-        head: department?.head?._id || "",
+        // head removed
         description:
           department.description ||
           "The Marketing Department is responsible for driving brand awareness",
@@ -54,9 +51,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
     onClose();
   };
 
-  useEffect(() => {
-    dispatch(getAllEmployeesForHead());
-  }, []);
+  // head removed: no need to fetch head candidates
 
   return (
     <div className="fixed inset-0 z-40 bg-gray-800 bg-opacity-50 flex justify-center items-center">
@@ -94,27 +89,7 @@ const DepartmentModal = ({ action, onClose, department }) => {
           </div>
         </div>
 
-        {/* Head select */}
-        <div className="w-full relative">
-          <i className="fa fa-building-columns text-sm icon absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600"></i>
-          <select
-            id="select"
-            name="head"
-            value={formData.head}
-            onChange={handleChange}
-            className="w-full bg-[#EFEFEF] text-center text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
-            disabled={isView}
-            required
-          >
-            <option value="">--- Select Head ---</option>
-            {heads.length > 0 &&
-              heads.map((head) => (
-                <option key={head._id} value={head._id}>
-                  {head.name}
-                </option>
-              ))}
-          </select>
-        </div>
+        {/* Department head removed — no selection UI */}
 
         {/* Created At - editable only for edit (hidden in create/view) */}
         {action === "update" && (
@@ -139,7 +114,6 @@ const DepartmentModal = ({ action, onClose, department }) => {
             onChange={handleChange}
             className="w-full bg-[#EFEFEF] text-center text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
             disabled={isView}
-            required
           >
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
@@ -151,11 +125,10 @@ const DepartmentModal = ({ action, onClose, department }) => {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Write your description"
+            placeholder="Write your description (optional)"
             className="w-full p-4 bg-[#EFEFEF] text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700 resize-none medium"
             disabled={isView}
             rows={4}
-            required
           />
         </div>
 
@@ -172,6 +145,24 @@ const DepartmentModal = ({ action, onClose, department }) => {
       </form>
     </div>
   );
+};
+
+DepartmentModal.propTypes = {
+  action: PropTypes.oneOf(["create", "update", "view"]).isRequired,
+  onClose: PropTypes.func,
+  department: PropTypes.shape({
+    _id: PropTypes.string,
+    name: PropTypes.string,
+    description: PropTypes.string,
+    status: PropTypes.string,
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    // head removed
+  }),
+};
+
+DepartmentModal.defaultProps = {
+  onClose: () => {},
+  department: null,
 };
 
 export default DepartmentModal;
