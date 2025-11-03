@@ -54,10 +54,19 @@ const getAllPayrolls = catchErrors(async (req, res) => {
 
   const query = {};
 
+  // Check if user is admin by checking if they have employee populated with admin field
+  const isAdmin = req.user.authority === "admin";
+  
+  // If not admin or employee query parameter matches user's ID, restrict to own payroll
+  if (!isAdmin) {
+    query.employee = req.user.id;
+  } else if (employee) {
+    query.employee = employee;
+  }
+
   if (year) query.year = year;
   if (month) query.month = month;
   if (isPaid) query.isPaid = isPaid;
-  if (employee) query.employee = employee;
 
   const pageNumber = Math.max(parseInt(page), 1);
   const limitNumber = Math.max(parseInt(limit), 1);
@@ -66,7 +75,8 @@ const getAllPayrolls = catchErrors(async (req, res) => {
   const payrolls = await Payroll.find(query)
     .populate("employee", "employeeId name")
     .skip(skip)
-    .limit(limitNumber);
+    .limit(limitNumber)
+    .sort({ year: -1, month: -1 });
 
   if (!payrolls) throw new Error("Payroll record not found");
 

@@ -8,11 +8,11 @@ import {
   getEmployeePayrollHistory,
   generatePayrollForNextYear,
 } from "../controllers/payroll.controller.js";
-import { verifyAdminToken, verifyCornJob } from "../middlewares/index.js";
+import { verifyAdminToken, verifyEmployeeToken, verifyCornJob } from "../middlewares/index.js";
 
 const router = express.Router();
 
-router.get("/", verifyAdminToken, getAllPayrolls);
+router.get("/", verifyEmployeeToken, getAllPayrolls); // Allow employees to view their own payroll
 router.post("/", verifyAdminToken, createPayroll);
 router.patch("/:payrollId", verifyAdminToken, updatePayroll);
 router.patch("/:payrollId/pay", verifyAdminToken, markAsPaid);

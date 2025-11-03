@@ -27,7 +27,7 @@ const Payroll = () => {
   const fetchPayrolls = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get(`/payrolls?employee=\${user._id}`);
+      const { data } = await axiosInstance.get(`/payrolls?employee=${user._id}`);
       setPayrolls(data.payrolls || []);
       setError(null);
     } catch (err) {
