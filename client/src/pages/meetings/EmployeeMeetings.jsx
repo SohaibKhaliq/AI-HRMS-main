@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyMeetings, updateMeetingStatus } from '../../services/meeting.service';
 import { FaCalendarAlt, FaMapMarkerAlt, FaVideo, FaUsers, FaFilter } from 'react-icons/fa';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 const EmployeeMeetings = () => {
   const dispatch = useDispatch();
   const { myMeetings, loading } = useSelector((state) => state.meeting);
+  const { user } = useSelector((state) => state.authentication);
   
   const [filteredMeetings, setFilteredMeetings] = useState([]);
   const [typeFilter, setTypeFilter] = useState('all');
@@ -19,13 +20,7 @@ const EmployeeMeetings = () => {
     dispatch(getMyMeetings());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (myMeetings) {
-      filterMeetings();
-    }
-  }, [myMeetings, typeFilter, statusFilter, dateFilter]);
-
-  const filterMeetings = () => {
+  const filterMeetings = useCallback(() => {
     let filtered = [...(myMeetings || [])];
 
     // Filter by type
@@ -36,7 +31,7 @@ const EmployeeMeetings = () => {
     // Filter by RSVP status
     if (statusFilter !== 'all') {
       filtered = filtered.filter((m) => {
-        const participant = m.participants?.find((p) => p._id === localStorage.getItem('userId'));
+        const participant = m.participants?.find((p) => p.employee?._id === user?._id || p.employee === user?._id);
         return participant?.status === statusFilter;
       });
     }
@@ -68,7 +63,13 @@ const EmployeeMeetings = () => {
     const sorted = [...filtered].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
     setFilteredMeetings(sorted);
-  };
+  }, [myMeetings, typeFilter, statusFilter, dateFilter, user]);
+
+  useEffect(() => {
+    if (myMeetings) {
+      filterMeetings();
+    }
+  }, [myMeetings, filterMeetings]);
 
   const getMeetingTypeColor = (type) => {
     const colors = {
@@ -83,7 +84,10 @@ const EmployeeMeetings = () => {
   };
 
   const getStatusBadge = (meeting) => {
-    const participant = meeting.participants?.find((p) => p._id === localStorage.getItem('userId'));
+    const participant = meeting.participants?.find((p) => {
+      const employeeId = p.employee?._id || p.employee;
+      return employeeId === user?._id;
+    });
     const status = participant?.status || 'pending';
 
     const badges = {
@@ -92,7 +96,7 @@ const EmployeeMeetings = () => {
       pending: { color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300', text: 'Pending' },
     };
 
-    return badges[status];
+    return badges[status] || badges.pending;
   };
 
   const handleRSVP = (meeting, action) => {

@@ -51,6 +51,20 @@ const getAllResignations = catchErrors(async (req, res) => {
   return res.status(200).json({ success: true, message: "Resignations fetched successfully", resignations });
 });
 
+  const getMyResignation = catchErrors(async (req, res) => {
+    const employeeId = req.user.id;
+  
+    const resignation = await Resignation.findOne({ employee: employeeId })
+      .populate("employee", "name firstName lastName employeeId email profilePicture")
+      .lean();
+  
+    if (!resignation) {
+      return res.status(404).json({ success: false, message: "No resignation found" });
+    }
+
+    return res.status(200).json({ success: true, message: "Resignation fetched successfully", resignation });
+  });
+
 const getResignationById = catchErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new Error("Please provide resignation id");
@@ -97,4 +111,4 @@ const deleteResignation = catchErrors(async (req, res) => {
   return res.status(200).json({ success: true, message: "Resignation deleted" });
 });
 
-export { createResignation, getAllResignations, getResignationById, updateResignation, deleteResignation };
+export { createResignation, getAllResignations, getMyResignation, getResignationById, updateResignation, deleteResignation };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaFile, FaDownload, FaFileAlt, FaFilePdf, FaFileWord, FaFileImage, FaFileArchive, FaCheckCircle, FaTimesCircle, FaClock, FaCalendar, FaSearch, FaFilter } from "react-icons/fa";
 import { getMyDocuments } from "../../services/employeeDocument.service";
@@ -7,8 +7,8 @@ import toast from "react-hot-toast";
 
 const EmployeeDocuments = () => {
   const dispatch = useDispatch();
-  const { myDocuments, loading } = useSelector((state) => state.employeeDocument);
-  const { documentCategories } = useSelector((state) => state.documentCategory);
+  const { myDocuments = [], loading } = useSelector((state) => state.employeeDocument);
+  const { documentCategories = [] } = useSelector((state) => state.documentCategory);
 
   const [filters, setFilters] = useState({
     category: "",
@@ -16,22 +16,24 @@ const EmployeeDocuments = () => {
     search: "",
   });
 
-  useEffect(() => {
-    fetchDocuments();
-    dispatch(getDocumentCategories());
-  }, []);
-
-  const fetchDocuments = () => {
+  const fetchDocuments = useCallback(() => {
     const params = {};
     if (filters.category) params.category = filters.category;
     if (filters.status) params.status = filters.status;
     
     dispatch(getMyDocuments(params));
-  };
+  }, [dispatch, filters.category, filters.status]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [filters.category, filters.status]);
+    dispatch(getDocumentCategories());
+  }, [dispatch, fetchDocuments]);
+
+  useEffect(() => {
+    if (filters.category || filters.status) {
+      fetchDocuments();
+    }
+  }, [filters.category, filters.status, fetchDocuments]);
 
   const getFileIcon = (fileType) => {
     if (!fileType) return <FaFile className="text-gray-400" size={24} />;
@@ -87,7 +89,7 @@ const EmployeeDocuments = () => {
     }
   };
 
-  const filteredDocuments = myDocuments.filter((doc) => {
+  const filteredDocuments = (myDocuments || []).filter((doc) => {
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       return (
@@ -139,11 +141,15 @@ const EmployeeDocuments = () => {
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           >
             <option value="">All Categories</option>
-            {documentCategories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
+            {documentCategories && documentCategories.length > 0 ? (
+              documentCategories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))
+            ) : (
+              <option disabled>Loading categories...</option>
+            )}
           </select>
 
           {/* Status Filter */}
