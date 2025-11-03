@@ -98,6 +98,10 @@ const createAnnouncement = catchErrors(async (req, res) => {
     );
 
     // Send emails to all employees (in background, don't wait)
+    // Note: For production with large user base, consider implementing:
+    // - Email queue system (Bull, BeeQueue)
+    // - Batch processing with delays
+    // - Professional email service (SendGrid, AWS SES) with higher rate limits
     Promise.all(employees.map(emp => 
       sendEmailNotification({
         email: emp.email,

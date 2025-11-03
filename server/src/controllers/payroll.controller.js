@@ -138,6 +138,9 @@ const markAsPaid = catchErrors(async (req, res) => {
   );
   if (!payroll) throw new Error("Payroll record not found");
 
+  // Track previous state to detect status change
+  const wasUnpaid = !payroll.isPaid;
+  
   payroll.isPaid = !payroll.isPaid;
 
   if (payroll.isPaid) payroll.paymentDate = new Date();
@@ -152,8 +155,8 @@ const markAsPaid = catchErrors(async (req, res) => {
     remarks: "--",
   });
 
-  // Send notification when marked as paid
-  if (payroll.isPaid) {
+  // Send notification ONLY when transitioning from unpaid to paid
+  if (payroll.isPaid && wasUnpaid) {
     const employeeData = await Employee.findById(payroll.employee._id);
     if (employeeData) {
       await sendFullNotification({

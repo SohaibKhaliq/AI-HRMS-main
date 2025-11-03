@@ -1,4 +1,4 @@
-import { catchErrors } from "../utils/index.js";
+import { catchErrors, sendMail } from "../utils/index.js";
 import Recruitment from "../models/recruitment.model.js";
 import {
   inviteForInterviewMail,
@@ -185,7 +185,6 @@ const updateApplicationStatus = catchErrors(async (req, res) => {
   // Send email notification for status change using standardized service
   if (status === "Rejected" || status === "Selected") {
     try {
-      const { sendMail } = await import("../utils/index.js");
       const statusColor = status === "Selected" ? "#10B981" : "#EF4444";
       const statusMessage = status === "Selected" 
         ? "Congratulations! Our HR team will contact you soon with the next steps."
