@@ -1,5 +1,7 @@
-import { catchErrors, myCache } from "../utils/index.js";
+import { catchErrors, myCache, formatDate } from "../utils/index.js";
 import Resignation from "../models/resignation.model.js";
+import Employee from "../models/employee.model.js";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const createResignation = catchErrors(async (req, res) => {
   const { employee, resignationDate, lastWorkingDay, noticePeriod, reason, status, documentUrl, remarks, createdAt } = req.body;
@@ -30,6 +32,26 @@ const createResignation = catchErrors(async (req, res) => {
   const resignation = await Resignation.create(data);
   const populated = await Resignation.findById(resignation._id)
     .populate("employee", "name firstName lastName employeeId email profilePicture");
+
+  // Send notification to employee
+  const employeeData = await Employee.findById(employee);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: "Resignation Submitted",
+      message: "Your resignation has been submitted successfully and is under review.",
+      type: "resignation",
+      priority: "high",
+      link: "/resignation",
+      emailSubject: "Resignation Submitted",
+      emailTemplate: "resignationSubmitted",
+      emailData: {
+        resignationDate: formatDate(resignationDate),
+        lastWorkingDay: formatDate(lastWorkingDay),
+        noticePeriod: noticePeriod || 0,
+      },
+    });
+  }
 
   myCache.del("resignations");
 
@@ -97,6 +119,37 @@ const updateResignation = catchErrors(async (req, res) => {
 
   const resignation = await Resignation.findByIdAndUpdate(id, updateData, { new: true })
     .populate("employee", "name firstName lastName employeeId email profilePicture");
+
+  // Send notification if status changed to Approved or Rejected
+  if (status && (status === "Approved" || status === "Rejected")) {
+    const employeeData = await Employee.findById(resignation.employee._id);
+    if (employeeData) {
+      if (status === "Approved") {
+        await sendFullNotification({
+          employee: employeeData,
+          title: "Resignation Approved",
+          message: `Your resignation has been approved. Your last working day is ${formatDate(resignation.lastWorkingDay)}.`,
+          type: "resignation",
+          priority: "high",
+          link: "/resignation",
+          emailSubject: "Resignation Approved",
+          emailTemplate: "resignationApproved",
+          emailData: {
+            lastWorkingDay: formatDate(resignation.lastWorkingDay),
+          },
+        });
+      } else if (status === "Rejected") {
+        await sendFullNotification({
+          employee: employeeData,
+          title: "Resignation Update",
+          message: `Your resignation has been ${status.toLowerCase()}. ${remarks || ''}`,
+          type: "resignation",
+          priority: "high",
+          link: "/resignation",
+        });
+      }
+    }
+  }
 
   myCache.del("resignations");
 

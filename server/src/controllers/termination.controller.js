@@ -1,5 +1,7 @@
 import Termination from "../models/termination.model.js";
-import { myCache, catchErrors } from "../utils/index.js";
+import Employee from "../models/employee.model.js";
+import { myCache, catchErrors, formatDate } from "../utils/index.js";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const createTermination = catchErrors(async (req, res) => {
   const {
@@ -41,6 +43,25 @@ const createTermination = catchErrors(async (req, res) => {
     "employee",
     "name firstName lastName employeeId email profilePicture"
   );
+
+  // Send notification to employee
+  const employeeData = await Employee.findById(employee);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: "Termination Notice",
+      message: `This is to inform you about your employment termination. Type: ${type}. Termination date: ${formatDate(terminationDate)}. Please contact HR for more details.`,
+      type: "termination",
+      priority: "high",
+      link: "/profile",
+      emailSubject: "Employment Termination Notice",
+      emailTemplate: "announcement",
+      emailData: {
+        title: "Employment Termination Notice",
+        message: `This is to inform you about your employment termination. Type: ${type}. Notice date: ${formatDate(noticeDate)}. Termination date: ${formatDate(terminationDate)}. Reason: ${reason}. ${remarks ? `Additional remarks: ${remarks}` : ''} Please contact HR for further details.`,
+      },
+    });
+  }
 
   myCache.del("terminations");
 

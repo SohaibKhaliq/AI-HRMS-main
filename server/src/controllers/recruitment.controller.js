@@ -1,4 +1,4 @@
-import { catchErrors } from "../utils/index.js";
+import { catchErrors, sendMail } from "../utils/index.js";
 import Recruitment from "../models/recruitment.model.js";
 import {
   inviteForInterviewMail,
@@ -181,6 +181,39 @@ const updateApplicationStatus = catchErrors(async (req, res) => {
   applicant.updatedAt = new Date();
 
   await job.save();
+
+  // Send email notification for status change using standardized service
+  if (status === "Rejected" || status === "Selected") {
+    try {
+      const statusColor = status === "Selected" ? "#10B981" : "#EF4444";
+      const statusMessage = status === "Selected" 
+        ? "Congratulations! Our HR team will contact you soon with the next steps."
+        : "We appreciate your interest in joining our team. We encourage you to apply for future opportunities.";
+      
+      await sendMail({
+        email: applicant.email,
+        subject: `Metro HRMS - Application ${status}`,
+        html: `
+          <div style="font-family: 'Poppins', system-ui; max-width: 600px; width: 100%; margin: 40px auto; background: #2c2c2c; padding: 32px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); text-align: center;">
+            <img src="http://metrohrms.netlify.app/metro.png" alt="Metro HRMS Logo" style="width: 120px; margin-bottom: 24px;">
+            <div style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Metro HRMS</div>
+            <h2 style="color: ${statusColor}; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Application ${status}</h2>
+            <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${applicant.name}</strong>,</p>
+            <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+              Your application for <strong>${job.title}</strong> has been ${status.toLowerCase()}.
+            </p>
+            <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+              ${statusMessage}
+            </p>
+            <div style="width: 100%; height: 1px; background: #444444; margin: 24px 0;"></div>
+            <p style="margin-top: 24px; font-size: 12px; color: #999999;">Metro HRMS &copy; ${new Date().getFullYear()}. All Rights Reserved.</p>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.error("Failed to send application status email:", err);
+    }
+  }
 
   return res.status(200).json({
     success: true,

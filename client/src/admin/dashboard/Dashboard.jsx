@@ -12,23 +12,18 @@ const Dashboard = () => {
   const { insights, loading, error } = useSelector((state) => state.insight);
 
   const infoCardData = [
-    { id: 1, title: "Total Employees", stats: insights?.totalEmployees },
-    { id: 2, title: "Job Applications", stats: insights?.jobApplications },
-    { id: 3, title: "Pending Complaints", stats: insights?.totalComplaints },
-    { id: 4, title: "Pending Leaves", stats: insights?.pendingLeaves },
-    { id: 5, title: "Emp on Leaves Today", stats: insights?.employeesOnLeave },
+    { id: 1, title: "Total Employees", stats: insights?.totalEmployees || 0, icon: "fas fa-users" },
+    { id: 2, title: "Job Applications", stats: insights?.jobApplications || 0, icon: "fas fa-file-alt" },
+    { id: 3, title: "Pending Complaints", stats: insights?.totalComplaints || 0, icon: "fas fa-exclamation-circle" },
+    { id: 4, title: "Pending Leaves", stats: insights?.pendingLeaves || 0, icon: "fas fa-calendar-times" },
+    { id: 5, title: "Employees on Leave", stats: insights?.employeesOnLeave || 0, icon: "fas fa-user-clock" },
     {
       id: 6,
       title: "Average Rating",
-    //  stats: insights?.feedbackResult[0].avgRating.toFixed(2),
+      stats: insights?.feedbackResult?.[0]?.avgRating?.toFixed(2) || "N/A",
+      icon: "fas fa-star"
     },
   ];
-
-  //const malePercentage = insights?.totalEmployees
-   // ? ((insights?.totalMaleEmployees / insights?.totalEmployees) * 100).toFixed(
-   //     0
-   //   )
-    //: 0;
 
   const femalePercentage = insights?.totalEmployees
     ? (
@@ -93,8 +88,8 @@ const Dashboard = () => {
             id="overflow"
             className="md:w-[60%] block h-full w-full mt-2 rounded-lg  dark:text-gray-200 text-gray-700 bg-gray-100 dark:bg-secondary border border-gray-300 dark:border-primary  p-4 overflow-auto shadow"
           >
-            <h3 className="text-[0.93rem] font-semibold mb-4 border-b dark:border-gray-600  pb-2">
-              Attendace Overview By Department
+            <h3 className="text-[0.93rem] font-semibold mb-4 border-b dark:border-gray-600 pb-2">
+              Attendance Overview By Department
             </h3>
             <div className="w-full pt-9 pr-6">
               <BarGraph

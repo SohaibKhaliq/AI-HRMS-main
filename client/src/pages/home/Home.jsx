@@ -18,25 +18,25 @@ const Home = () => {
     { 
       id: 1,
       title: "Leaves Taken", 
-      stats: employeeInsights?.leavesTaken,
+      stats: employeeInsights?.leavesTaken || 0,
       icon: "fas fa-calendar-times"
     },
     { 
       id: 2,
       title: "Leave Balance", 
-      stats: employeeInsights?.leaveBalance,
+      stats: employeeInsights?.leaveBalance || 0,
       icon: "fas fa-calendar-check"
     },
     { 
       id: 3,
       title: "Feedbacks", 
-      stats: employeeInsights?.feedbackSubmitted,
+      stats: employeeInsights?.feedbackSubmitted || 0,
       icon: "fas fa-comments"
     },
     { 
       id: 4,
       title: "Complaints", 
-      stats: employeeInsights?.complaintResolved,
+      stats: employeeInsights?.complaintResolved || 0,
       icon: "fas fa-exclamation-circle"
     },
     { 

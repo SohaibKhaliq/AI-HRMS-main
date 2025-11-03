@@ -1,5 +1,7 @@
 import Holiday from "../models/holiday.model.js";
-import { catchErrors, myCache } from "../utils/index.js";
+import Employee from "../models/employee.model.js";
+import { catchErrors, myCache, formatDate } from "../utils/index.js";
+import { createBulkNotifications, sendEmailNotification } from "../services/notification.service.js";
 
 const getHolidays = catchErrors(async (req, res) => {
   const { category, type, page = 1, limit = 12 } = req.query;
@@ -48,6 +50,44 @@ const createHoliday = catchErrors(async (req, res) => {
     description,
     isPaid: isPaid !== undefined ? isPaid : true,
   });
+
+  // Send notification to all employees about new holiday
+  try {
+    const employees = await Employee.find({}).select('_id name email');
+    
+    // Create bulk in-app notifications
+    await createBulkNotifications(
+      employees.map(emp => emp._id),
+      {
+        title: `Holiday Announcement: ${holidayName}`,
+        message: `${holidayName} on ${formatDate(date)}. ${description}`,
+        type: "holiday",
+        priority: "medium",
+        link: "/holidays",
+      }
+    );
+
+    // Send emails to all employees (in background)
+    // Note: For production with large user base, consider implementing:
+    // - Email queue system (Bull, BeeQueue)
+    // - Batch processing with delays
+    // - Professional email service (SendGrid, AWS SES) with higher rate limits
+    Promise.all(employees.map(emp => 
+      sendEmailNotification({
+        email: emp.email,
+        subject: `Metro HRMS - Holiday: ${holidayName}`,
+        templateName: "holidayAnnouncement",
+        templateData: {
+          employeeName: emp.name,
+          holidayName: holidayName,
+          holidayDate: formatDate(date),
+          description: description,
+        },
+      }).catch(err => console.error(`Failed to send email to ${emp.email}:`, err))
+    ));
+  } catch (err) {
+    console.error("Error sending holiday notifications:", err);
+  }
 
   myCache.del("insights");
 

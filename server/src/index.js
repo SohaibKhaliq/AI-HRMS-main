@@ -4,10 +4,12 @@ dotenv.config();
 import cors from "cors";
 import path from "path";
 import express from "express";
+import { createServer } from "http";
 import { fileURLToPath } from "url";
 import cloudinary from "cloudinary";
 import bodyParser from "body-parser";
 import { connectDB } from "./config/index.js";
+import { initializeSocket } from "./socket/index.js";
 import {
   role,
   leave,
@@ -176,10 +178,19 @@ app.get("/", (req, res) => {
 });
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
 const port = process.env.PORT || 3000;
+
+// Create HTTP server
+const server = createServer(app);
+
+// Initialize Socket.IO
+initializeSocket(server);
+console.log("✅ Socket.IO initialized");
+
 connectDB()
   .then(() => {
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Express running → On http://localhost:${port} 🚀`);
+      console.log(`Socket.IO running → ws://localhost:${port} 🔌`);
     });
   })
   .catch((err) => {

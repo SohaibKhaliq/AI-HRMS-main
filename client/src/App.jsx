@@ -3,7 +3,7 @@ import Login from "./auth/Login";
 import AdminApp from "./app/admin";
 import EmployeeApp from "./app/employee";
 import { Toaster } from "react-hot-toast";
-import { ThemeProvider } from "./context";
+import { ThemeProvider, SocketProvider } from "./context";
 import { useSelector } from "react-redux";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Loader from "./components/shared/loaders/Loader";
@@ -44,9 +44,11 @@ function HrmsForMetroCashAndCarry() {
 function EmployeeRouter() {
   return (
     <ThemeProvider>
-      <Routes>
-        <Route path="/*" element={<EmployeeApp />} />
-      </Routes>
+      <SocketProvider>
+        <Routes>
+          <Route path="/*" element={<EmployeeApp />} />
+        </Routes>
+      </SocketProvider>
     </ThemeProvider>
   );
 }
@@ -54,9 +56,11 @@ function EmployeeRouter() {
 function AdminRouter() {
   return (
     <ThemeProvider>
-      <Routes>
-        <Route path="/*" element={<AdminApp />} />
-      </Routes>
+      <SocketProvider>
+        <Routes>
+          <Route path="/*" element={<AdminApp />} />
+        </Routes>
+      </SocketProvider>
     </ThemeProvider>
   );
 }

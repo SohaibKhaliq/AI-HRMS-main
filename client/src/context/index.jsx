@@ -25,3 +25,6 @@ export const ThemeProvider = ({ children }) => {
 };
 
 export const useTheme = () => useContext(ThemeContext);
+
+// Export Socket context
+export { SocketProvider, useSocket } from "./SocketContext";

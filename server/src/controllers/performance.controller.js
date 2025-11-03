@@ -1,6 +1,8 @@
 import { catchErrors } from "../utils/index.js";
 import Performance from "../models/performance.model.js";
+import Employee from "../models/employee.model.js";
 import { calculateAverageAttendance } from "./attendance.controller.js";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const addPerformanceWithKPI = async (employee) => {
   if (!employee) throw new Error("All fields are required");
@@ -51,6 +53,25 @@ export const updatePerformance = catchErrors(async (req, res) => {
   });
 
   if (!performance) throw new Error("Performance not found");
+
+  // Send notification to employee about performance review
+  const employeeData = await Employee.findById(performance.employee._id);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: "Performance Review Available",
+      message: `Your performance review has been updated. Overall rating: ${rating}/5. Check your dashboard for details.`,
+      type: "performance",
+      priority: "medium",
+      link: "/performance",
+      emailSubject: "Performance Review Available",
+      emailTemplate: "performanceReview",
+      emailData: {
+        period: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        rating: rating || 0,
+      },
+    });
+  }
 
   return res.status(200).json({
     success: true,

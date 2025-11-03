@@ -3,9 +3,11 @@ dotenv.config();
 
 import * as bcrypt from "bcrypt";
 import cloudinary from "cloudinary";
-import { myCache } from "../utils/index.js";
+import { myCache, formatDate } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
 import Shift from "../models/shift.model.js";
+import Department from "../models/department.model.js";
+import Designation from "../models/designation.model.js";
 import { catchErrors, getPublicIdFromUrl } from "../utils/index.js";
 import {
   addPerformanceWithKPI,
@@ -18,6 +20,7 @@ import {
 import { deleteFeedback } from "./feedback.controller.js";
 import { deleteComplaint } from "./complaint.controller.js";
 import { deleteLeave, getEmployeeLeaveStatus } from "./leave.controller.js";
+import { sendEmailNotification } from "../services/notification.service.js";
 
 const clearEmployeeCache = () => {
   const cacheKeys = myCache.keys();
@@ -175,6 +178,31 @@ const createEmployee = catchErrors(async (req, res) => {
   await addPerformanceWithKPI(employee._id);
   await generateEmployeeYearlyPayroll(employee);
   clearEmployeeCache();
+
+  // Send welcome email to new employee
+  try {
+    // Fetch the created employee with populated fields
+    const createdEmployee = await Employee.findById(employee._id)
+      .populate('department', 'name')
+      .populate('designation', 'name');
+    
+    await sendEmailNotification({
+      email: email,
+      subject: "Welcome to Metro HRMS!",
+      templateName: "employeeOnboarding",
+      templateData: {
+        employeeName: name,
+        employeeId: employeeId,
+        department: createdEmployee?.department?.name || "N/A",
+        designation: createdEmployee?.designation?.name || "N/A",
+        startDate: formatDate(dateOfJoining),
+        email: email,
+        temporaryPassword: "Please check with HR for your password",
+      },
+    });
+  } catch (err) {
+    console.error("Failed to send onboarding email:", err);
+  }
 
   return res.status(201).json({
     success: true,

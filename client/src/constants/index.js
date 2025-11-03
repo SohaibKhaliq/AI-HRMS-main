@@ -105,6 +105,12 @@ const sidebarLinks = [
     link: "/reports",
     childrens: [],
   },
+  {
+    name: "Calendar View",
+    iconClass: "far fa-calendar-alt",
+    link: "/calendar",
+    childrens: [],
+  },
 ];
 
 const navbarLinks = [
@@ -143,6 +149,16 @@ const navbarLinks = [
     name: "My Documents",
     iconClass: "fa-solid fa-folder-open",
     link: "/documents",
+  },
+  {
+    name: "My Payroll",
+    iconClass: "fa-solid fa-file-invoice-dollar",
+    link: "/payroll",
+  },
+  {
+    name: "Calendar View",
+    iconClass: "fa-solid fa-calendar-days",
+    link: "/calendar",
   },
   {
     name: "Report Workplace Issues",

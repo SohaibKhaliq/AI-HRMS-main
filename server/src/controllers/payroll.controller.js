@@ -2,6 +2,7 @@ import { catchErrors, getMonthName } from "../utils/index.js";
 import Payroll from "../models/payroll.model.js";
 import Employee from "../models/employee.model.js";
 import { createUpdate } from "./update.controller.js";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const createPayroll = catchErrors(async (req, res) => {
   const { employee, month, year, baseSalary, allowances, deductions, bonuses } =
@@ -19,6 +20,27 @@ const createPayroll = catchErrors(async (req, res) => {
     deductions,
     bonuses,
   });
+
+  // Get employee details for notification
+  const employeeData = await Employee.findById(employee);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: "Payroll Generated",
+      message: `Your payroll for ${getMonthName(month)} ${year} has been generated and is ready for review.`,
+      type: "payroll",
+      priority: "medium",
+      link: "/payroll",
+      emailSubject: "Payroll Generated",
+      emailTemplate: "payrollGenerated",
+      emailData: {
+        month: getMonthName(month),
+        year: year,
+        netSalary: payroll.netSalary.toFixed(2),
+        isPaid: payroll.isPaid,
+      },
+    });
+  }
 
   return res.status(201).json({
     success: true,
@@ -116,6 +138,9 @@ const markAsPaid = catchErrors(async (req, res) => {
   );
   if (!payroll) throw new Error("Payroll record not found");
 
+  // Track previous state to detect status change
+  const wasUnpaid = !payroll.isPaid;
+  
   payroll.isPaid = !payroll.isPaid;
 
   if (payroll.isPaid) payroll.paymentDate = new Date();
@@ -129,6 +154,29 @@ const markAsPaid = catchErrors(async (req, res) => {
     type: `Payroll - ${getMonthName(payroll.month)}`,
     remarks: "--",
   });
+
+  // Send notification ONLY when transitioning from unpaid to paid
+  if (payroll.isPaid && wasUnpaid) {
+    const employeeData = await Employee.findById(payroll.employee._id);
+    if (employeeData) {
+      await sendFullNotification({
+        employee: employeeData,
+        title: "Salary Paid",
+        message: `Your salary for ${getMonthName(payroll.month)} ${payroll.year} has been paid successfully.`,
+        type: "payroll",
+        priority: "high",
+        link: "/payroll",
+        emailSubject: "Salary Payment Confirmation",
+        emailTemplate: "payrollGenerated",
+        emailData: {
+          month: getMonthName(payroll.month),
+          year: payroll.year,
+          netSalary: payroll.netSalary.toFixed(2),
+          isPaid: true,
+        },
+      });
+    }
+  }
 
   return res.status(200).json({
     success: true,
