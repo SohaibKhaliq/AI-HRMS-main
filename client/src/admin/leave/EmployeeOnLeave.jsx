@@ -90,7 +90,7 @@ function EmployeeOnLeave() {
                       {leave?.substitute?.name || "Not Found"}
                     </td>
                     <td className="py-3 px-4 border-b border-gray-500">
-                      {leave.leaveType} Leave
+                      {leave.leaveType?.name || leave.leaveType} Leave
                     </td>
                     <td className="py-3 px-4 border-b border-gray-500">
                       {formatDate(leave.fromDate)}

@@ -122,7 +122,7 @@ function LeaveRequest() {
                       {leave.employee.department?.name || "--"}
                     </td>
                     <td className="py-3 px-4 border-b border-gray-500">
-                      {leave.leaveType} Leave
+                      {leave.leaveType?.name || leave.leaveType} Leave
                     </td>
                     <td
                       onMouseEnter={() => setHoveredIndex(index)}
