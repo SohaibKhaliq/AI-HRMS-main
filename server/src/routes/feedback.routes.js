@@ -7,7 +7,8 @@ import {
 
 const router = express.Router();
 
-router.get("/", verifyAdminToken, getFeedbacks);
+// Employees can view all feedbacks (frontend filters to show only their own)
+router.get("/", verifyEmployeeToken, getFeedbacks);
 router.post("/", verifyEmployeeToken, createFeedback);
 
 export default router;

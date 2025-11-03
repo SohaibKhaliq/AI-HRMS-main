@@ -5,14 +5,14 @@ import axiosInstance from "../axios/axiosInstance";
 // Fetch Feedbacks
 export const getFeedbacks = createAsyncThunk(
   "feedbacks/getFeedbacks",
-  async ({ review, currentPage }, { rejectWithValue }) => {
+  async ({ review, page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams({
-        page: currentPage,
-        review: review || "",
-      }).toString();
+      const queryParams = new URLSearchParams();
+      if (page) queryParams.append('page', page);
+      if (limit) queryParams.append('limit', limit);
+      if (review) queryParams.append('review', review);
 
-      const { data } = await axiosInstance.get(`/feedbacks?${queryParams}`);
+      const { data } = await axiosInstance.get(`/feedbacks?${queryParams.toString()}`);
       return data;
     } catch (error) {
       return rejectWithValue(
