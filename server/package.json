@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "setup": "node src/setup/index.js"
+    "setup": "node src/setup/index.js",
+    "seed": "node scripts/seedDatabase.js",
+    "seed:help": "echo 'Run npm run seed to populate the database with sample data'"
   },
   "license": "ISC",
   "author": "Obaid Ali Siddiqui",

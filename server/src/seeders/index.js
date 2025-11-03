@@ -820,6 +820,22 @@ const generateAnnouncementData = async () => {
   }
 };
 
+// Export comprehensive HCM seeders
+export {
+  seedAllHCMData,
+  seedShifts,
+  seedLeaveTypes,
+  seedLeaveBalances,
+  seedLeaves,
+  seedDocumentCategories,
+  seedEmployeeDocuments,
+  seedMeetings,
+  seedTimeEntries,
+  seedAttendance,
+  seedNotifications,
+  seedFeedback,
+} from "./comprehensive.seeder.js";
+
 export {
   alterEmployeeData,
   startHrmsApplication,

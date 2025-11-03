@@ -37,11 +37,36 @@ import {
   leaveBalance,
 } from "./routes/index.routes.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
+
+// ========================================
+// 🌱 DATA SEEDERS (Uncomment to use)
+// ========================================
 // import {
+//   // Comprehensive HCM Seeders - Seeds all new modules at once
+//   seedAllHCMData,
+//   
+//   // Individual HCM Seeders - Use for targeted seeding
+//   seedShifts,
+//   seedLeaveTypes,
+//   seedLeaveBalances,
+//   seedLeaves,
+//   seedDocumentCategories,
+//   seedEmployeeDocuments,
+//   seedMeetings,
+//   seedTimeEntries,
+//   seedAttendance,
+//   seedNotifications,
+//   seedFeedback,
+//   
+//   // Legacy Seeders
 //   deleteAllPayrollRecords,
 //   generatePayrollDataForYear,
 //   generatePayrollDataForMonths,
-//   deleteTodayAttendanceRecords
+//   deleteTodayAttendanceRecords,
+//   generateTerminationData,
+//   generateComplaintData,
+//   generateHolidayData,
+//   generateAnnouncementData,
 // } from "./seeders/index.js";
 
 const app = express();
@@ -85,10 +110,35 @@ cloudinary.v2.config({
   secure: true,
 });
 
-// deleteAllPayrollRecords()
-// deleteTodayAttendanceRecords()
-// generatePayrollDataForMonths(8)
-// generatePayrollDataForYear(2025)
+// ========================================
+// 🌱 RUN SEEDERS (Uncomment what you need)
+// ========================================
+// 
+// Seed ALL HCM modules at once (recommended for fresh setup):
+// seedAllHCMData();
+//
+// OR seed individual modules:
+// seedShifts();
+// seedLeaveTypes();
+// seedLeaveBalances();
+// seedLeaves();
+// seedDocumentCategories();
+// seedEmployeeDocuments();
+// seedMeetings();
+// seedTimeEntries();
+// seedAttendance();
+// seedNotifications();
+// seedFeedback();
+// generateHolidayData();
+// generateAnnouncementData();
+// generateComplaintData();
+// generateTerminationData();
+//
+// Legacy seeders:
+// deleteAllPayrollRecords();
+// deleteTodayAttendanceRecords();
+// generatePayrollDataForMonths(8);
+// generatePayrollDataForYear(2025);
 
 app.use("/api/roles", role);
 app.use("/api/leaves", leave);
