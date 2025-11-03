@@ -14,7 +14,7 @@ import {
 const initialState = {
   activeEntry: null,
   myEntries: [],
-  allEntries: [],
+  allTimeEntries: [],
   loading: false,
   error: null,
 };
@@ -126,7 +126,7 @@ const timeEntrySlice = createSlice({
       })
       .addCase(getAllTimeEntries.fulfilled, (state, action) => {
         state.loading = false;
-        state.allEntries = action.payload.data;
+        state.allTimeEntries = action.payload.data;
       })
       .addCase(getAllTimeEntries.rejected, (state, action) => {
         state.loading = false;
@@ -135,17 +135,17 @@ const timeEntrySlice = createSlice({
       
       // Approve time entry
       .addCase(approveTimeEntry.fulfilled, (state, action) => {
-        const index = state.allEntries.findIndex(e => e._id === action.payload.data._id);
+        const index = state.allTimeEntries.findIndex(e => e._id === action.payload.data._id);
         if (index !== -1) {
-          state.allEntries[index] = action.payload.data;
+          state.allTimeEntries[index] = action.payload.data;
         }
       })
       
       // Reject time entry
       .addCase(rejectTimeEntry.fulfilled, (state, action) => {
-        const index = state.allEntries.findIndex(e => e._id === action.payload.data._id);
+        const index = state.allTimeEntries.findIndex(e => e._id === action.payload.data._id);
         if (index !== -1) {
-          state.allEntries[index] = action.payload.data;
+          state.allTimeEntries[index] = action.payload.data;
         }
       });
   },

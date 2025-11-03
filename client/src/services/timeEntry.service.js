@@ -134,9 +134,9 @@ export const approveTimeEntry = createAsyncThunk(
 // Reject time entry (admin)
 export const rejectTimeEntry = createAsyncThunk(
   "timeEntry/reject",
-  async ({ id, notes }, { rejectWithValue }) => {
+  async ({ id, reason, adminNotes }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/time-entries/${id}/reject`, { notes });
+      const response = await api.patch(`/time-entries/${id}/reject`, { reason, adminNotes });
       return response.data;
     } catch (error) {
       return rejectWithValue(

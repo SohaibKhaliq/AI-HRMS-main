@@ -40,6 +40,23 @@ const sidebarLinks = [
     childrens: [
       { name: "Leave Requests", link: "/leaves" },
       { name: "On-Leave Employees", link: "/leave/active" },
+      { name: "Leave Types", link: "/leave-types" },
+    ],
+  },
+  {
+    name: "Time & Shift Management",
+    iconClass: "far fa-clock",
+    childrens: [
+      { name: "Time Tracking", link: "/time-tracking" },
+      { name: "Shifts", link: "/shifts" },
+    ],
+  },
+  {
+    name: "Meetings & Documents",
+    iconClass: "far fa-calendar-check",
+    childrens: [
+      { name: "Meetings", link: "/meetings" },
+      { name: "Document Categories", link: "/document-categories" },
     ],
   },
   {

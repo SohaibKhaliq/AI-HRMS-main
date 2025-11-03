@@ -46,6 +46,7 @@ const Shift = lazy(() => import("../admin/shift/Shift"));
 const Meeting = lazy(() => import("../admin/meeting/Meeting"));
 const LeaveType = lazy(() => import("../admin/leaveType/LeaveType"));
 const DocumentCategory = lazy(() => import("../admin/documentCategory/DocumentCategory"));
+const AdminTimeTracking = lazy(() => import("../admin/timeTracking/AdminTimeTracking"));
 
 const AdminApp = () => {
   const dispatch = useDispatch();
@@ -103,6 +104,7 @@ const AdminApp = () => {
             <Route path="/meetings" element={<Meeting />} />
             <Route path="/leave-types" element={<LeaveType />} />
             <Route path="/document-categories" element={<DocumentCategory />} />
+            <Route path="/time-tracking" element={<AdminTimeTracking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
