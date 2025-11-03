@@ -11,11 +11,79 @@ import TimeEntry from "../models/timeEntry.model.js";
 import Notification from "../models/notification.model.js";
 import Attendance from "../models/attendance.model.js";
 import Feedback from "../models/feedback.model.js";
+import bcrypt from "bcrypt";
 
 /**
  * Comprehensive HRMS Data Seeder
  * Seeds all major modules with realistic sample data
  */
+
+export const seedAdditionalEmployees = async () => {
+  try {
+    const existingEmployees = await Employee.countDocuments();
+    if (existingEmployees >= 10) {
+      console.log("✓ Sufficient employees already exist, skipping...");
+      return;
+    }
+
+    const departments = await Department.find().limit(3);
+    const Role = (await import("../models/role.model.js")).default;
+    const Designation = (await import("../models/designation.model.js")).default;
+    
+    const employeeRole = await Role.findOne({ name: "Employee" });
+    const designations = await Designation.find().limit(3);
+    const shifts = await Shift.find().limit(3);
+
+    if (!employeeRole || departments.length === 0 || designations.length === 0) {
+      console.log("✗ Missing required data for employee seeding (roles, departments, designations)");
+      return;
+    }
+
+    const firstNames = ["Ahmed", "Fatima", "Ali", "Ayesha", "Hassan", "Zainab", "Usman", "Khadija", "Bilal", "Maryam"];
+    const lastNames = ["Khan", "Ahmed", "Ali", "Hussain", "Hassan", "Malik", "Sheikh", "Raza", "Iqbal", "Siddiqui"];
+    
+    const employees = [];
+    const employeeIdStart = 101;
+
+    for (let i = 0; i < 10; i++) {
+      const firstName = firstNames[i % firstNames.length];
+      const lastName = lastNames[i % lastNames.length];
+      const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@company.com`;
+      
+      employees.push({
+        employeeId: String(employeeIdStart + i),
+        name: `${firstName} ${lastName}`,
+        email,
+        password: await bcrypt.hash("password123", 10),
+        department: departments[i % departments.length]._id,
+        designation: designations[i % designations.length]._id,
+        role: employeeRole._id,
+        shift: shifts.length > 0 ? shifts[i % shifts.length]._id : null,
+        phoneNumber: `+92300${Math.floor(1000000 + Math.random() * 9000000)}`,
+        dob: new Date(1990 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+        gender: i % 2 === 0 ? "Male" : "Female",
+        martialStatus: i % 3 === 0 ? "Married" : "Single",
+        dateOfJoining: new Date(2020 + Math.floor(Math.random() * 4), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+        employmentType: ["Full-Time", "Part-Time", "Contract"][i % 3],
+        status: "Active",
+        address: {
+          street: `House ${Math.floor(Math.random() * 100)}, Street ${Math.floor(Math.random() * 50)}`,
+          city: ["Lahore", "Karachi", "Islamabad"][i % 3],
+          state: ["Punjab", "Sindh", "ICT"][i % 3],
+          postalCode: String(54000 + Math.floor(Math.random() * 1000)),
+          country: "Pakistan",
+        },
+        salary: 50000 + Math.floor(Math.random() * 50000),
+        admin: false,
+      });
+    }
+
+    await Employee.insertMany(employees);
+    console.log(`✓ Successfully seeded ${employees.length} additional employees`);
+  } catch (error) {
+    console.error("✗ Error seeding additional employees:", error.message);
+  }
+};
 
 export const seedShifts = async () => {
   try {
@@ -93,105 +161,116 @@ export const seedLeaveTypes = async () => {
         name: "Annual Leave",
         code: "AL",
         description: "Paid annual vacation leave for all employees",
-        defaultDays: 20,
-        maxDays: 30,
+        maxDaysPerYear: 20,
         carryForward: true,
-        carryForwardDays: 10,
+        carryForwardLimit: 10,
         requiresApproval: true,
         isPaid: true,
         isActive: true,
         color: "#3B82F6",
+        minDaysNotice: 3,
+        allowHalfDay: true,
       },
       {
         name: "Sick Leave",
         code: "SL",
         description: "Leave for medical illness and recovery",
-        defaultDays: 12,
-        maxDays: 15,
+        maxDaysPerYear: 12,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
+        requiresDocument: true,
         isPaid: true,
         isActive: true,
         color: "#EF4444",
+        minDaysNotice: 0,
+        allowHalfDay: true,
       },
       {
         name: "Casual Leave",
         code: "CL",
         description: "Short-term leave for personal matters",
-        defaultDays: 10,
-        maxDays: 12,
+        maxDaysPerYear: 10,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
         isPaid: true,
         isActive: true,
         color: "#10B981",
+        minDaysNotice: 1,
+        allowHalfDay: true,
       },
       {
         name: "Maternity Leave",
         code: "ML",
         description: "Paid leave for expecting mothers",
-        defaultDays: 90,
-        maxDays: 180,
+        maxDaysPerYear: 90,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
+        requiresDocument: true,
         isPaid: true,
         isActive: true,
         color: "#EC4899",
+        minDaysNotice: 30,
+        allowHalfDay: false,
       },
       {
         name: "Paternity Leave",
         code: "PL",
         description: "Leave for new fathers",
-        defaultDays: 15,
-        maxDays: 21,
+        maxDaysPerYear: 15,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
+        requiresDocument: true,
         isPaid: true,
         isActive: true,
         color: "#8B5CF6",
+        minDaysNotice: 15,
+        allowHalfDay: false,
       },
       {
         name: "Unpaid Leave",
         code: "UL",
         description: "Leave without pay for extended personal needs",
-        defaultDays: 0,
-        maxDays: 90,
+        maxDaysPerYear: 90,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
         isPaid: false,
         isActive: true,
         color: "#6B7280",
+        minDaysNotice: 7,
+        allowHalfDay: true,
       },
       {
         name: "Bereavement Leave",
         code: "BL",
         description: "Compassionate leave for family loss",
-        defaultDays: 5,
-        maxDays: 7,
+        maxDaysPerYear: 5,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
         isPaid: true,
         isActive: true,
         color: "#1F2937",
+        minDaysNotice: 0,
+        allowHalfDay: false,
       },
       {
         name: "Study Leave",
         code: "STL",
         description: "Leave for professional development and exams",
-        defaultDays: 7,
-        maxDays: 15,
+        maxDaysPerYear: 7,
         carryForward: false,
-        carryForwardDays: 0,
+        carryForwardLimit: 0,
         requiresApproval: true,
         isPaid: true,
         isActive: true,
         color: "#F59E0B",
+        minDaysNotice: 14,
+        allowHalfDay: true,
       },
     ];
 
@@ -223,19 +302,20 @@ export const seedLeaveBalances = async () => {
 
     for (const employee of employees) {
       for (const leaveType of leaveTypes) {
-        const used = Math.floor(Math.random() * (leaveType.defaultDays / 2));
+        const totalAllotted = leaveType.maxDaysPerYear || 15;
+        const used = Math.floor(Math.random() * (totalAllotted / 3));
         const pending = Math.floor(Math.random() * 3);
-        const available = leaveType.defaultDays - used - pending;
+        const carriedForward = Math.floor(Math.random() * 5);
 
         balances.push({
           employee: employee._id,
           leaveType: leaveType._id,
           year: currentYear,
-          allocated: leaveType.defaultDays,
+          totalAllotted,
           used,
           pending,
-          available: Math.max(0, available),
-          carriedForward: leaveType.carryForward ? Math.floor(Math.random() * 5) : 0,
+          carriedForward,
+          // available will be calculated by pre-save hook
         });
       }
     }
@@ -283,23 +363,26 @@ export const seedLeaves = async () => {
       const employee = employees[Math.floor(Math.random() * employees.length)];
       const leaveType = leaveTypes[Math.floor(Math.random() * leaveTypes.length)];
       
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() + Math.floor(Math.random() * 60) - 30);
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() + Math.floor(Math.random() * 60) - 30);
       
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + Math.floor(Math.random() * 5) + 1);
+      const toDate = new Date(fromDate);
+      toDate.setDate(toDate.getDate() + Math.floor(Math.random() * 5) + 1);
       
-      const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+      const duration = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
 
       leaves.push({
         employee: employee._id,
         leaveType: leaveType._id,
-        startDate,
-        endDate,
-        days,
+        fromDate,
+        toDate,
+        duration,
         reason: reasons[Math.floor(Math.random() * reasons.length)],
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        appliedDate: new Date(startDate.getTime() - 1000 * 60 * 60 * 24 * 3),
+        status,
+        appliedOn: new Date(fromDate.getTime() - 1000 * 60 * 60 * 24 * 3),
+        approvedBy: status === "Approved" ? employees[0]._id : null,
+        approvedOn: status === "Approved" ? new Date() : null,
       });
     }
 
@@ -392,7 +475,7 @@ export const seedEmployeeDocuments = async () => {
       return;
     }
 
-    const statuses = ["Pending", "Verified", "Rejected"];
+    const statuses = ["pending", "verified", "rejected"];
     const documents = [];
 
     for (const employee of employees) {
@@ -403,17 +486,25 @@ export const seedEmployeeDocuments = async () => {
         .slice(0, numDocs);
 
       for (const category of selectedCategories) {
+        const fileName = `${category.name.replace(/\s+/g, '_')}_${employee.employeeId}.pdf`;
         documents.push({
           employee: employee._id,
           category: category._id,
-          documentName: `${category.name} - ${employee.name}`,
-          documentUrl: `https://example.com/documents/${employee.employeeId}/${category.name.replace(/\s+/g, '_')}.pdf`,
-          uploadDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          title: `${category.name} - ${employee.name}`,
+          description: `Official ${category.name} for ${employee.name}`,
+          fileUrl: `https://example.com/documents/${employee.employeeId}/${fileName}`,
+          fileName: fileName,
+          fileSize: Math.floor(Math.random() * 5000000) + 100000, // 100KB to 5MB
+          fileType: "application/pdf",
+          uploadedBy: employee._id,
+          issueDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
           expiryDate: category.name.includes("Identity") 
             ? new Date(Date.now() + 365 * 5 * 24 * 60 * 60 * 1000) // 5 years
             : null,
           status: statuses[Math.floor(Math.random() * statuses.length)],
-          remarks: Math.random() > 0.5 ? "Document verified and approved" : "",
+          verifiedBy: Math.random() > 0.5 ? employees[0]._id : null,
+          verifiedAt: Math.random() > 0.5 ? new Date() : null,
+          tags: category.required ? ["required", "official"] : ["optional"],
         });
       }
     }
@@ -446,7 +537,7 @@ export const seedMeetings = async () => {
       "Sprint Planning - Project Alpha",
       "Client Presentation Rehearsal",
       "Team Building Activity Planning",
-      "Budget Discussion 2024",
+      "Budget Discussion 2025",
       "New Hire Onboarding Session",
       "Marketing Strategy Brainstorm",
       "Product Roadmap Review",
@@ -455,7 +546,7 @@ export const seedMeetings = async () => {
     ];
 
     const meetingTypes = ["In-Person", "Virtual", "Hybrid"];
-    const statuses = ["Scheduled", "Completed", "Cancelled", "Rescheduled"];
+    const statuses = ["scheduled", "completed", "cancelled"];
 
     const meetings = [];
 
@@ -469,8 +560,8 @@ export const seedMeetings = async () => {
         .slice(0, Math.min(numParticipants, employees.length))
         .map(emp => ({
           employee: emp._id,
-          rsvpStatus: ["Accepted", "Declined", "Pending"][Math.floor(Math.random() * 3)],
-          responseDate: Math.random() > 0.3 ? new Date() : null,
+          status: ["pending", "accepted", "declined"][Math.floor(Math.random() * 3)],
+          attendance: "not_marked",
         }));
 
       const startTime = new Date();
@@ -480,6 +571,8 @@ export const seedMeetings = async () => {
       const endTime = new Date(startTime);
       endTime.setHours(endTime.getHours() + Math.floor(Math.random() * 2) + 1);
 
+      const meetingType = meetingTypes[Math.floor(Math.random() * meetingTypes.length)];
+
       meetings.push({
         title: meetingTitles[i % meetingTitles.length],
         description: `Important ${meetingTitles[i % meetingTitles.length]} discussion. Please review the agenda beforehand.`,
@@ -487,16 +580,16 @@ export const seedMeetings = async () => {
         participants,
         startTime,
         endTime,
-        location: meetingTypes[Math.floor(Math.random() * meetingTypes.length)] === "In-Person"
+        location: meetingType === "In-Person"
           ? `Conference Room ${String.fromCharCode(65 + Math.floor(Math.random() * 5))}`
-          : null,
-        meetingLink: meetingTypes[Math.floor(Math.random() * meetingTypes.length)] !== "In-Person"
+          : meetingType === "Hybrid" ? "Main Office - Conference Hall" : "",
+        meetingLink: meetingType !== "In-Person"
           ? `https://meet.example.com/room-${Math.random().toString(36).substring(7)}`
-          : null,
-        meetingType: meetingTypes[Math.floor(Math.random() * meetingTypes.length)],
+          : "",
         agenda: "1. Opening remarks\n2. Main discussion points\n3. Action items\n4. Q&A\n5. Closing",
         status: statuses[Math.floor(Math.random() * statuses.length)],
-        reminderSent: Math.random() > 0.5,
+        isRecurring: Math.random() > 0.7,
+        recurrencePattern: Math.random() > 0.7 ? ["daily", "weekly", "monthly"][Math.floor(Math.random() * 3)] : "none",
       });
     }
 
@@ -523,7 +616,7 @@ export const seedTimeEntries = async () => {
     }
 
     const entries = [];
-    const statuses = ["Approved", "Pending", "Rejected"];
+    const statuses = ["approved", "pending", "rejected"];
 
     // Create entries for the past 14 days
     for (let day = 14; day >= 0; day--) {
@@ -557,15 +650,18 @@ export const seedTimeEntries = async () => {
 
           const totalMinutes = (clockOut - clockIn) / (1000 * 60) - totalBreakMinutes;
 
+          const statusValue = day < 7 ? statuses[Math.floor(Math.random() * statuses.length)] : "approved";
           entries.push({
             employee: employee._id,
             date,
             clockIn,
             clockOut,
             breaks,
-            totalHours: (totalMinutes / 60).toFixed(2),
-            status: day < 7 ? statuses[Math.floor(Math.random() * statuses.length)] : "Approved",
+            totalHours: parseFloat((totalMinutes / 60).toFixed(2)),
+            status: statusValue,
             notes: Math.random() > 0.7 ? "Worked on urgent project deliverables" : "",
+            approvedBy: statusValue === "approved" ? employees[0]._id : null,
+            approvedAt: statusValue === "approved" ? new Date() : null,
           });
         }
       }
@@ -594,7 +690,7 @@ export const seedAttendance = async () => {
     }
 
     const records = [];
-    const statuses = ["Present", "Absent", "Late", "Half Day"];
+    const statuses = ["Present", "Absent", "Late", "Half-Day"];
 
     // Create attendance for the past 30 days
     for (let day = 30; day >= 0; day--) {
@@ -607,20 +703,27 @@ export const seedAttendance = async () => {
       for (const employee of employees) {
         const status = statuses[Math.floor(Math.random() * 100) < 85 ? 0 : Math.floor(Math.random() * statuses.length)];
         
-        const checkIn = new Date(date);
-        checkIn.setHours(9 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60));
+        const checkInTime = new Date(date);
+        checkInTime.setHours(9 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60));
 
-        const checkOut = status === "Half Day" 
-          ? new Date(checkIn.getTime() + 4 * 60 * 60 * 1000)
-          : new Date(checkIn.getTime() + 8 * 60 * 60 * 1000 + Math.random() * 2 * 60 * 60 * 1000);
+        const checkOutTime = status === "Half-Day" 
+          ? new Date(checkInTime.getTime() + 4 * 60 * 60 * 1000)
+          : new Date(checkInTime.getTime() + 8 * 60 * 60 * 1000 + Math.random() * 2 * 60 * 60 * 1000);
+
+        const workHours = status !== "Absent" 
+          ? ((checkOutTime - checkInTime) / (1000 * 60 * 60)).toFixed(2) 
+          : 0;
 
         records.push({
           employee: employee._id,
           date,
           status,
-          checkIn: status !== "Absent" ? checkIn : null,
-          checkOut: status !== "Absent" ? checkOut : null,
-          remarks: status === "Absent" ? "Unplanned absence" : status === "Late" ? "Traffic delay" : "",
+          checkIn: status !== "Absent" ? { time: checkInTime, method: "legacy" } : { time: null, method: "legacy" },
+          checkOut: status !== "Absent" ? { time: checkOutTime, method: "legacy" } : { time: null, method: "legacy" },
+          workHours: parseFloat(workHours),
+          isLate: status === "Late",
+          lateByMinutes: status === "Late" ? Math.floor(Math.random() * 30) + 5 : 0,
+          notes: status === "Absent" ? "Unplanned absence" : status === "Late" ? "Traffic delay" : "",
         });
       }
     }
@@ -648,18 +751,19 @@ export const seedNotifications = async () => {
     }
 
     const notificationTypes = [
-      "Leave Request Approved",
-      "Meeting Scheduled",
-      "Document Uploaded",
-      "Performance Review Due",
-      "Payroll Processed",
-      "Time Entry Reminder",
-      "Policy Update",
-      "Birthday Wish",
-      "Task Assignment",
-      "System Maintenance",
+      { type: "leave", title: "Leave Request Update" },
+      { type: "meeting", title: "Meeting Scheduled" },
+      { type: "document", title: "Document Uploaded" },
+      { type: "performance", title: "Performance Review Due" },
+      { type: "payroll", title: "Payroll Processed" },
+      { type: "attendance", title: "Attendance Reminder" },
+      { type: "announcement", title: "New Announcement" },
+      { type: "general", title: "System Notification" },
+      { type: "feedback", title: "Feedback Received" },
+      { type: "holiday", title: "Upcoming Holiday" },
     ];
 
+    const priorities = ["low", "medium", "high", "urgent"];
     const notifications = [];
 
     for (const employee of employees) {
@@ -667,15 +771,17 @@ export const seedNotifications = async () => {
       const numNotifications = Math.floor(Math.random() * 5) + 3;
 
       for (let i = 0; i < numNotifications; i++) {
-        const type = notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
+        const notif = notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
+        const isRead = Math.random() > 0.5;
         
         notifications.push({
           recipient: employee._id,
-          type,
-          title: type,
-          message: `You have a new notification regarding: ${type}. Please check your dashboard for details.`,
-          isRead: Math.random() > 0.5,
-          priority: ["Low", "Medium", "High"][Math.floor(Math.random() * 3)],
+          type: notif.type,
+          title: notif.title,
+          message: `You have a new notification regarding: ${notif.title}. Please check your dashboard for details.`,
+          read: isRead,
+          readAt: isRead ? new Date() : null,
+          priority: priorities[Math.floor(Math.random() * priorities.length)],
           createdAt: new Date(Date.now() - Math.random() * 15 * 24 * 60 * 60 * 1000),
         });
       }
@@ -703,42 +809,45 @@ export const seedFeedback = async () => {
       return;
     }
 
-    const feedbackTopics = [
-      "Work Environment",
-      "Management Support",
-      "Team Collaboration",
-      "Career Growth",
-      "Work-Life Balance",
-      "Training Opportunities",
-      "Compensation & Benefits",
-      "Communication",
+    const feedbackReviews = [
+      "Quarterly Performance Review",
+      "Project Completion Feedback",
+      "Team Collaboration Assessment",
+      "Leadership Skills Evaluation",
+      "Technical Skills Review",
+      "Communication Skills Feedback",
+    ];
+
+    const feedbackDescriptions = [
+      "Employee has consistently demonstrated strong work ethic and dedication to project deliverables.",
+      "Shows excellent collaboration skills and willingness to help team members.",
+      "Could improve time management and prioritization of tasks.",
+      "Demonstrates good technical knowledge and problem-solving abilities.",
+      "Actively participates in team meetings and contributes valuable ideas.",
+      "Maintains professional conduct and adheres to company policies.",
+    ];
+
+    const feedbackSuggestions = [
+      "Continue with current performance level. Consider taking on more leadership responsibilities.",
+      "Attend time management workshops to improve productivity.",
+      "Focus on developing technical skills through online courses and certifications.",
+      "Improve communication with stakeholders and provide regular project updates.",
+      "Seek mentorship opportunities to enhance leadership skills.",
+      "Maintain work-life balance while meeting project deadlines.",
     ];
 
     const feedbacks = [];
 
     for (let i = 0; i < 15; i++) {
-      const fromEmployee = employees[Math.floor(Math.random() * employees.length)];
-      let toEmployee = employees[Math.floor(Math.random() * employees.length)];
-      
-      // Ensure from and to are different
-      while (toEmployee._id.equals(fromEmployee._id)) {
-        toEmployee = employees[Math.floor(Math.random() * employees.length)];
-      }
-
-      const rating = Math.floor(Math.random() * 3) + 3; // 3-5 stars
+      const employee = employees[i % employees.length];
+      const rating = Math.floor(Math.random() * 3) + 3; // 3-5 rating
 
       feedbacks.push({
-        from: fromEmployee._id,
-        to: toEmployee._id,
-        feedbackType: Math.random() > 0.5 ? "Peer" : "Manager",
-        subject: feedbackTopics[Math.floor(Math.random() * feedbackTopics.length)],
-        message: rating >= 4 
-          ? "Great work! Your contributions have been valuable to the team."
-          : "There's room for improvement. Let's discuss how I can support you better.",
+        employee: employee._id,
+        review: feedbackReviews[Math.floor(Math.random() * feedbackReviews.length)],
         rating,
-        isAnonymous: Math.random() > 0.7,
-        status: ["Pending", "Reviewed", "Acknowledged"][Math.floor(Math.random() * 3)],
-        createdAt: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000),
+        description: feedbackDescriptions[Math.floor(Math.random() * feedbackDescriptions.length)],
+        suggestion: feedbackSuggestions[Math.floor(Math.random() * feedbackSuggestions.length)],
       });
     }
 
@@ -746,6 +855,220 @@ export const seedFeedback = async () => {
     console.log(`✓ Successfully seeded ${feedbacks.length} feedback entries`);
   } catch (error) {
     console.error("✗ Error seeding feedback:", error.message);
+  }
+};
+
+export const seedRecruitmentData = async () => {
+  try {
+    const JobCategory = (await import("../models/jobCategory.model.js")).default;
+    const JobType = (await import("../models/jobType.model.js")).default;
+    const JobLocation = (await import("../models/jobLocation.model.js")).default;
+    const Recruitment = (await import("../models/recruitment.model.js")).default;
+
+    // Check if already seeded
+    const existingJobs = await Recruitment.countDocuments();
+    if (existingJobs > 5) {
+      console.log("✓ Recruitment data already exists, skipping...");
+      return;
+    }
+
+    // Seed Job Categories (check for existing to avoid duplicate key errors)
+    let categories = await JobCategory.find();
+    if (categories.length === 0) {
+      categories = await JobCategory.insertMany([
+        { name: "Engineering", description: "Software and technical roles" },
+        { name: "Marketing", description: "Marketing and branding positions" },
+        { name: "Sales", description: "Sales and business development" },
+        { name: "Human Resources", description: "HR and talent management" },
+        { name: "Finance", description: "Accounting and finance roles" },
+      ]);
+    }
+
+    // Seed Job Types (check for existing)
+    let types = await JobType.find();
+    if (types.length === 0) {
+      types = await JobType.insertMany([
+        { name: "Full-Time", description: "Permanent full-time position" },
+        { name: "Part-Time", description: "Part-time employment" },
+        { name: "Contract", description: "Fixed-term contract" },
+        { name: "Internship", description: "Internship program" },
+      ]);
+    }
+
+    // Seed Job Locations (check for existing)
+    let locations = await JobLocation.find();
+    if (locations.length === 0) {
+      locations = await JobLocation.insertMany([
+        { name: "Lahore Office", description: "Main office in Lahore" },
+        { name: "Karachi Office", description: "Branch office in Karachi" },
+        { name: "Remote", description: "Work from anywhere" },
+        { name: "Islamabad Office", description: "Capital office" },
+      ]);
+    }
+
+    const employees = await Employee.find({ admin: true }).limit(2);
+    const departments = await Department.find().limit(3);
+
+    if (employees.length === 0 || departments.length === 0) {
+      console.log("✗ No employees or departments for recruitment");
+      return;
+    }
+
+    // Create job postings
+    const jobs = [
+      {
+        title: "Senior Software Engineer",
+        department: departments[0]._id,
+        location: "Lahore Office - Main Campus",
+        type: "Full-time",
+        minSalary: "80,000 PKR",
+        maxSalary: "120,000 PKR",
+        description: "Looking for experienced software engineers proficient in MERN stack. Bachelor's degree in CS, 3+ years experience, React/Node.js expertise required. Responsibilities include developing and maintaining web applications, mentoring junior developers.",
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        status: "Open",
+        postedBy: employees[0]._id,
+      },
+      {
+        title: "Marketing Manager",
+        department: departments[1]._id,
+        location: "Lahore Office",
+        type: "Full-time",
+        minSalary: "100,000 PKR",
+        maxSalary: "150,000 PKR",
+        description: "Lead marketing initiatives and brand strategy. MBA preferred, proven track record in digital marketing. Develop marketing campaigns, manage team, analyze metrics. Performance bonuses, health insurance, gym membership included.",
+        deadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+        status: "Open",
+        postedBy: employees[0]._id,
+      },
+      {
+        title: "HR Intern",
+        department: departments[2]._id,
+        location: "Remote",
+        type: "Contract",
+        minSalary: "25,000 PKR",
+        maxSalary: "35,000 PKR",
+        description: "Internship opportunity in Human Resources. Recent graduate in HR or related field. Assist in recruitment, maintain employee records, organize events. Learning opportunity with potential full-time offer.",
+        deadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
+        status: "Open",
+        postedBy: employees[0]._id,
+      },
+      {
+        title: "Part-time Sales Associate",
+        department: departments[0]._id,
+        location: "Karachi Office",
+        type: "Part-time",
+        minSalary: "30,000 PKR",
+        maxSalary: "45,000 PKR",
+        description: "Part-time sales position for weekends and evenings. Great communication skills required. Handle customer inquiries, process sales, maintain inventory.",
+        deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+        status: "Open",
+        postedBy: employees[0]._id,
+      },
+    ];
+
+    await Recruitment.insertMany(jobs);
+    console.log("✓ Successfully seeded recruitment data (categories, types, locations, jobs)");
+  } catch (error) {
+    console.error("✗ Error seeding recruitment data:", error.message);
+  }
+};
+
+export const seedPerformanceReviews = async () => {
+  try {
+    const Performance = (await import("../models/performance.model.js")).default;
+    
+    const existingReviews = await Performance.countDocuments();
+    if (existingReviews > 10) {
+      console.log("✓ Performance reviews already exist, skipping...");
+      return;
+    }
+
+    const employees = await Employee.find({ status: "Active", admin: false }).limit(10);
+    
+    if (employees.length === 0) {
+      console.log("✗ No employees found for performance reviews");
+      return;
+    }
+
+    const reviews = [];
+
+    for (const employee of employees) {
+      const attendanceScore = 85 + Math.floor(Math.random() * 15); // 85-100
+      const performanceRating = 3 + Math.random() * 2; // 3-5
+
+      reviews.push({
+        employee: employee._id,
+        reviewPeriod: {
+          startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+          endDate: new Date(),
+        },
+        kpis: {
+          attendance: attendanceScore,
+          rating: performanceRating,
+          projectCompletion: 70 + Math.floor(Math.random() * 30),
+          teamwork: 3 + Math.random() * 2,
+          communication: 3 + Math.random() * 2,
+        },
+        kpiScore: (attendanceScore * 0.3 + performanceRating * 20 * 0.7),
+        feedback: performanceRating >= 4 
+          ? "Excellent performance. Consistently meets and exceeds expectations."
+          : "Good performance with room for improvement in some areas.",
+        goals: "Continue professional development, take on leadership responsibilities",
+        status: "Completed",
+      });
+    }
+
+    await Performance.insertMany(reviews);
+    console.log(`✓ Successfully seeded ${reviews.length} performance reviews`);
+  } catch (error) {
+    console.error("✗ Error seeding performance reviews:", error.message);
+  }
+};
+
+export const seedUpdates = async () => {
+  try {
+    const Update = (await import("../models/update.model.js")).default;
+    
+    const existingUpdates = await Update.countDocuments();
+    if (existingUpdates > 5) {
+      console.log("✓ Employee updates already exist, skipping...");
+      return;
+    }
+
+    const employees = await Employee.find({ status: "Active", admin: false }).limit(5);
+    
+    if (employees.length === 0) {
+      console.log("✗ No employees found for updates");
+      return;
+    }
+
+    const updateTypes = [
+      "Promotion",
+      "Transfer",
+      "Department Change",
+      "Role Change",
+      "Salary Adjustment",
+      "Status Change",
+    ];
+
+    const statuses = [
+      "Pending Approval",
+      "Approved",
+      "Implemented",
+      "Rejected",
+    ];
+
+    const updates = employees.map((employee, index) => ({
+      employee: employee._id,
+      type: updateTypes[index % updateTypes.length],
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      remarks: `Employee ${updateTypes[index % updateTypes.length].toLowerCase()} processed. Updated effective from ${new Date().toLocaleDateString()}.`,
+    }));
+
+    await Update.insertMany(updates);
+    console.log(`✓ Successfully seeded ${updates.length} employee updates`);
+  } catch (error) {
+    console.error("✗ Error seeding employee updates:", error.message);
   }
 };
 
@@ -758,6 +1081,7 @@ export const seedAllHCMData = async () => {
   console.log("========================================\n");
 
   try {
+    await seedAdditionalEmployees(); // Seed more employees first for testing
     await seedShifts();
     await seedLeaveTypes();
     await seedLeaveBalances();
@@ -769,6 +1093,9 @@ export const seedAllHCMData = async () => {
     await seedAttendance();
     await seedNotifications();
     await seedFeedback();
+    await seedRecruitmentData();
+    await seedPerformanceReviews();
+    await seedUpdates();
 
     console.log("\n========================================");
     console.log("✅ Comprehensive HCM Data Seeding Complete!");
@@ -780,6 +1107,7 @@ export const seedAllHCMData = async () => {
 
 // Export individual seeders for selective use
 export default {
+  seedAdditionalEmployees,
   seedShifts,
   seedLeaveTypes,
   seedLeaveBalances,
@@ -791,5 +1119,8 @@ export default {
   seedAttendance,
   seedNotifications,
   seedFeedback,
+  seedRecruitmentData,
+  seedPerformanceReviews,
+  seedUpdates,
   seedAllHCMData,
 };

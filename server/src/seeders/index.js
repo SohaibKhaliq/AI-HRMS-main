@@ -11,48 +11,89 @@ import Attendance from "../models/attendance.model.js";
 
 const startHrmsApplication = async () => {
   try {
-    // First create the role
-    const role = await Role.create({
-      name: "Supervisor",
-      description: "Dummy data entry of position by seeder function",
-    });
+    // Check if super user already exists and update credentials
+    const existingSuperUser = await Employee.findOne({ employeeId: "000" });
+    if (existingSuperUser) {
+      console.log("✓ Super user found, updating credentials and required fields...");
+      await Employee.findByIdAndUpdate(existingSuperUser._id, {
+        email: "admin@gmail.com",
+        password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", // 12345678
+        admin: true,
+        gender: existingSuperUser.gender || "Male",
+        martialStatus: existingSuperUser.martialStatus || "Single",
+        employmentType: existingSuperUser.employmentType || "Full-Time",
+      });
+      console.log("✓ Super user credentials updated: admin@gmail.com / 12345678");
+      return;
+    }
 
-    // Create the employee without department first
+    // Find or create the role
+    let role = await Role.findOne({ name: "Supervisor" });
+    if (!role) {
+      role = await Role.create({
+        name: "Supervisor",
+        description: "Supervisor role with full system access",
+      });
+    }
+
+    // Create additional roles if they don't exist
+    if (!(await Role.findOne({ name: "Manager" }))) {
+      await Role.create({
+        name: "Manager",
+        description: "Department manager with administrative privileges",
+      });
+    }
+
+    if (!(await Role.findOne({ name: "Employee" }))) {
+      await Role.create({
+        name: "Employee",
+        description: "Regular employee with standard access",
+      });
+    }
+
+    if (!(await Role.findOne({ name: "HR" }))) {
+      await Role.create({
+        name: "HR",
+        description: "Human Resources personnel with HR-specific access",
+      });
+    }
+
+    // Create the SUPER USER with specified credentials
+    // Email: admin@gmail.com, Password: 12345678 (bcrypt hash)
     const employee = await Employee.create({
       employeeId: "000",
-      name: "Admin",
-      dob: "1990-05-15T00:00:00.000Z",
+      name: "Super Admin",
+      dob: "1985-01-01T00:00:00.000Z",
       email: "admin@gmail.com",
-      password: "$2b$10$k.1v4SeBsR.UYT4chI/O8OTkK5CO.MilaR8yCACtodqTZKm429rWG",
+      password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", // 12345678
       profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
       qrCode: "",
       phoneNumber: "+1234567890",
       address: {
-        street: "Kachupura",
+        street: "HQ Building",
         city: "Lahore",
         state: "Punjab",
-        postalCode: "10001",
+        postalCode: "54000",
         country: "Pakistan",
       },
       role: role._id,
       department: "681146faec6adc26293c7466",
-      dateOfJoining: "2020-01-10T00:00:00.000Z",
+      dateOfJoining: "2020-01-01T00:00:00.000Z",
       gender: "Male",
-      martialStatus: "Married",
+      martialStatus: "Single",
       employmentType: "Full-Time",
-      shift: "Morning",
       status: "Active",
-      salary: 75000,
+      salary: 150000,
       bankDetails: {
-        accountNumber: "123456789012",
-        bankName: "Example Bank",
+        accountNumber: "000111222333",
+        bankName: "Main Bank",
       },
       emergencyContact: {
-        name: "Dummy User",
-        relationship: "Spouse",
+        name: "Emergency Contact",
+        relationship: "Family",
         phoneNumber: "+1987654321",
       },
-      leaveBalance: 15,
+      leaveBalance: 30,
       admin: true,
       forgetPasswordToken: null,
     });
@@ -834,6 +875,9 @@ export {
   seedAttendance,
   seedNotifications,
   seedFeedback,
+  seedRecruitmentData,
+  seedPerformanceReviews,
+  seedUpdates,
 } from "./comprehensive.seeder.js";
 
 export {
