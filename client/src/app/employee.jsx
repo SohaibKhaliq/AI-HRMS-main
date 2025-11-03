@@ -14,6 +14,7 @@ const Complaint = lazy(() => import("../pages/complaint/Complaint"));
 const Attendance = lazy(() => import("../pages/attendance/Attendance"));
 const MarkAttendance = lazy(() => import("../pages/attendance/MarkAttendance"));
 const Resignation = lazy(() => import("../pages/resignation/Resignation"));
+const TimeTracking = lazy(() => import("../pages/timeTracking/TimeTracking"));
 
 const EmployeeApp = () => {
   const dispatch = useDispatch();
@@ -41,6 +42,7 @@ const EmployeeApp = () => {
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance/mark" element={<MarkAttendance />} />
+            <Route path="/time-tracking" element={<TimeTracking />} />
             <Route path="/resignation" element={<Resignation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -103,6 +103,11 @@ const navbarLinks = [
     link: "/attendance",
   },
   {
+    name: "Time Tracking",
+    iconClass: "fa-solid fa-clock",
+    link: "/time-tracking",
+  },
+  {
     name: "Apply Leave Requests",
     iconClass: "fa-regular fa-calendar-minus",
     link: "/leave",
