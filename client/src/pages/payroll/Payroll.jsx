@@ -27,7 +27,7 @@ const Payroll = () => {
   const fetchPayrolls = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get(\`/payrolls?employee=\${user._id}\`);
+      const { data } = await axiosInstance.get(`/payrolls?employee=\${user._id}`);
       setPayrolls(data.payrolls || []);
       setError(null);
     } catch (err) {
@@ -47,14 +47,14 @@ const Payroll = () => {
     try {
       toast.loading("Generating payslip PDF...");
       const { data } = await axiosInstance.get(
-        \`/payrolls/\${payroll._id}/download\`,
+        `/payrolls/\${payroll._id}/download`,
         { responseType: "blob" }
       );
       
       const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", \`payslip_\${payroll.year}_\${payroll.month}.pdf\`);
+      link.setAttribute("download", `payslip_\${payroll.year}_\${payroll.month}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -121,11 +121,11 @@ const Payroll = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={\`px-2 py-1 rounded text-xs font-semibold \${
+                          className={`px-2 py-1 rounded text-xs font-semibold \${
                             payroll.isPaid
                               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                          }\`}
+                          }`}
                         >
                           {payroll.isPaid ? "Paid" : "Pending"}
                         </span>
@@ -233,11 +233,11 @@ const Payroll = () => {
                   </div>
 
                   <div className="flex justify-between items-center pt-4 border-t dark:border-gray-700">
-                    <span className={\`px-3 py-1 rounded text-sm font-semibold \${
+                    <span className={`px-3 py-1 rounded text-sm font-semibold \${
                       selectedPayroll.isPaid
                         ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                         : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                    }\`}>
+                    }`}>
                       {selectedPayroll.isPaid ? "Paid" : "Pending"}
                     </span>
                     {selectedPayroll.isPaid && selectedPayroll.paymentDate && (

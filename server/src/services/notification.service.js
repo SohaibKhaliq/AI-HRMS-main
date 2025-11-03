@@ -1,6 +1,7 @@
 import Notification from "../models/notification.model.js";
 import { sendMail } from "../utils/index.js";
 import { getEmailTemplate } from "./email.service.js";
+import { sendNotificationToUser } from "../socket/index.js";
 
 /**
  * Create a notification for an employee
@@ -96,6 +97,21 @@ export const sendFullNotification = async ({
       link,
       metadata,
     });
+
+    // Send real-time notification via Socket.IO
+    try {
+      sendNotificationToUser(employee._id.toString(), "notification", {
+        _id: notification._id,
+        title,
+        message,
+        type,
+        priority,
+        link,
+        createdAt: notification.createdAt,
+      });
+    } catch (socketError) {
+      console.log("Socket.IO not available or user not connected");
+    }
 
     // Send email if template is provided
     if (emailTemplate && employee.email) {
