@@ -2,7 +2,7 @@ import express from "express";
 import { verifyAdminToken } from "../middlewares/index.js";
 import {
   createDocumentCategory,
-  getDocumentCategories,
+  getAllDocumentCategories,
   updateDocumentCategory,
   deleteDocumentCategory,
 } from "../controllers/documentCategory.controller.js";
@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 router.post("/", verifyAdminToken, createDocumentCategory);
-router.get("/", verifyAdminToken, getDocumentCategories);
+router.get("/", verifyAdminToken, getAllDocumentCategories);
 router.patch("/:id", verifyAdminToken, updateDocumentCategory);
 router.delete("/:id", verifyAdminToken, deleteDocumentCategory);
 
