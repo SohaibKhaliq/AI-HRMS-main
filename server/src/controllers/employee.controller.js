@@ -181,8 +181,10 @@ const createEmployee = catchErrors(async (req, res) => {
 
   // Send welcome email to new employee
   try {
-    const dept = await Department.findById(department);
-    const desig = await Designation.findById(employee.designation);
+    // Fetch the created employee with populated fields
+    const createdEmployee = await Employee.findById(employee._id)
+      .populate('department', 'name')
+      .populate('designation', 'name');
     
     await sendEmailNotification({
       email: email,
@@ -191,8 +193,8 @@ const createEmployee = catchErrors(async (req, res) => {
       templateData: {
         employeeName: name,
         employeeId: employeeId,
-        department: dept?.name || "N/A",
-        designation: desig?.name || "N/A",
+        department: createdEmployee?.department?.name || "N/A",
+        designation: createdEmployee?.designation?.name || "N/A",
         startDate: formatDate(dateOfJoining),
         email: email,
         temporaryPassword: "Please check with HR for your password",

@@ -270,7 +270,7 @@ User Action → Controller → sendFullNotification() → Email Service → SMTP
 | Performance Review | performanceReview | Employee |
 | Promotion | announcement | Employee |
 | Termination | announcement | Employee |
-| Interview Scheduled | inviteForInterviewMail | Candidate |
+| Interview Scheduled | (legacy template in templates/index.js) | Candidate |
 
 ## Support
 
