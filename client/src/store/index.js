@@ -24,6 +24,7 @@ import notification from "../reducers/notification.reducer";
 import shift from "../reducers/shift.reducer";
 import meeting from "../reducers/meeting.reducer";
 import leaveType from "../reducers/leaveType.reducer";
+import documentCategory from "../reducers/documentCategory.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -52,6 +53,7 @@ const rootReducer = combineReducers({
   shift,
   meeting,
   leaveType,
+  documentCategory,
 });
 
 // Configure the store

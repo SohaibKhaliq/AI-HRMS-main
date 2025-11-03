@@ -45,6 +45,7 @@ const Payroll = lazy(() => import("../admin/payroll/Payroll"));
 const Shift = lazy(() => import("../admin/shift/Shift"));
 const Meeting = lazy(() => import("../admin/meeting/Meeting"));
 const LeaveType = lazy(() => import("../admin/leaveType/LeaveType"));
+const DocumentCategory = lazy(() => import("../admin/documentCategory/DocumentCategory"));
 
 const AdminApp = () => {
   const dispatch = useDispatch();
@@ -101,6 +102,7 @@ const AdminApp = () => {
             <Route path="/shifts" element={<Shift />} />
             <Route path="/meetings" element={<Meeting />} />
             <Route path="/leave-types" element={<LeaveType />} />
+            <Route path="/document-categories" element={<DocumentCategory />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
