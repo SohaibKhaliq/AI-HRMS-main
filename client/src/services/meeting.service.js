@@ -89,9 +89,9 @@ export const deleteMeeting = createAsyncThunk(
 // Update Meeting Status (RSVP)
 export const updateMeetingStatus = createAsyncThunk(
   "meeting/updateMeetingStatus",
-  async ({ id, status }, { rejectWithValue, dispatch }) => {
+  async ({ meetingId, status }, { rejectWithValue, dispatch }) => {
     try {
-      const { data } = await axiosInstance.patch(`/meetings/${id}/status`, { status });
+      const { data } = await axiosInstance.patch(`/meetings/${meetingId}/status`, { status });
       toast.success(data.message);
       const result = await dispatch(getMyMeetings());
       return result.payload;

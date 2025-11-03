@@ -135,6 +135,11 @@ const navbarLinks = [
     link: "/leave-balance",
   },
   {
+    name: "My Meetings",
+    iconClass: "fa-solid fa-calendar-check",
+    link: "/meetings",
+  },
+  {
     name: "Report Workplace Issues",
     iconClass: "fas fa-circle-exclamation",
     link: "/complaint",
