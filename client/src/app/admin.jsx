@@ -43,6 +43,7 @@ const Performance = lazy(() => import("../admin/performance/Performance"));
 const Report = lazy(() => import("../admin/report/Report"));
 const Payroll = lazy(() => import("../admin/payroll/Payroll"));
 const Shift = lazy(() => import("../admin/shift/Shift"));
+const Meeting = lazy(() => import("../admin/meeting/Meeting"));
 
 const AdminApp = () => {
   const dispatch = useDispatch();
@@ -97,6 +98,7 @@ const AdminApp = () => {
             <Route path="/announcements" element={<Announcement />} />
             <Route path="/reports" element={<Report />} />
             <Route path="/shifts" element={<Shift />} />
+            <Route path="/meetings" element={<Meeting />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
