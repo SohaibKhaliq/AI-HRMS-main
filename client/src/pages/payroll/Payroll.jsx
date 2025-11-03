@@ -14,21 +14,44 @@ const Payroll = () => {
   const [error, setError] = useState(null);
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalPayrolls: 0,
+    limit: 12
+  });
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
-  useEffect(() => {
-    fetchPayrolls();
-  }, []);
+  // Generate year options (current year and previous years)
+  const yearOptions = [];
+  const currentYear = new Date().getFullYear();
+  for (let i = currentYear; i >= 2024; i--) {
+    yearOptions.push(i);
+  }
 
-  const fetchPayrolls = async () => {
+  useEffect(() => {
+    fetchPayrolls(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
+
+  const fetchPayrolls = async (page = 1) => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get(`/payrolls?employee=${user._id}`);
+      const { data } = await axiosInstance.get(
+        `/payrolls?employee=${user._id}&year=${selectedYear}&page=${page}&limit=${pagination.limit}`
+      );
       setPayrolls(data.payrolls || []);
+      setPagination(data.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalPayrolls: 0,
+        limit: 12
+      });
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch payroll data");
@@ -38,33 +61,116 @@ const Payroll = () => {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      fetchPayrolls(newPage);
+    }
+  };
+
   const handleViewPayslip = (payroll) => {
     setSelectedPayroll(payroll);
     setShowModal(true);
   };
 
-  const handleDownloadPayslip = async (payroll) => {
-    try {
-      toast.loading("Generating payslip PDF...");
-      const { data } = await axiosInstance.get(
-        `/payrolls/\${payroll._id}/download`,
-        { responseType: "blob" }
-      );
-      
-      const url = window.URL.createObjectURL(new Blob([data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `payslip_\${payroll.year}_\${payroll.month}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      
-      toast.dismiss();
-      toast.success("Payslip downloaded successfully");
-    } catch (err) {
-      toast.dismiss();
-      toast.error("PDF download feature coming soon");
-    }
+  const handleDownloadPayslip = (payroll) => {
+    // Create a simple payslip HTML for printing/saving as PDF
+    const payslipWindow = window.open('', '_blank');
+    const payslipHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Payslip - ${monthNames[payroll.month - 1]} ${payroll.year}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+          .company-name { font-size: 24px; font-weight: bold; color: #2563eb; }
+          .payslip-title { font-size: 18px; margin-top: 10px; }
+          .info-section { margin: 20px 0; }
+          .info-row { display: flex; justify-content: space-between; margin: 10px 0; }
+          .info-label { font-weight: bold; color: #666; }
+          .info-value { color: #333; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+          th { background-color: #f8f9fa; font-weight: bold; }
+          .total-row { font-weight: bold; font-size: 18px; background-color: #e3f2fd; }
+          .status { display: inline-block; padding: 5px 15px; border-radius: 5px; font-weight: bold; }
+          .status-paid { background-color: #d4edda; color: #155724; }
+          .status-pending { background-color: #fff3cd; color: #856404; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px; }
+          @media print {
+            body { padding: 20px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-name">Metro Cash & Carry</div>
+          <div class="payslip-title">PAYSLIP</div>
+        </div>
+        
+        <div class="info-section">
+          <div class="info-row">
+            <div><span class="info-label">Employee Name:</span> <span class="info-value">${user?.name || 'N/A'}</span></div>
+            <div><span class="info-label">Employee ID:</span> <span class="info-value">${user?.employeeId || 'N/A'}</span></div>
+          </div>
+          <div class="info-row">
+            <div><span class="info-label">Period:</span> <span class="info-value">${monthNames[payroll.month - 1]} ${payroll.year}</span></div>
+            <div><span class="info-label">Status:</span> <span class="status ${payroll.isPaid ? 'status-paid' : 'status-pending'}">${payroll.isPaid ? 'PAID' : 'PENDING'}</span></div>
+          </div>
+          ${payroll.isPaid && payroll.paymentDate ? `
+          <div class="info-row">
+            <div><span class="info-label">Payment Date:</span> <span class="info-value">${new Date(payroll.paymentDate).toLocaleDateString()}</span></div>
+          </div>
+          ` : ''}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="text-align: right;">Amount (Rs.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Base Salary</td>
+              <td style="text-align: right;">${payroll.baseSalary?.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Allowances</td>
+              <td style="text-align: right; color: green;">+${payroll.allowances?.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Bonuses</td>
+              <td style="text-align: right; color: green;">+${payroll.bonuses?.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Deductions</td>
+              <td style="text-align: right; color: red;">-${payroll.deductions?.toLocaleString()}</td>
+            </tr>
+            <tr class="total-row">
+              <td>Net Salary</td>
+              <td style="text-align: right;">Rs. ${payroll.netSalary?.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p>This is a computer-generated payslip and does not require a signature.</p>
+          <p>Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+
+        <div class="no-print" style="text-align: center; margin-top: 30px;">
+          <button onclick="window.print()" style="padding: 10px 30px; background-color: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px;">Print / Save as PDF</button>
+          <button onclick="window.close()" style="padding: 10px 30px; background-color: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Close</button>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    payslipWindow.document.write(payslipHTML);
+    payslipWindow.document.close();
   };
 
   if (loading) return <ComponentLoader />;
@@ -78,11 +184,31 @@ const Payroll = () => {
 
       <section className="px-1 sm:px-4 bg-gray-200 dark:bg-primary min-h-screen py-4">
         <div className="bg-white dark:bg-secondary rounded-lg shadow p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <FaFileInvoiceDollar className="text-3xl text-blue-600 dark:text-blue-400" />
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              My Payroll
-            </h1>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <FaFileInvoiceDollar className="text-3xl text-blue-600 dark:text-blue-400" />
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                My Payroll
+              </h1>
+            </div>
+            
+            {/* Year Selector */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Year:
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {payrolls.length === 0 ? (
@@ -121,7 +247,7 @@ const Payroll = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`px-2 py-1 rounded text-xs font-semibold \${
+                          className={`px-2 py-1 rounded text-xs font-semibold ${
                             payroll.isPaid
                               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
@@ -154,6 +280,64 @@ const Payroll = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t dark:border-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {payrolls.length} of {pagination.totalPayrolls} records
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      disabled={pagination.currentPage === 1}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex gap-1">
+                      {[...Array(pagination.totalPages)].map((_, index) => {
+                        const page = index + 1;
+                        // Show first page, last page, current page, and pages around current
+                        if (
+                          page === 1 ||
+                          page === pagination.totalPages ||
+                          (page >= pagination.currentPage - 1 && page <= pagination.currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`px-3 py-2 rounded-lg ${
+                                pagination.currentPage === page
+                                  ? "bg-blue-600 text-white"
+                                  : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (
+                          page === pagination.currentPage - 2 ||
+                          page === pagination.currentPage + 2
+                        ) {
+                          return <span key={page} className="px-2">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      disabled={pagination.currentPage === pagination.totalPages}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -233,7 +417,7 @@ const Payroll = () => {
                   </div>
 
                   <div className="flex justify-between items-center pt-4 border-t dark:border-gray-700">
-                    <span className={`px-3 py-1 rounded text-sm font-semibold \${
+                    <span className={`px-3 py-1 rounded text-sm font-semibold ${
                       selectedPayroll.isPaid
                         ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                         : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
