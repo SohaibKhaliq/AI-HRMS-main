@@ -172,7 +172,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "welcome.html"));
 });
-
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
 const port = process.env.PORT || 3000;
 connectDB()
   .then(() => {

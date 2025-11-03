@@ -17,7 +17,7 @@ const startHrmsApplication = async () => {
       console.log("✓ Super user found, updating credentials and required fields...");
       await Employee.findByIdAndUpdate(existingSuperUser._id, {
         email: "admin@gmail.com",
-        password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", // 12345678
+  password: "$2b$10$HKf5qsTXhgkBqnZDO9ob3u1nO9EHU2ltSOcInojpGdsTfRar89MWO", // 12345678
         admin: true,
         gender: existingSuperUser.gender || "Male",
         martialStatus: existingSuperUser.martialStatus || "Single",
@@ -65,7 +65,7 @@ const startHrmsApplication = async () => {
       name: "Super Admin",
       dob: "1985-01-01T00:00:00.000Z",
       email: "admin@gmail.com",
-      password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", // 12345678
+  password: "$2b$10$HKf5qsTXhgkBqnZDO9ob3u1nO9EHU2ltSOcInojpGdsTfRar89MWO", // 12345678
       profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
       qrCode: "",
       phoneNumber: "+1234567890",

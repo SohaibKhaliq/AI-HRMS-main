@@ -5,6 +5,7 @@ import * as bcrypt from "bcrypt";
 import cloudinary from "cloudinary";
 import { myCache } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
+import Shift from "../models/shift.model.js";
 import { catchErrors, getPublicIdFromUrl } from "../utils/index.js";
 import {
   addPerformanceWithKPI,
@@ -297,6 +298,13 @@ const updateEmployee = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Please provide employee Id");
 
+  // Handle shift conversion from string to ObjectId
+  let shiftId = shift;
+  if (shift && typeof shift === "string" && ["Morning", "Evening", "Night"].includes(shift)) {
+    const shiftDoc = await Shift.findOne({ name: shift });
+    shiftId = shiftDoc ? shiftDoc._id : null;
+  }
+
   const employee = await Employee.findByIdAndUpdate(
     id,
     {
@@ -313,7 +321,7 @@ const updateEmployee = catchErrors(async (req, res) => {
       gender,
       martialStatus,
       employmentType,
-      shift,
+      shift: shiftId,
       status,
       salary,
       bankDetails,
