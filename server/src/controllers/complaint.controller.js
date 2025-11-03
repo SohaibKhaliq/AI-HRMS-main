@@ -1,7 +1,9 @@
 import Complaint from "../models/complaint.model.js";
+import Employee from "../models/employee.model.js";
 import { createUpdate } from "./update.controller.js";
 import { complaintRespond } from "../templates/index.js";
 import { catchErrors, myCache } from "../utils/index.js";
+import { sendFullNotification } from "../services/notification.service.js";
 
 const getComplaints = catchErrors(async (req, res) => {
   const { status, page = 1, limit = 12 } = req.query;
@@ -92,6 +94,26 @@ const createComplaint = catchErrors(async (req, res) => {
     remarks: remarks || null,
   });
 
+  // Send notification to employee confirming complaint submission
+  const employeeData = await Employee.findById(employee);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: "Complaint Submitted",
+      message: `Your complaint regarding ${complainType} has been submitted successfully and is under review.`,
+      type: "complaint",
+      priority: "medium",
+      link: "/complaints",
+      emailSubject: "Complaint Submitted",
+      emailTemplate: "complaintUpdate",
+      emailData: {
+        complaintType: complainType,
+        subject: complainSubject,
+        status: "Pending",
+      },
+    });
+  }
+
   myCache.del("insights");
 
   return res.status(200).json({
@@ -151,12 +173,26 @@ const respondComplaint = catchErrors(async (req, res) => {
     remarks: remarks || "--",
   });
 
-  await complaintRespond({
-    status: complaint.status,
-    type: complaint.complainType,
-    name: complaint.employee.name,
-    email: complaint.employee.email,
-  });
+  // Send notification using new service
+  const employeeData = await Employee.findById(complaint.employee._id);
+  if (employeeData) {
+    await sendFullNotification({
+      employee: employeeData,
+      title: `Complaint ${status}`,
+      message: `Your complaint regarding ${complaint.complainType} has been ${status.toLowerCase()}. ${remarks || ''}`,
+      type: "complaint",
+      priority: status === "Resolved" ? "low" : "medium",
+      link: "/complaints",
+      emailSubject: `Complaint ${status}`,
+      emailTemplate: "complaintUpdate",
+      emailData: {
+        complaintType: complaint.complainType,
+        subject: complaint.complainSubject,
+        status: status,
+        remarks: remarks,
+      },
+    });
+  }
 
   myCache.del("insights");
 

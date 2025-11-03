@@ -57,6 +57,8 @@ export const getEmailTemplate = (templateName, data) => {
     resignationSubmitted: resignationSubmittedTemplate,
     resignationApproved: resignationApprovedTemplate,
     performanceReview: performanceReviewTemplate,
+    complaintUpdate: complaintUpdateTemplate,
+    employeeOnboarding: employeeOnboardingTemplate,
   };
 
   const template = templates[templateName];
@@ -301,6 +303,57 @@ const performanceReviewTemplate = (data) => `
   </div>
   <a href="${clientUrl}/performance" style="display: inline-block; padding: 12px 28px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
     View Full Review
+  </a>
+`;
+
+/**
+ * Complaint Update Template
+ */
+const complaintUpdateTemplate = (data) => `
+  <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Complaint Status Update</h2>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    Your complaint regarding <strong>${data.complaintType}</strong> has been updated.
+  </p>
+  <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Status:</strong> ${data.status}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Subject:</strong> ${data.subject}</p>
+    ${data.remarks ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Remarks:</strong> ${data.remarks}</p>` : ''}
+  </div>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    ${data.status === "Resolved" ? "Thank you for bringing this to our attention. The matter has been resolved." : "We are working on resolving this issue. You will be notified of any updates."}
+  </p>
+  <a href="${clientUrl}/complaints" style="display: inline-block; padding: 12px 28px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
+    View Complaint
+  </a>
+`;
+
+/**
+ * Employee Onboarding Template
+ */
+const employeeOnboardingTemplate = (data) => `
+  <h2 style="color: #10B981; font-weight: 500; font-size: 22px; margin-bottom: 16px;">🎉 Welcome to Metro HRMS!</h2>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    Welcome to the team! We are excited to have you join us.
+  </p>
+  <div style="background: #1a3a2c; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #10B981;">
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Employee ID:</strong> ${data.employeeId}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Department:</strong> ${data.department}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Designation:</strong> ${data.designation}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Start Date:</strong> ${data.startDate}</p>
+  </div>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    Please login to the HRMS portal to complete your profile and access company resources.
+  </p>
+  <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Login Credentials:</strong></p>
+    <p style="color: #cccccc; margin: 4px 0;">Email: ${data.email}</p>
+    <p style="color: #cccccc; margin: 4px 0;">Password: ${data.temporaryPassword || "Please check with HR"}</p>
+    <p style="color: #F59E0B; font-size: 12px; margin-top: 8px;">⚠️ Please change your password after first login</p>
+  </div>
+  <a href="${clientUrl}/login" style="display: inline-block; padding: 12px 28px; background-color: #10B981; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
+    Login to Portal
   </a>
 `;
 
