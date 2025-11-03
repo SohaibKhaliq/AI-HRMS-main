@@ -3,6 +3,8 @@ import {
   createComplaint,
   getComplaints,
   respondToComplaintRequest,
+  updateComplaint,
+  deleteComplaint,
 } from "../services/complaint.service";
 
 const initialState = {
@@ -70,6 +72,39 @@ const complaintsSlice = createSlice({
         state.complaints.push(action.payload);
       })
       .addCase(createComplaint.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Handle updateComplaint action
+    builder
+      .addCase(updateComplaint.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateComplaint.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedComplaint = action.payload;
+        const idx = state.complaints.findIndex((c) => c._id === updatedComplaint._id);
+        if (idx !== -1) state.complaints[idx] = updatedComplaint;
+      })
+      .addCase(updateComplaint.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Handle deleteComplaint action
+    builder
+      .addCase(deleteComplaint.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteComplaint.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedId = action.payload;
+        state.complaints = state.complaints.filter((c) => c._id !== deletedId);
+      })
+      .addCase(deleteComplaint.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

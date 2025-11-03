@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
 import { MdAdd } from "react-icons/md";
 import { FiSearch, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
-import { getComplaints, respondToComplaintRequest } from "../../services/complaint.service";
+import { getComplaints, respondToComplaintRequest, deleteComplaint } from "../../services/complaint.service";
 import { getAllEmployees } from "../../services/employee.service";
 import ComplaintModal from "../../components/shared/modals/ComplaintModal";
 import Loader from "../../components/shared/loaders/Loader";
@@ -128,15 +128,36 @@ const Complaint = () => {
 
   const handleDelete = (complaintId) => {
     if (window.confirm("Are you sure you want to delete this complaint?")) {
-      console.log(`Delete complaint ${complaintId}`);
-      // TODO: Implement delete with API call
+      dispatch(deleteComplaint(complaintId))
+        .unwrap()
+        .then(() => {
+          // Refetch complaints after delete
+          dispatch(
+            getComplaints({
+              page: currentPage,
+              limit: pageSize,
+              status: statusFilter || undefined,
+            })
+          );
+        })
+        .catch((error) => {
+          console.error("Error deleting complaint:", error);
+        });
     }
   };
 
   const handleModalSubmit = (formData) => {
     console.log("Submit complaint:", formData);
-    // TODO: Implement create/update with API call
+    // Modal submit is handled by ComplaintModal component
     handleCloseModal();
+    // Refetch to show latest data
+    dispatch(
+      getComplaints({
+        page: currentPage,
+        limit: pageSize,
+        status: statusFilter || undefined,
+      })
+    );
   };
 
   // Pagination calculations

@@ -60,3 +60,40 @@ export const respondToComplaintRequest = createAsyncThunk(
     }
   }
 );
+
+// Update Complaint
+export const updateComplaint = createAsyncThunk(
+  "complaints/updateComplaint",
+  async ({ id, complaint }, { rejectWithValue, dispatch }) => {
+    try {
+      const { data } = await axiosInstance.patch(`/complaints/${id}`, complaint);
+      toast.success(data.message);
+      await dispatch(getComplaints({ page: 1, limit: 10 }));
+      return data.complaint;
+    } catch (error) {
+      toast.error(error.response?.data.message);
+      return rejectWithValue(
+        error.response?.data.message || "Failed to update complaint"
+      );
+    }
+  }
+);
+
+// Delete Complaint
+export const deleteComplaint = createAsyncThunk(
+  "complaints/deleteComplaint",
+  async (id, { rejectWithValue, dispatch }) => {
+    try {
+      const { data } = await axiosInstance.delete(`/complaints/${id}`);
+      toast.success(data.message);
+      await dispatch(getComplaints({ page: 1, limit: 10 }));
+      return id;
+    } catch (error) {
+      toast.error(error.response?.data.message);
+      return rejectWithValue(
+        error.response?.data.message || "Failed to delete complaint"
+      );
+    }
+  }
+);
+

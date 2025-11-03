@@ -11,238 +11,325 @@ import Designation from "../models/designation.model.js";
 import LeaveType from "../models/leaveType.model.js";
 import getPredictionFromGeminiAI from "../gemini/index.js";
 
-async function getAnswerFromChatbot(prompt) {
-  const [
-    leaves,
-    feedbacks,
-    performances,
-    employees,
-    complaints,
-    jobs,
-    departments,
-    designations,
-    payrolls,
-    attendances,
-    leaveTypes,
-  ] = await Promise.all([
-    Leave.find().populate("employee leaveType", "name").lean(),
-    Feedback.find().populate("employee", "name").lean(),
-    Performance.find().populate("employee", "name").lean(),
-    Employee.find()
-      .populate("department role designation", "name")
-      .lean(),
-    Complaint.find()
-      .populate("employee againstEmployee", "name employeeId")
-      .lean(),
-    Recruitment.find()
-      .populate("department role postedBy", "name")
-      .lean(),
+// === CONFIG ===
+const MAX_RECORDS_PER_SECTION = 15;
+const RECENT_DAYS = 30;
+const PROMPT_MAX_TOKENS = 28000; // Stay safe under Gemini limits
+const CACHE_TTL = 60 * 1000; // 1 min cache for stats
+
+// === IN-MEMORY CACHE (for stats) ===
+const statsCache = {
+  data: null,
+  timestamp: 0,
+};
+
+// === UTILITIES ===
+const formatCurrency = (amount) => `PKR ${Number(amount || 0).toLocaleString()}`;
+const truncate = (str, len) => (str?.length > len ? str.slice(0, len) + "..." : str || "N/A");
+const formatDate = (date) => new Date(date).toLocaleDateString("en-GB");
+
+// === SMART DATA FETCHER ===
+async function fetchRelevantData(prompt) {
+  const keywords = prompt.toLowerCase();
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.setDate(now.getDate() - RECENT_DAYS));
+
+  // Core models to always load (lightweight)
+  const [employees, departments, designations, leaveTypes] = await Promise.all([
+    Employee.find().populate("department role designation", "name").lean(),
     Department.find().lean(),
     Designation.find().populate("department", "name").lean(),
-    Payroll.find().populate("employee", "name employeeId").lean(),
-    Attendance.find().populate("employee", "name").lean(),
     LeaveType.find().lean(),
   ]);
 
-  // Calculate statistics
   const totalEmployees = employees.length;
   const activeEmployees = employees.filter(e => e.status === "Active").length;
-  const totalDepartments = departments.length;
-  const totalDesignations = designations.length;
-  const pendingLeaves = leaves.filter(l => l.status === "Pending").length;
-  const pendingComplaints = complaints.filter(c => c.status === "Pending").length;
-  const averageSalary = employees.length > 0 
-    ? (employees.reduce((sum, e) => sum + (e.salary || 0), 0) / employees.length).toFixed(0)
-    : 0;
-  const recentAttendance = attendances.filter(a => {
-    const date = new Date(a.date);
-    const today = new Date();
-    const diffTime = Math.abs(today - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 30;
-  }).length;
 
-  const formattedPrompt = `
-    **Admin Query:** "${prompt}"
-    
-    ### About the HRMS  
-    This HRMS is developed for **Metro Cash & Carry** using **MERN Stack** & **Gemini AI** by **Obaid Ali & Sohaib Khaliq**.  
-    
-    ### Key Modules:  
-    1. **Employee Management** (Full CRUD with designation & salary management)
-    2. **Attendance Tracking** (QR code-based with geolocation verification)
-    3. **Leave Management** (AI-powered substitute assigning with balance tracking)
-    4. **Performance Management** (KPI scoring & comprehensive reviews)
-    5. **Feedback & Complaints** (Employee feedback collection & complaint resolution)
-    6. **AI Sentiment Analysis** (Employee sentiment tracking from feedback)
-    7. **Recruitment Management** (Job postings + Applicant tracking system)
-    8. **Payroll Processing** (Automated salary calculations & payment tracking)
-    9. **Department & Designation** (Organizational structure with salary bands)
-    10. **Analytics & Reporting** (Real-time dashboards & comprehensive insights)
-    
-    ---
-    
-    ### Response Guidelines:
-    - **Greeting** (Hi/Hello): Respond with "👋 Hello! How may I assist you with the HRMS today?"
-    - **Farewell** (Bye/Goodbye): Respond with "Have a great day! Feel free to ask anytime. 👋"
-    - **Irrelevant Query**: "🤔 This seems unrelated to the HRMS. Could you ask something about employees, attendance, leave, performance, complaints, recruitment, or payroll?"
-    - Provide **data-driven insights** with **statistics and trends**
-    - Use **bullet points** for clarity
-    - Be **concise yet comprehensive**
-    - Include **actionable recommendations** when appropriate
-  
-    ---
-    
-    ### System Overview & Statistics:
-    - **Total Employees:** ${totalEmployees} (Active: ${activeEmployees})
-    - **Total Departments:** ${totalDepartments}
-    - **Total Designations:** ${totalDesignations}
-    - **Average Salary:** PKR ${averageSalary}
-    - **Pending Leaves:** ${pendingLeaves}
-    - **Pending Complaints:** ${pendingComplaints}
-    - **Attendance Records (Last 30 Days):** ${recentAttendance}
-    - **Total Leave Types:** ${leaveTypes.length}
-    - **Active Job Postings:** ${jobs.filter(j => j.status === "Active").length}
-    
-    ---
-    
-    ### HRMS Data Analysis:
-    
-    #### **1. Employee Data (${totalEmployees} total)**  
-    ${employees
-      .map(
-        (emp, index) =>
-          `${index + 1}. **Name:** ${emp?.name} | **ID:** ${emp?.employeeId} | **Department:** ${
-            emp?.department?.name || "N/A"
-          } | **Designation:** ${emp?.designation?.name || "N/A"} | **Role:** ${
-            emp?.role?.name || "N/A"
-          } | **Salary:** PKR ${emp?.salary?.toLocaleString() || 0} | **Status:** ${emp?.status} | **Admin:** ${emp?.admin ? "Yes" : "No"}`
-      )
-      .join("\n")}
-    
-    #### **2. Performance Data (${performances.length} reviews)**  
-    ${performances
-      .map(
-        (per, index) =>
-          `${index + 1}. **Employee:** ${per?.employee?.name || "N/A"} | **KPI Score:** ${
-            per.kpiScore?.toFixed(2) || "0.00"
-          } | **Rating:** ${per?.rating || "Not Rated"} | **Attendance %:** ${
-            per?.kpis?.attendance?.toFixed(1) || "0.0"
-          }% | **Feedback:** ${per?.feedback?.substring(0, 50) || "No feedback"}${per?.feedback?.length > 50 ? "..." : ""}`
-      )
-      .join("\n")}
-    
-    #### **3. Leave Data (${leaves.length} requests)**  
-    ${leaves
-      .map(
-        (leave, index) =>
-          `${index + 1}. **Employee:** ${leave?.employee?.name || "N/A"} | **Type:** ${
-            leave?.leaveType?.name || leave?.leaveType || "N/A"
-          } | **Duration:** ${leave?.duration || 1} day(s) | **From:** ${leave?.fromDate} | **To:** ${leave?.toDate} | **Status:** ${
-            leave?.status
-          } | **Substitute:** ${leave?.substitute?.name || "Not Assigned"}`
-      )
-      .join("\n")}
-    
-    **Available Leave Types:** ${leaveTypes.map(lt => `${lt.name} (${lt.daysAllowed} days)`).join(", ")}  
-    
-    #### **4. Complaint Data (${complaints.length} complaints)**  
-    ${complaints
-      .map(
-        (com, index) =>
-          `${index + 1}. **Complainant:** ${
-            com?.employee?.name || "N/A"
-          } (${com?.employee?.employeeId || "N/A"}) | **Against:** ${
-            com?.againstEmployee?.name || "General"
-          } | **Type:** ${com?.complainType} | **Subject:** ${com?.complainSubject?.substring(0, 40)}${com?.complainSubject?.length > 40 ? "..." : ""} | **Status:** ${
-            com?.status
-          } | **Date:** ${new Date(com?.createdAt).toLocaleDateString()}`
-      )
-      .join("\n")}
-    
-    **Complaint Types:** Workplace, Payroll, Leave, Harassment, Scheduling, Misconduct, Discrimination, Safety, Other  
-    
-    #### **5. Feedback Data (${feedbacks.length} feedbacks)**  
-    ${feedbacks
-      .map(
-        (feed, index) =>
-          `${index + 1}. **Employee:** ${feed?.employee?.name || "Anonymous"} | **Rating:** ${
-            feed?.rating || "N/A"
-          }/5 | **Review:** ${feed?.review?.substring(0, 50)}${feed?.review?.length > 50 ? "..." : ""} | **Suggestion:** ${feed?.suggestion?.substring(0, 50)}${feed?.suggestion?.length > 50 ? "..." : ""}`
-      )
-      .join("\n")}
+  // Conditional loading based on keywords
+  const promises = [];
 
-    #### **6. Department Data (${totalDepartments} departments)**  
-    ${departments
-      .map(
-        (dept, index) =>
-          `${index + 1}. **Name:** ${dept?.name} | **Status:** ${dept?.status || "Active"} | **Description:** ${dept?.description?.substring(0, 60) || "No description"}${dept?.description?.length > 60 ? "..." : ""}`
-      )
-      .join("\n")}
+  if (keywords.includes("leave") || keywords.includes("pending") || keywords.includes("balance")) {
+    promises.push(Leave.find().populate("employee leaveType", "name").lean());
+  } else {
+    promises.push(Leave.find({ status: "Pending" }).populate("employee leaveType", "name").lean());
+  }
 
-    #### **7. Designation Data (${totalDesignations} designations)**  
-    ${designations
-      .map(
-        (des, index) =>
-          `${index + 1}. **Name:** ${des?.name} | **Department:** ${des?.department?.name || "N/A"} | **Salary:** PKR ${des?.salary?.toLocaleString() || 0} | **Status:** ${des?.status || "Active"}`
-      )
-      .join("\n")}
+  if (keywords.includes("complaint") || keywords.includes("issue") || keywords.includes("grievance")) {
+    promises.push(Complaint.find().populate("employee againstEmployee", "name employeeId").lean());
+  } else {
+    promises.push(Complaint.find({ status: "Pending" }).lean());
+  }
 
-    #### **8. Payroll Data (${payrolls.length} records)**  
-    ${payrolls.slice(0, 20)
-      .map(
-        (pay, index) =>
-          `${index + 1}. **Employee:** ${pay?.employee?.name || "N/A"} (${pay?.employee?.employeeId || "N/A"}) | **Month:** ${pay?.month}/${pay?.year} | **Base Salary:** PKR ${pay?.baseSalary?.toLocaleString() || 0} | **Net Salary:** PKR ${pay?.netSalary?.toLocaleString() || 0} | **Paid:** ${pay?.isPaid ? "Yes" : "No"}`
-      )
-      .join("\n")}
-    ${payrolls.length > 20 ? `\n... and ${payrolls.length - 20} more payroll records` : ""}
+  if (keywords.includes("payroll") || keywords.includes("salary") || keywords.includes("payment")) {
+    promises.push(Payroll.find().populate("employee", "name employeeId").sort({ year: -1, month: -1 }).limit(20).lean());
+  } else {
+    promises.push(Payroll.find({ isPaid: false }).populate("employee", "name employeeId").lean());
+  }
 
-    #### **9. Attendance Data (Last 30 days: ${recentAttendance} records)**  
-    ${attendances.slice(0, 15)
-      .map(
-        (att, index) =>
-          `${index + 1}. **Employee:** ${att?.employee?.name || "N/A"} | **Date:** ${new Date(att?.date).toLocaleDateString()} | **Check-In:** ${att?.checkIn || "N/A"} | **Check-Out:** ${att?.checkOut || "N/A"} | **Status:** ${att?.status || "Present"}`
-      )
-      .join("\n")}
-    ${attendances.length > 15 ? `\n... and ${attendances.length - 15} more attendance records` : ""}
+  if (keywords.includes("attendance") || keywords.includes("check-in") || keywords.includes("absent")) {
+    promises.push(Attendance.find({ date: { $gte: thirtyDaysAgo } }).populate("employee", "name").sort({ date: -1 }).limit(50).lean());
+  } else {
+    promises.push(Attendance.find({ date: { $gte: thirtyDaysAgo }, status: { $ne: "Present" } }).populate("employee", "name").lean());
+  }
 
-    #### **10. Recruitment Data (${jobs.length} jobs)**  
-    ${jobs
-      .map(
-        (job, index) => `
-        ${index + 1}. **Job Title:** ${job?.title} | **Department:** ${
-          job?.department?.name
-        } | **Role:** ${job?.role?.name} | **Location:** ${
-          job?.location
-        } | **Salary Range:** ${job?.minSalary} - ${
-          job?.maxSalary
-        } | **Type:** ${job?.type} | **Status:** ${
-          job?.status
-        } | **Posted By:** ${job?.postedBy?.name} | **Deadline:** ${
-          job?.deadline
-        }
-        
-        **Applicants:**  
-        ${job?.applicants
-          .map(
-            (app, i) =>
-              `   - ${i + 1}. **Name:** ${app?.name} | **Email:** ${
-                app?.email
-              } | **Phone:** ${app?.phone} | **Status:** ${app?.status}`
-          )
-          .join("\n")}
-      `
-      )
-      .join("\n")}
-    
-    ---
-    
-    ### Generate an insightful and concise response to the admin's query based on the provided data.
-    `;
+  if (keywords.includes("performance") || keywords.includes("kpi") || keywords.includes("review")) {
+    promises.push(Performance.find().populate("employee", "name").sort({ createdAt: -1 }).limit(20).lean());
+  } else {
+    promises.push(Performance.find({ rating: { $lt: 3 } }).populate("employee", "name").lean());
+  }
 
-  const response = await getPredictionFromGeminiAI(formattedPrompt);
+  if (keywords.includes("feedback") || keywords.includes("sentiment") || keywords.includes("review")) {
+    promises.push(Feedback.find().populate("employee", "name").sort({ createdAt: -1 }).limit(15).lean());
+  } else {
+    promises.push(Feedback.find({ rating: { $lt: 3 } }).lean());
+  }
 
-  return response || "⚠️ Failed to generate response, Try again later";
+  if (keywords.includes("recruit") || keywords.includes("job") || keywords.includes("hiring")) {
+    promises.push(Recruitment.find().populate("department role postedBy", "name").lean());
+  } else {
+    promises.push(Recruitment.find({ status: "Active" }).lean());
+  }
+
+  const [
+    leaves,
+    complaints,
+    payrolls,
+    attendances,
+    performances,
+    feedbacks,
+    jobs,
+  ] = await Promise.all(promises);
+
+  return {
+    employees,
+    departments,
+    designations,
+    leaveTypes,
+    leaves,
+    complaints,
+    payrolls,
+    attendances,
+    performances,
+    feedbacks,
+    jobs,
+    stats: {
+      totalEmployees,
+      activeEmployees,
+      totalDepartments: departments.length,
+      totalDesignations: designations.length,
+      pendingLeaves: leaves.filter(l => l.status === "Pending").length,
+      pendingComplaints: complaints.filter(c => c.status === "Pending").length,
+      avgSalary: totalEmployees > 0
+        ? Math.round(employees.reduce((s, e) => s + (e.salary || 0), 0) / totalEmployees)
+        : 0,
+      recentAttendance: attendances.length,
+      activeJobs: jobs.filter(j => j.status === "Active").length,
+    },
+  };
+}
+
+// === BUILD DYNAMIC PROMPT ===
+function buildPrompt(prompt, data) {
+  const { stats } = data;
+
+  // === SYSTEM CONTEXT (Always included) ===
+  let context = `
+## HRMS AI Assistant – Metro Cash & Carry
+**Built with MERN + Gemini AI** by **Obaid Ali & Sohaib Khaliq**
+
+### Core Modules
+- Employee | Attendance | Leave | Performance | Feedback | Complaints
+- Recruitment | Payroll | Department | Designation | Analytics
+
+---
+
+### Live HR Stats
+| Metric | Value |
+|--------|-------|
+| Total Employees | **${stats.totalEmployees}** (Active: ${stats.activeEmployees}) |
+| Departments | **${stats.totalDepartments}** |
+| Designations | **${stats.totalDesignations}** |
+| Avg Salary | **${formatCurrency(stats.avgSalary)}** |
+| Pending Leaves | **${stats.pendingLeaves}** |
+| Pending Complaints | **${stats.pendingComplaints}** |
+| Attendance (30d) | **${stats.recentAttendance}** records |
+| Active Jobs | **${stats.activeJobs}** |
+
+---
+
+### Query: "${prompt}"
+`.trim();
+
+  // === DYNAMIC DATA INJECTION ===
+  const sections = [];
+
+  // 1. Employees
+  if (prompt.match(/employee|staff|team|headcount|salary/i)) {
+    sections.push(`
+#### Employees
+${data.employees.slice(0, MAX_RECORDS_PER_SECTION).map((e, i) => `
+${i + 1}. **${e.name}** (\`${e.employeeId}\`)  
+   → ${e.department?.name || "N/A"} | ${e.designation?.name || "N/A"}  
+   → ${formatCurrency(e.salary)} | ${e.status} ${e.admin ? "**(Admin)**" : ""}
+`.trim()).join("\n")}
+${data.employees.length > MAX_RECORDS_PER_SECTION ? `\n... and ${data.employees.length - MAX_RECORDS_PER_SECTION} more` : ""}
+    `);
+  }
+
+  // 2. Leaves
+  if (prompt.match(/leave|vacation|balance|pending|approved/i)) {
+    sections.push(`
+#### Leave Requests
+${data.leaves.slice(0, MAX_RECORDS_PER_SECTION).map((l, i) => `
+${i + 1}. **${l.employee?.name}** → **${l.leaveType?.name}**  
+   → ${l.duration} day(s) | ${formatDate(l.fromDate)} to ${formatDate(l.toDate)}  
+   → **${l.status}** | Substitute: *${l.substitute?.name || "Auto-Assigned"}*
+`.trim()).join("\n")}
+
+**Leave Types**: ${data.leaveTypes.map(t => `${t.name} (${t.daysAllowed}d)`).join(", ")}
+    `);
+  }
+
+  // 3. Complaints
+  if (prompt.match(/complaint|issue|grievance|harassment|misconduct/i)) {
+    sections.push(`
+#### Complaints
+${data.complaints.slice(0, 10).map((c, i) => `
+${i + 1}. **${c.employee?.name}** vs **${c.againstEmployee?.name || "General"}**  
+   → *${c.complainType}*: ${truncate(c.complainSubject, 50)}  
+   → **${c.status}** | ${formatDate(c.createdAt)}
+`.trim()).join("\n")}
+${data.complaints.length > 10 ? `\n... ${data.complaints.length - 10} more` : ""}
+    `);
+  }
+
+  // 4. Payroll
+  if (prompt.match(/payroll|salary|payment|deduction|slip/i)) {
+    sections.push(`
+#### Payroll (Recent/Unpaid)
+${data.payrolls.map((p, i) => `
+${i + 1}. **${p.employee?.name}** (\`${p.employee?.employeeId}\`)  
+   → ${p.month}/${p.year} | Base: ${formatCurrency(p.baseSalary)}  
+   → Net: **${formatCurrency(p.netSalary)}** | Paid: ${p.isPaid ? "Yes" : "**No**"}
+`.trim()).join("\n")}
+    `);
+  }
+
+  // 5. Attendance
+  if (prompt.match(/attendance|check.?in|absent|late|present/i)) {
+    const absentees = data.attendances.filter(a => a.status !== "Present");
+    sections.push(`
+#### Attendance (Last ${RECENT_DAYS} Days)
+**Total Records**: ${data.attendances.length}  
+**Absentees/Late**: ${absentees.length > 0 ? absentees.length : "None"}
+
+${data.attendances.slice(0, 10).map((a, i) => `
+${i + 1}. **${a.employee?.name}** | ${formatDate(a.date)}  
+   → In: \`${a.checkIn || "—"}\` | Out: \`${a.checkOut || "—"}\` | **${a.status}**
+`.trim()).join("\n")}
+    `);
+  }
+
+  // 6. Performance
+  if (prompt.match(/performance|kpi|review|score|rating/i)) {
+    const lowPerformers = data.performances.filter(p => p.rating < 3);
+    sections.push(`
+#### Performance Reviews
+**Low Performers**: ${lowPerformers.length > 0 ? lowPerformers.length : "None"}
+
+${data.performances.slice(0, 8).map((p, i) => `
+${i + 1}. **${p.employee?.name}** → KPI: **${p.kpiScore?.toFixed(1)}** | Rating: **${p.rating}/5**  
+   → "${truncate(p.feedback, 60)}"
+`.trim()).join("\n")}
+    `);
+  }
+
+  // 7. Feedback
+  if (prompt.match(/feedback|sentiment|suggestion|review/i)) {
+    sections.push(`
+#### Employee Feedback
+${data.feedbacks.slice(0, 8).map((f, i) => `
+${i + 1}. **${f.rating}/5** – ${f.employee?.name || "Anonymous"}  
+   → Review: "${truncate(f.review, 60)}"  
+   → Suggestion: "${truncate(f.suggestion, 60)}"
+`.trim()).join("\n")}
+    `);
+  }
+
+  // 8. Recruitment
+  if (prompt.match(/job|hiring|recruit|applicant|posting/i)) {
+    sections.push(`
+#### Job Openings
+${data.jobs.map((j, i) => `
+${i + 1}. **${j.title}** @ ${j.department?.name}  
+   → ${formatCurrency(j.minSalary)} – ${formatCurrency(j.maxSalary)} | ${j.type}  
+   → Applicants: **${j.applicants?.length || 0}** | Deadline: ${j.deadline ? formatDate(j.deadline) : "Open"}  
+   ${j.applicants?.length > 0 ? `→ Top: ${j.applicants[0].name} (${j.applicants[0].status})` : ""}
+`.trim()).join("\n")}
+    `);
+  }
+
+  // === FINAL PROMPT ===
+  const finalPrompt = `
+${context}
+
+${sections.join("\n---\n")}
+
+---
+
+### AI Instructions
+- Answer **only** the user's query using the data above.
+- Use **bullet points**, **bold**, and *italics* for clarity.
+- Include **stats**, **trends**, and **recommendations**.
+- Highlight **critical issues** (e.g., unpaid salaries, pending complaints).
+- Be **professional, concise, and actionable**.
+- If irrelevant: "This is outside HRMS scope. Ask about employees, leave, payroll, etc."
+
+### Generate a **stellar**, **data-rich**, **insightful** response:
+`.trim();
+
+  // Truncate if too long
+  if (finalPrompt.length > PROMPT_MAX_TOKENS) {
+    return finalPrompt.slice(0, PROMPT_MAX_TOKENS) + "\n\n[Prompt truncated for performance]";
+  }
+
+  return finalPrompt;
+}
+
+// === MAIN FUNCTION ===
+async function getAnswerFromChatbot(prompt) {
+  try {
+    // Greeting / Farewell shortcuts
+    const lower = prompt.toLowerCase().trim();
+    if (lower.includes("hi") || lower.includes("hello")) {
+      return "Hello! How may I assist you with the HRMS today?";
+    }
+    if (lower.includes("bye") || lower.includes("goodbye") || lower.includes("thank")) {
+      return "Have a great day! Feel free to ask anytime.";
+    }
+
+    // Irrelevant query
+    const hrKeywords = ["employee", "leave", "attendance", "payroll", "complaint", "performance", "job", "salary", "department", "feedback", "kpi", "recruit"];
+    if (!hrKeywords.some(k => lower.includes(k))) {
+      return "This seems unrelated to the HRMS. Try asking about employees, leave, payroll, attendance, or recruitment.";
+    }
+
+    // Fetch smart data
+    const data = await fetchRelevantData(prompt);
+
+    // Build AI prompt
+    const aiPrompt = buildPrompt(prompt, data);
+
+    // Call Gemini
+    const response = await getPredictionFromGeminiAI(aiPrompt);
+
+    // Final fallback
+    return response?.trim() || "No response generated. Please try again.";
+
+  } catch (error) {
+    console.error("Chatbot Error:", error);
+    return "Sorry, the HRMS AI is temporarily unavailable. Please try again later.";
+  }
 }
 
 export default getAnswerFromChatbot;
