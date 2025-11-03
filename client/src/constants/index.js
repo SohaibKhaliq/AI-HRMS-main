@@ -300,7 +300,6 @@ const checkAttendanceHead = [
   "EMP ID",
   "Name",
   "Department",
-  "Position",
   "Date",
   "Status",
 ];

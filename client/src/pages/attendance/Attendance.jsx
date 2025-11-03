@@ -130,16 +130,13 @@ const Attendance = () => {
                         className="dark:even:bg-gray-800 odd:bg-gray-200 dark:odd:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
                       >
                         <td className="py-3 px-4 border-b border-gray-500">
-                          EMP {item.employee.employeeId}
+                          EMP {item.employee?.employeeId || "N/A"}
                         </td>
                         <td className="py-3 px-4 border-b border-gray-500">
-                          {item.employee.name}
+                          {item.employee?.name || "N/A"}
                         </td>
                         <td className="py-3 px-4 border-b border-gray-500">
-                          {item.employee.department.name}
-                        </td>
-                        <td className="py-3 px-4 border-b border-gray-500">
-                          {item.employee.role.name}
+                          {item.employee?.department?.name || "N/A"}
                         </td>
                         <td className="py-3 px-4 border-b border-gray-500">
                           {formatDate(item.date)}
