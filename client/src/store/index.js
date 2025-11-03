@@ -23,6 +23,7 @@ import jobmeta from "../reducers/jobmeta.reducer";
 import notification from "../reducers/notification.reducer";
 import shift from "../reducers/shift.reducer";
 import meeting from "../reducers/meeting.reducer";
+import leaveType from "../reducers/leaveType.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -50,6 +51,7 @@ const rootReducer = combineReducers({
   notification,
   shift,
   meeting,
+  leaveType,
 });
 
 // Configure the store
