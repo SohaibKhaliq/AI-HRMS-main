@@ -28,6 +28,27 @@ const clearEmployeeCache = () => {
   });
 };
 
+// Helper function to convert shift strings to ObjectIds
+const convertShiftToObjectId = async (shiftValue) => {
+  if (!shiftValue) return null;
+  
+  // If already an ObjectId, return as is
+  if (typeof shiftValue !== "string") return shiftValue;
+  
+  // If it's a shift name string, convert to ObjectId
+  if (["Morning", "Evening", "Night"].includes(shiftValue)) {
+    // Try both formats: "Morning" and "Morning Shift"
+    let shiftDoc = await Shift.findOne({ name: shiftValue });
+    if (!shiftDoc) {
+      shiftDoc = await Shift.findOne({ name: `${shiftValue} Shift` });
+    }
+    return shiftDoc ? shiftDoc._id : null;
+  }
+  
+  // If it's already an ObjectId string, return it
+  return shiftValue;
+};
+
 const bulkCreateEmployees = catchErrors(async (req, res) => {
   const employeesRecords = req.body;
 
@@ -57,7 +78,8 @@ const bulkCreateEmployees = catchErrors(async (req, res) => {
   const hashedEmployeesData = await Promise.all(
     employeesRecords.map(async (employee) => {
       const hashedPassword = await bcrypt.hash("password", 10);
-      return { ...employee, password: hashedPassword };
+      const shiftId = await convertShiftToObjectId(employee.shift);
+      return { ...employee, password: hashedPassword, shift: shiftId };
     })
   );
 
@@ -123,14 +145,8 @@ const createEmployee = catchErrors(async (req, res) => {
     throw new Error("Please provide all required fields.");
   }
 
-  // Handle shift conversion from string to ObjectId
-  let shiftId = shift;
-  if (shift && typeof shift === "string" && ["Morning", "Evening", "Night"].includes(shift)) {
-    const shiftDoc = await Shift.findOne({ name: shift });
-    shiftId = shiftDoc ? shiftDoc._id : null;
-  }
-
   const hashedPassword = await bcrypt.hash(password, 10);
+  const shiftId = await convertShiftToObjectId(shift);
 
   const employee = await Employee.create({
     employeeId,
@@ -305,12 +321,7 @@ const updateEmployee = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Please provide employee Id");
 
-  // Handle shift conversion from string to ObjectId
-  let shiftId = shift;
-  if (shift && typeof shift === "string" && ["Morning", "Evening", "Night"].includes(shift)) {
-    const shiftDoc = await Shift.findOne({ name: shift });
-    shiftId = shiftDoc ? shiftDoc._id : null;
-  }
+  const shiftId = await convertShiftToObjectId(shift);
 
   const employee = await Employee.findByIdAndUpdate(
     id,

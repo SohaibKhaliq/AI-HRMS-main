@@ -74,7 +74,7 @@ const employeeSchema = new mongoose.Schema(
       required: true,
     },
     shift: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed, // Accept both ObjectId and String
       ref: "Shift",
       default: null,
     },
@@ -119,6 +119,60 @@ const employeeSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Pre-save middleware to convert string shift values to ObjectId
+employeeSchema.pre("save", async function (next) {
+  if (this.isModified("shift") && this.shift) {
+    // If shift is a string, convert it to ObjectId
+    if (typeof this.shift === "string") {
+      const Shift = mongoose.model("Shift");
+      // Try both formats: "Morning" and "Morning Shift"
+      let shiftDoc = await Shift.findOne({ name: this.shift });
+      if (!shiftDoc) {
+        shiftDoc = await Shift.findOne({ name: `${this.shift} Shift` });
+      }
+      if (shiftDoc) {
+        this.shift = shiftDoc._id;
+      } else {
+        this.shift = null;
+      }
+    }
+  }
+  next();
+});
+
+// Pre-update middleware to convert string shift values to ObjectId
+employeeSchema.pre(["findOneAndUpdate", "updateOne", "updateMany"], async function (next) {
+  const update = this.getUpdate();
+  
+  // Handle both direct update and $set operator
+  const shiftValue = update.$set?.shift || update.shift;
+  
+  if (shiftValue && typeof shiftValue === "string") {
+    const Shift = mongoose.model("Shift");
+    // Try both formats: "Morning" and "Morning Shift"
+    let shiftDoc = await Shift.findOne({ name: shiftValue });
+    if (!shiftDoc) {
+      shiftDoc = await Shift.findOne({ name: `${shiftValue} Shift` });
+    }
+    
+    if (shiftDoc) {
+      if (update.$set) {
+        update.$set.shift = shiftDoc._id;
+      } else {
+        update.shift = shiftDoc._id;
+      }
+    } else {
+      if (update.$set) {
+        update.$set.shift = null;
+      } else {
+        update.shift = null;
+      }
+    }
+  }
+  
+  next();
+});
 
 const Employee = mongoose.model("Employee", employeeSchema);
 

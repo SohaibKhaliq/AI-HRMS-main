@@ -105,14 +105,14 @@ const rejectLeave = async (leave, remarks) => {
   await createUpdate({
     employee: leave.employee._id,
     status: leave.status,
-    type: `Leave - ${leave.leaveType}`,
+    type: `Leave - ${leave.leaveType?.name || leave.leaveType}`,
     remarks: leave.remarks || "--",
   });
 
   await leaveRespond({
     email: leave.employee.email,
     name: leave.employee.name,
-    type: leave.leaveType,
+    type: leave.leaveType?.name || leave.leaveType,
     status: leave.status,
     remarks: leave.remarks,
   });
@@ -150,6 +150,11 @@ const deductFromSalary = async (
     year,
     month,
   });
+
+  if (!payrollData) {
+    // If no payroll record exists for this month, skip deduction
+    return `${existingRemarks}No payroll record found for ${month}/${year}. Deduction will be applied when payroll is generated.`;
+  }
 
   const deductionAmount = 1000 * days;
   payrollData.deductions += deductionAmount;
@@ -253,9 +258,8 @@ const respondLeave = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { remarks, status } = req.body;
 
-  const leave = await Leave.findById(id)
-    .populate("employee", "name email")
-    .populate("leaveType", "name");
+  // Don't populate employee in the initial fetch to avoid nested save issues
+  const leave = await Leave.findById(id).populate("leaveType", "name");
 
   if (!leave) throw new Error("Leave not found");
 
@@ -263,17 +267,26 @@ const respondLeave = catchErrors(async (req, res) => {
 
   if (!status) throw new Error("Leave status is required");
 
+  // Fetch employee separately for both approve and reject
+  const employee = await Employee.findById(leave.employee)
+    .populate("department")
+    .populate("shift");
+  
+  if (!employee) throw new Error("Employee not found");
+
+  // Manually set employee data on leave for response functions
+  leave.employee = {
+    _id: employee._id,
+    name: employee.name,
+    email: employee.email,
+  };
+
   if (status === "Rejected") {
     const result = await rejectLeave(leave, remarks);
     return res.status(200).json(result);
   }
 
   if (status === "Approved") {
-    const employee = await Employee.findById(leave.employee)
-      .populate("department")
-      .populate("shift");
-    if (!employee) throw new Error("Employee not found");
-
     const result = await approveLeave(leave, employee);
     return res.status(200).json(result);
   }

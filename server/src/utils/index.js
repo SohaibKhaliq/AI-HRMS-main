@@ -71,6 +71,8 @@ async function generateQrCode(employeeId) {
 const catchErrors = (fn) => {
   return (req, res, next) => {
     fn(req, res, next).catch((err) => {
+      console.error("❌ Error caught:", err);
+      console.error("Stack trace:", err.stack);
       next(err.message);
     });
   };
