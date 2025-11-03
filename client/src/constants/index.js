@@ -113,6 +113,11 @@ const navbarLinks = [
     link: "/leave",
   },
   {
+    name: "Leave Balance",
+    iconClass: "fa-solid fa-calendar-days",
+    link: "/leave-balance",
+  },
+  {
     name: "Report Workplace Issues",
     iconClass: "fas fa-circle-exclamation",
     link: "/complaint",

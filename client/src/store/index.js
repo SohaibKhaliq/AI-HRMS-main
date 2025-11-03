@@ -26,6 +26,7 @@ import meeting from "../reducers/meeting.reducer";
 import leaveType from "../reducers/leaveType.reducer";
 import documentCategory from "../reducers/documentCategory.reducer";
 import timeEntry from "../reducers/timeEntry.reducer";
+import leaveBalance from "../reducers/leaveBalance.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -56,6 +57,7 @@ const rootReducer = combineReducers({
   leaveType,
   documentCategory,
   timeEntry,
+  leaveBalance,
 });
 
 // Configure the store
