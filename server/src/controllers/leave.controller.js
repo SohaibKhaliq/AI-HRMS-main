@@ -190,9 +190,12 @@ const approveLeave = async (leave, employee) => {
     );
   }
 
+  // Get shift name (handle both populated object and string)
+  const shiftName = employee.shift?.name || employee.shift || "Morning";
+
   const substituteData = await getSubstitute({
     department: employee.department,
-    shift: employee.shift,
+    shift: shiftName,
   });
 
   let subsMsg = "";
@@ -202,7 +205,7 @@ const approveLeave = async (leave, employee) => {
 
     await notifySubstituteEmployee({
       name: employee.name,
-      shift: employee.shift,
+      shift: shiftName,
       duration: leave.duration,
       email: substituteData.email,
       subsName: substituteData.name,
@@ -215,12 +218,18 @@ const approveLeave = async (leave, employee) => {
   }
 
   await leave.save();
-  await employee.save();
+  
+  // Save only the leaveBalance field without the populated shift
+  if (employee.isModified('leaveBalance')) {
+    await Employee.findByIdAndUpdate(employee._id, {
+      leaveBalance: employee.leaveBalance
+    });
+  }
 
   await createUpdate({
     employee: leave.employee._id,
     status: leave.status,
-    type: `Leave - ${leave.leaveType}`,
+    type: `Leave - ${leave.leaveType?.name || leave.leaveType}`,
     remarks: leave.remarks || "--",
   });
 
@@ -260,9 +269,9 @@ const respondLeave = catchErrors(async (req, res) => {
   }
 
   if (status === "Approved") {
-    const employee = await Employee.findById(leave.employee).populate(
-      "department"
-    );
+    const employee = await Employee.findById(leave.employee)
+      .populate("department")
+      .populate("shift");
     if (!employee) throw new Error("Employee not found");
 
     const result = await approveLeave(leave, employee);
