@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
 import { MdAdd } from "react-icons/md";
 import { FiSearch, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
-import { getComplaints } from "../../services/complaint.service";
+import { getComplaints, respondToComplaintRequest } from "../../services/complaint.service";
 import { getAllEmployees } from "../../services/employee.service";
 import ComplaintModal from "../../components/shared/modals/ComplaintModal";
 import Loader from "../../components/shared/loaders/Loader";
@@ -100,9 +100,30 @@ const Complaint = () => {
     setSelectedComplaint(null);
   };
 
-  const handleStatusChange = (complaintId, newStatus) => {
-    console.log(`Change complaint ${complaintId} status to ${newStatus}`);
-    // TODO: Implement status change with API call
+  const handleStatusChange = (complaintId, newStatus, currentStatus) => {
+    if (newStatus === currentStatus) return; // No change
+    
+    dispatch(
+      respondToComplaintRequest({
+        complaintID: complaintId,
+        status: newStatus,
+        remarks: `Status changed from ${currentStatus} to ${newStatus}`,
+      })
+    )
+      .unwrap()
+      .then(() => {
+        // Refetch complaints to update UI
+        dispatch(
+          getComplaints({
+            page: currentPage,
+            limit: pageSize,
+            status: statusFilter || undefined,
+          })
+        );
+      })
+      .catch((error) => {
+        console.error("Error updating complaint status:", error);
+      });
   };
 
   const handleDelete = (complaintId) => {
@@ -267,7 +288,7 @@ const Complaint = () => {
                       <select
                         value={complaint.status}
                         onChange={(e) =>
-                          handleStatusChange(complaint._id, e.target.value)
+                          handleStatusChange(complaint._id, e.target.value, complaint.status)
                         }
                         className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
                           complaint.status === "Pending"
