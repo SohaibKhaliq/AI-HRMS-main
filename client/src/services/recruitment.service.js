@@ -1,5 +1,3 @@
-import axios from "axios";
-import { getToken } from "../utils";
 import toast from "react-hot-toast";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../axios/axiosInstance";
@@ -46,10 +44,9 @@ export const createJobApplication = createAsyncThunk(
   "recruitment/createJobApplication",
   async ({ jobId, application }, { rejectWithValue }) => {
     try {
-      // Public endpoint: using axios directly for multipart/form-data
-      const baseURL = import.meta.env.VITE_URL || "http://localhost:3000";
-      const { data } = await axios.post(
-        `${baseURL}/api/recruitment/${jobId}/apply`,
+      // Use axiosInstance to respect configured baseURL (avoids double /api)
+      const { data } = await axiosInstance.post(
+        `/recruitment/${jobId}/apply`,
         application,
         {
           headers: {
@@ -61,10 +58,9 @@ export const createJobApplication = createAsyncThunk(
       toast.success(data.message);
       return data.application;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create application");
-      return rejectWithValue(
-        error.response?.data.message || "Failed to create application"
-      );
+      const message = error.response?.data?.message || error.message || "Failed to create application";
+      toast.error(message);
+      return rejectWithValue(message);
     }
   }
 );

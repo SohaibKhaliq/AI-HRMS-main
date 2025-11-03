@@ -1,9 +1,12 @@
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
+import { useState } from "react";
 import ButtonLoader from "../loaders/ButtonLoader";
 import { createJobApplication } from "../../../services/recruitment.service";
 
 const JobApplicationModal = ({ jobId, setJobId, loading }) => {
+  const [submitted, setSubmitted] = useState(false);
+  const [submittedInfo, setSubmittedInfo] = useState(null);
   const {
     register,
     handleSubmit,
@@ -24,13 +27,15 @@ const JobApplicationModal = ({ jobId, setJobId, loading }) => {
     if (data.resume && data.resume[0]) {
       formData.append("resume", data.resume[0]);
     }
-    console.log(formData);
-
     dispatch(createJobApplication({ jobId, application: formData }))
       .unwrap()
-      .then(() => {
+      .then((application) => {
+        setSubmitted(true);
+        setSubmittedInfo(application || null);
         reset();
-        setJobId(null);
+      })
+      .catch(() => {
+        // error toast handled in thunk
       });
   };
 
@@ -38,6 +43,30 @@ const JobApplicationModal = ({ jobId, setJobId, loading }) => {
     <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex justify-center items-center">
       <div id="overflow" className="w-[90%] sm:max-w-xl">
         <div id="modal" className="bg-white rounded-lg overflow-hidden">
+          {submitted ? (
+            <div className="p-8 space-y-5 text-center">
+              <div className="flex justify-center mb-2">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <i className="fa-solid fa-check text-green-600 text-2xl"></i>
+                </div>
+              </div>
+              <h2 className="font-bold text-gray-700 text-xl">Application Submitted</h2>
+              <p className="text-gray-600 text-sm max-w-md mx-auto">
+                Thank you for applying{submittedInfo?.name ? `, ${submittedInfo.name}` : ""}. We&apos;ll review your application and contact you at
+                {" "}
+                <span className="font-semibold">{submittedInfo?.email || "your email"}</span>.
+              </p>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setJobId(null)}
+                  className="w-full text-[0.9rem] bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-full"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-4">
             <div className="flex justify-between items-center border-b border-gray-200 pb-3">
               <h2 className="font-bold text-gray-600">Job Application</h2>
@@ -192,6 +221,7 @@ const JobApplicationModal = ({ jobId, setJobId, loading }) => {
               </button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>

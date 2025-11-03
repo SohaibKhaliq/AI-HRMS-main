@@ -141,7 +141,26 @@ const createApplicant = catchErrors(async (req, res) => {
   const job = await Recruitment.findById(req.params.id);
   if (!job) throw new Error("Job not found");
 
-  if (job.deadline < Date.now())
+  // Enforce only active/open jobs can receive applications
+  if (job.status && job.status.toLowerCase() !== "open") {
+    throw new Error("This job is not open for applications");
+  }
+
+  // Optional: ensure the job poster (employee) is active
+  if (job.postedBy) {
+    try {
+      const { default: Employee } = await import("../models/employee.model.js");
+      const poster = await Employee.findById(job.postedBy).select("status name");
+      if (poster && poster.status && poster.status.toLowerCase() !== "active") {
+        throw new Error("Applications are only accepted for jobs posted by active employees");
+      }
+    } catch (e) {
+      // If employee model lookup fails, fail-safe: allow, but log
+      console.error("Warning: could not verify job poster active status:", e?.message || e);
+    }
+  }
+
+  if (job.deadline && job.deadline < Date.now())
     throw new Error("Job expired, deadline reached");
 
   job.applicants.push({
@@ -153,15 +172,23 @@ const createApplicant = catchErrors(async (req, res) => {
   });
   await job.save();
 
-  await thankYouForApplying({
-    email,
-    candidateName: name,
-    jobTitle: job.title,
-  });
+  const createdApplication = job.applicants[job.applicants.length - 1];
+
+  // Send acknowledgement email but don't fail the request if email fails
+  try {
+    await thankYouForApplying({
+      email,
+      candidateName: name,
+      jobTitle: job.title,
+    });
+  } catch (mailErr) {
+    console.error("Failed to send application acknowledgement:", mailErr);
+  }
 
   return res.status(201).json({
     success: true,
     message: "Application sent successfully",
+    application: createdApplication,
   });
 });
 

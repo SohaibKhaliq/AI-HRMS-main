@@ -19,20 +19,21 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    const msg = error.response?.data?.message?.toLowerCase() || "";
+    const rawMsg = error.response?.data?.message;
+    const msg = typeof rawMsg === "string" ? rawMsg.toLowerCase() : "";
     const url = error.config?.url || "";
-    
+
     // Don't redirect if it's a logout request (handled by logout service)
     const isLogoutRequest = url.includes("/auth/logout");
-    
+
     // Only logout on authentication errors (401) or specific JWT errors
     if (
       !isLogoutRequest &&
       (status === 401 ||
-      (status === 403 && (msg.includes("jwt") || msg.includes("token"))) ||
-      msg.includes("jwt expired") ||
-      msg.includes("jwt malformed") ||
-      msg.includes("invalid token"))
+        (status === 403 && (msg.includes("jwt") || msg.includes("token"))) ||
+        msg.includes("jwt expired") ||
+        msg.includes("jwt malformed") ||
+        msg.includes("invalid token"))
     ) {
       sessionStorage.clear();
       localStorage.clear();
