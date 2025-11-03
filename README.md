@@ -18,7 +18,14 @@
 
 ***Self-hosted Version*** : [_click here_](https://metrohrms.site)
 
-***Installation Guide*** : [_click here_](https://github.com/WhatsWrongOB/AI-HRMS/blob/main/INSTALLATION.md)
+## 📚 _Documentation_ :
+
+- 📖 [**Installation Guide**](INSTALLATION.md) - Complete setup instructions
+- 📧 [**Email Configuration**](EMAIL_CONFIGURATION.md) - Configure email notifications (NEW)
+- 🌱 [**Seeding Guide**](SEEDING_GUIDE.md) - Database seeding instructions
+- 🔒 [**Security**](SECURITY.md) - Security best practices
+- 📊 [**Implementation Plan**](IMPLEMENTATION_PLAN.md) - Development roadmap
+- ✅ [**Current Status**](CURRENT_STATUS.md) - Project status and progress
 
 ## _Key Features_ :
 
@@ -39,7 +46,9 @@
 - _AI Substitute Assignment_ 
 - _QR Code-Based Attendance_
 - _Biometric Face Recognition Attendance_ 🆕
-- _GEMINI-Powered Chatbot_ 
+- _GEMINI-Powered Chatbot_
+- _📧 Comprehensive Email Notifications_ 🆕
+- _16 Professional HTML Email Templates_ 🆕 
 
 ## _Impact or Outcomes_ :
 
@@ -54,3 +63,22 @@
 - _MERN Stack for Development_
 - _Redux for State Management_
 - _AI Integration with Gemini_
+- _Nodemailer for Email Notifications_
+- _Cloudinary for File Storage_
+- _JWT for Authentication_
+- _Tailwind CSS for Styling_
+
+## 📧 _Email Notifications_ :
+
+The system includes **16 professional HTML email templates** for:
+- ✅ Leave applications and approvals
+- ✅ Payroll and salary notifications
+- ✅ Employee onboarding welcome emails
+- ✅ Meeting invitations and reminders
+- ✅ Holiday and announcement broadcasts
+- ✅ Performance reviews
+- ✅ Resignation and termination notices
+- ✅ Complaint status updates
+- ✅ And more...
+
+See [EMAIL_CONFIGURATION.md](EMAIL_CONFIGURATION.md) for setup instructions.
