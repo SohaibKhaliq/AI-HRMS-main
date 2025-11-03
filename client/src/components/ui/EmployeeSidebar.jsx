@@ -9,6 +9,7 @@ import SettingModal from "../shared/modals/SettingModal";
 import ProfileModal from "../shared/modals/ProfileModal";
 import { updateProfile } from "../../services/employee.service";
 import { logout, logoutAll } from "../../services/authentication.service";
+import NotificationBell from "../shared/notifications/NotificationBell";
 
 const EmployeeSidebar = () => {
   const dispatch = useDispatch();
@@ -104,15 +105,18 @@ const EmployeeSidebar = () => {
           alt="hamburger"
         />
         <img className="w-[55px]" src="/metro.png" alt="logo" />
-        <div
-          onClick={() => setToggleModal(true)}
-          className="w-[35px] h-[35px] border-[2px] border-gray-700 rounded-full overflow-hidden cursor-pointer"
-        >
-          <img
-            className="w-full"
-            src={imagePreview || "/unknown.jpeg"}
-            alt={user?.name}
-          />
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <div
+            onClick={() => setToggleModal(true)}
+            className="w-[35px] h-[35px] border-[2px] border-gray-700 rounded-full overflow-hidden cursor-pointer"
+          >
+            <img
+              className="w-full"
+              src={imagePreview || "/unknown.jpeg"}
+              alt={user?.name}
+            />
+          </div>
         </div>
       </nav>
 

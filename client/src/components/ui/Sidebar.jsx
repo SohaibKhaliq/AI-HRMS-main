@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import SettingModal from "../shared/modals/SettingModal";
 import { logout, logoutAll } from "../../services/authentication.service";
+import NotificationBell from "../shared/notifications/NotificationBell";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -73,12 +74,15 @@ const Sidebar = () => {
           alt="hamburger"
         />
         <img className="w-[55px]" src="/metro.png" alt="logo" />
-        <div className="w-[35px] h-[35px] border-[2px] border-gray-700 rounded-full overflow-hidden cursor-pointer">
-          <img
-            className="w-full"
-            src={user?.profilePicture || "/unkonwn.jpeg"}
-            alt={user?.name}
-          />
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <div className="w-[35px] h-[35px] border-[2px] border-gray-700 rounded-full overflow-hidden cursor-pointer">
+            <img
+              className="w-full"
+              src={user?.profilePicture || "/unkonwn.jpeg"}
+              alt={user?.name}
+            />
+          </div>
         </div>
       </nav>
 

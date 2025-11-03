@@ -21,6 +21,7 @@ import payroll from "../reducers/payroll.reducer";
 import recruitment from "../reducers/recruitment.reducer";
 import jobmeta from "../reducers/jobmeta.reducer";
 import notification from "../reducers/notification.reducer";
+import shift from "../reducers/shift.reducer";
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -46,6 +47,7 @@ const rootReducer = combineReducers({
   jobmeta,
   authentication,
   notification,
+  shift,
 });
 
 // Configure the store
