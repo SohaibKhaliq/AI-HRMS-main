@@ -18,7 +18,7 @@ const createMeeting = catchErrors(async (req, res) => {
     recurrenceEndDate,
   } = req.body;
 
-  const organizerId = req.employee._id;
+  const organizerId = req.user.id;
 
   if (!title || !startTime || !endTime) {
     throw new Error("Title, start time, and end time are required");
@@ -78,7 +78,7 @@ const createMeeting = catchErrors(async (req, res) => {
             meetingTime: new Date(startTime).toLocaleTimeString(),
             location: location || "TBA",
             meetingLink: meetingLink || "",
-            organizer: req.employee.name,
+            organizer: populated.organizer.name,
             agenda: agenda || "",
           },
         });
@@ -125,7 +125,7 @@ const getAllMeetings = catchErrors(async (req, res) => {
 });
 
 const getMyMeetings = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.user.id;
   const { status, startDate, endDate } = req.query;
   const query = {
     $or: [{ organizer: employeeId }, { "participants.employee": employeeId }],
@@ -182,6 +182,30 @@ const updateMeeting = catchErrors(async (req, res) => {
   if (updateData.recurrenceEndDate)
     updateData.recurrenceEndDate = new Date(updateData.recurrenceEndDate);
 
+  // Transform participants if it's an array of strings to proper embedded documents
+  if (updateData.participants && Array.isArray(updateData.participants)) {
+    updateData.participants = updateData.participants.map((p) => {
+      // If it's already an object with employee field, return as is
+      if (typeof p === "object" && p.employee) {
+        return p;
+      }
+      // If it's a string (ObjectId), convert to embedded document structure
+      if (typeof p === "string") {
+        return {
+          employee: p,
+          status: "pending",
+          attendance: "not_marked",
+        };
+      }
+      // If it's an ObjectId, convert to embedded document structure
+      return {
+        employee: p,
+        status: "pending",
+        attendance: "not_marked",
+      };
+    });
+  }
+
   const meeting = await Meeting.findByIdAndUpdate(id, updateData, { new: true })
     .populate("organizer", "name email profilePicture")
     .populate("participants.employee", "name email profilePicture");
@@ -200,7 +224,7 @@ const updateMeeting = catchErrors(async (req, res) => {
 const updateParticipantStatus = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const employeeId = req.employee._id;
+  const employeeId = req.user.id;
 
   if (!id) throw new Error("Meeting ID is required");
   if (!status) throw new Error("Status is required");
