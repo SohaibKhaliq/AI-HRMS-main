@@ -1,9 +1,14 @@
+import fs from "fs";
 import path from "path";
 import multer from "multer";
 import mongoose from "mongoose";
 import cloudinary from "cloudinary";
 import { v4 as uuidv4 } from "uuid";
+import { fileURLToPath } from "url";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Database Connection Utilities
 const connectDB = async () => {
@@ -43,6 +48,35 @@ const createImageStorage = () => {
 };
 
 const createResumeStorage = () => {
+  // Use local storage fallback if Cloudinary is not configured
+  const useLocalStorage = !process.env.CLOUDINARY_CLOUD_NAME || 
+                          !process.env.CLOUDINARY_API_KEY || 
+                          !process.env.CLOUDINARY_API_SECRET;
+
+  if (useLocalStorage) {
+    console.log("⚠️  Cloudinary not configured. Using local file storage for resumes.");
+    const uploadDir = path.join(__dirname, "../public/uploads/resumes");
+    
+    // Ensure upload directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    return multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const parsedName = path.parse(file.originalname);
+        const sanitizedName = parsedName.name
+          .replace(/\s+/g, "_")
+          .replace(/[^a-zA-Z0-9_-]/g, "");
+        const uniqueName = `${sanitizedName}_${uuidv4().substring(0, 8)}${parsedName.ext}`;
+        cb(null, uniqueName);
+      },
+    });
+  }
+
   return new CloudinaryStorage({
     cloudinary: cloudinary.v2,
     params: (req, file) => {

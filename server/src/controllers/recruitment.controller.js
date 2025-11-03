@@ -163,11 +163,14 @@ const createApplicant = catchErrors(async (req, res) => {
   if (job.deadline && job.deadline < Date.now())
     throw new Error("Job expired, deadline reached");
 
+  // Handle both Cloudinary (path) and local storage (filename) for resume URL
+  const resumePath = req.file.path || `/uploads/resumes/${req.file.filename}`;
+
   job.applicants.push({
     name,
     email,
     phone,
-    resume: req.file.path,
+    resume: resumePath,
     coverLetter,
   });
   await job.save();
