@@ -33,6 +33,21 @@ export const getEmployeesOnLeave = createAsyncThunk(
   }
 );
 
+// Get My Leaves (Employee's own leaves)
+export const getMyLeaves = createAsyncThunk(
+  "leaves/getMyLeaves",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.get(`/leaves/my-leaves`);
+      return data.leaves;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data.message || "Failed to fetch your leaves"
+      );
+    }
+  }
+);
+
 // Appy for Leave
 export const createLeave = createAsyncThunk(
   "leaves/createLeave",

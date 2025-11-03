@@ -71,6 +71,21 @@ const getEmployeesOnLeave = catchErrors(async (req, res) => {
   });
 });
 
+const getMyLeaves = catchErrors(async (req, res) => {
+  const employeeId = req.user.id;
+
+  const leaves = await Leave.find({ employee: employeeId })
+    .populate("leaveType", "name")
+    .populate("substitute", "name")
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json({
+    success: true,
+    message: "Your leaves fetched successfully",
+    leaves,
+  });
+});
+
 const applyLeave = catchErrors(async (req, res) => {
   const employee = req.user.id;
   const { leaveType, duration, fromDate, toDate, description } = req.body;
@@ -381,4 +396,5 @@ export {
   assignSustitute,
   getEmployeesOnLeave,
   getEmployeeLeaveStatus,
+  getMyLeaves,
 };

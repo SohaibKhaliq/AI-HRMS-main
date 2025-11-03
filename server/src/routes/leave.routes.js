@@ -5,12 +5,14 @@ import {
   respondLeave,
   assignSustitute,
   getEmployeesOnLeave,
+  getMyLeaves,
 } from "../controllers/leave.controller.js";
 import { verifyAdminToken, verifyEmployeeToken } from "../middlewares/index.js";
 
 const router = express.Router();
 
 router.get("/", verifyAdminToken, getLeaves);
+router.get("/my-leaves", verifyEmployeeToken, getMyLeaves);
 router.post("/", verifyEmployeeToken, applyLeave);
 router.patch("/:id", verifyAdminToken, respondLeave);
 router.get("/employee", verifyAdminToken, getEmployeesOnLeave);

@@ -227,7 +227,7 @@ const complaintSchema = z.object({
 const leaveSchema = z
   .object({
     leaveType: z.string().min(1, "* Leave type is required"),
-    duration: z.string().min(1, "* Duration must be at least 1 day"),
+    duration: z.coerce.number().min(1, "* Duration must be at least 1 day"),
     fromDate: z.string().min(1, "* From date is required"),
     toDate: z.string().min(1, "* To date is required"),
     description: z.string().optional(),

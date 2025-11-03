@@ -5,10 +5,12 @@ import {
   getLeavesByStatus,
   getEmployeesOnLeave,
   respondToLeaveRequest,
+  getMyLeaves,
 } from "../services/leave.service";
 
 const initialState = {
   leaves: [],
+  myLeaves: [],
   employeesOnLeaveToday: [],
   loading: false,
   error: null,
@@ -74,13 +76,28 @@ const leavesSlice = createSlice({
         state.error = action.payload;
       })
 
+      // Handling getMyLeaves action
+      .addCase(getMyLeaves.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getMyLeaves.fulfilled, (state, action) => {
+        state.fetch = false;
+        state.loading = false;
+        state.myLeaves = action.payload;
+      })
+      .addCase(getMyLeaves.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       // Handling createLeave action
       .addCase(createLeave.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createLeave.fulfilled, (state, action) => {
-        state.leaves.push(action.payload);
+        state.myLeaves.unshift(action.payload);
         state.loading = false;
       })
       .addCase(createLeave.rejected, (state, action) => {
