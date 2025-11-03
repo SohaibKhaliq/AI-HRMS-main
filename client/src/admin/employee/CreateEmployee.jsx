@@ -1,10 +1,12 @@
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createEmployeeSchema } from "../../validations";
 import Loader from "../../components/shared/loaders/Loader";
 import { addEmployee } from "../../services/employee.service";
+import { getDesignations } from "../../services/designation.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 
 const AddEmployee = () => {
@@ -12,12 +14,15 @@ const AddEmployee = () => {
 
   const roles = useSelector((state) => state.role.roles);
   const departments = useSelector((state) => state.department.departments);
+  const designations = useSelector((state) => state.designation.designations || []);
   const { loading, formLoading } = useSelector((state) => state.employee);
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(createEmployeeSchema),
@@ -27,6 +32,11 @@ const AddEmployee = () => {
     dispatch(addEmployee(data));
     reset();
   };
+
+  useEffect(() => {
+    // load designations for the designation selector
+    dispatch(getDesignations());
+  }, [dispatch]);
 
   return (
     <>
@@ -45,7 +55,7 @@ const AddEmployee = () => {
           {/* Basic Details */}
           <div className="dark:bg-gray-800 text-[0.9rem] p-5 rounded-lg">
             <h4 className="dark:text-primary font-semibold mb-3 text-[0.95rem]">
-              <i class="fas fa-user mr-2"></i>
+              <i className="fas fa-user mr-2"></i>
               Basic Details
             </h4>
             <div className="grid gap-4 sm:grid-cols-2 text-[0.82rem]">
@@ -264,7 +274,7 @@ const AddEmployee = () => {
           {/* Address Details */}
           <div className="dark:bg-gray-800 text-[0.9rem] p-5 rounded-lg">
             <h4 className="dark:text-primary font-semibold mb-3">
-              <i class="fas fa-map-marker-alt mr-2"></i>
+              <i className="fas fa-map-marker-alt mr-2"></i>
               Address
             </h4>
             <div className="grid gap-4 sm:grid-cols-2 text-[0.82rem]">
@@ -408,7 +418,7 @@ const AddEmployee = () => {
 
           <div className="dark:bg-gray-800 text-[0.9rem] p-5 rounded-lg">
             <h4 className="dark:text-primary font-semibold mb-3">
-              <i class="fas fa-briefcase mr-2"></i>
+              <i className="fas fa-briefcase mr-2"></i>
               Department & Role
             </h4>
             <div className="grid gap-4 sm:grid-cols-2 text-[0.82rem]">
@@ -468,6 +478,54 @@ const AddEmployee = () => {
                     {errors.role && (
                       <p className="text-red-500 text-[0.8rem] mt-1">
                         {errors.role.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
+
+              {/* Designation selector: when chosen, automatically populate salary */}
+              <Controller
+                name="designation"
+                control={control}
+                defaultValue=""
+                rules={{ required: "Designation is required" }}
+                render={({ field }) => (
+                  <div>
+                    <select
+                      {...field}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        field.onChange(val);
+                        // find the selected designation and set salary
+                        const sel = designations.find((d) => d._id === val);
+                        if (sel && sel.salary !== undefined) {
+                          setValue("salary", sel.salary);
+                        }
+                      }}
+                      className={`w-full p-[0.75rem] dark:p-[0.7rem] rounded-lg bg-white dark:bg-[#4b5563] focus:border-blue-500 focus:outline-none border ${
+                        errors.designation
+                          ? "border-red-500"
+                          : "border-gray-200 dark:border-gray-600"
+                      } text-gray-800 dark:text-gray-200`}
+                    >
+                      <option value="">--Designation--</option>
+                      {designations
+                        .filter((d) => {
+                          const dept = watch("department");
+                          // if department selected, show designations that belong to it or those with no department
+                          if (!dept) return true;
+                          return !d.department || d.department._id === dept || d.department === dept;
+                        })
+                        .map((d) => (
+                          <option key={d._id} value={d._id}>
+                            {d.name}
+                          </option>
+                        ))}
+                    </select>
+                    {errors.designation && (
+                      <p className="text-red-500 text-[0.8rem] mt-1">
+                        {errors.designation.message}
                       </p>
                     )}
                   </div>
@@ -616,7 +674,7 @@ const AddEmployee = () => {
           {/* Bank Details */}
           <div className="dark:bg-gray-800 text-[0.9rem] p-5 rounded-lg">
             <h4 className="dark:text-primary font-semibold mb-3">
-              <i class="fas fa-university mr-2"></i>
+              <i className="fas fa-university mr-2"></i>
               Bank Details
             </h4>
             <div className="grid gap-4 sm:grid-cols-2 text-[0.82rem]">
@@ -680,7 +738,7 @@ const AddEmployee = () => {
           {/* Emergency Contact */}
           <div className="dark:bg-gray-800 text-[0.9rem] p-5 rounded-lg">
             <h4 className="dark:text-primary font-semibold mb-3">
-              <i class="fas fa-user-shield mr-2"></i>
+              <i className="fas fa-user-shield mr-2"></i>
               Emergency Contact
             </h4>
             <div className="grid gap-4 sm:grid-cols-2 text-[0.82rem]">

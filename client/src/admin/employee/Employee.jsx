@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import { downloadXls } from "../../utils";
-import { empoyeeHead } from "../../constants";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState, useCallback } from "react";
 import Error from "../../components/shared/error/Error";
@@ -212,7 +211,7 @@ function Employee() {
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">EMP {employee.employeeId}</td>
                     <td className="py-3 px-4 border-b border-secondary">{employee.department?.name || '--'}</td>
-                    <td className="py-3 px-4 border-b border-secondary">{employee.role?.name || '--'}</td>
+                    <td className="py-3 px-4 border-b border-secondary">{employee.designation?.name || '--'}</td>
                     <td className="py-3 px-4 border-b border-secondary">{employee.status}</td>
                     <td className="py-3 px-4 border-b border-secondary">{employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString() : '-'}</td>
                     <td className="py-3 px-4 border-b border-secondary flex items-center space-x-2">

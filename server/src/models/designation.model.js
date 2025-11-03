@@ -11,6 +11,11 @@ const designationSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    salary: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",

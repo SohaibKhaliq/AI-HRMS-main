@@ -26,7 +26,6 @@ const sidebarLinks = [
     iconClass: "far fa-building",
     childrens: [
   { name: "Departments", link: "/department" },
-      { name: "Roles", link: "/roles" },
     ],
   },
   {

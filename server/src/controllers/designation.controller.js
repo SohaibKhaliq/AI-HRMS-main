@@ -2,11 +2,11 @@ import { catchErrors, myCache } from "../utils/index.js";
 import Designation from "../models/designation.model.js";
 
 const createDesignation = catchErrors(async (req, res) => {
-  const { name, description, department, status, createdAt } = req.body;
+  const { name, description, department, status, salary, createdAt } = req.body;
 
   if (!name) throw new Error("Please provide a name for the designation");
 
-  const data = { name, description, department, status: status || "Active" };
+  const data = { name, description, department, status: status || "Active", salary: salary || 0 };
   if (createdAt) data.createdAt = new Date(createdAt);
 
   const designation = await Designation.create(data);
@@ -23,6 +23,7 @@ const getAllDesignations = catchErrors(async (req, res) => {
     return res.status(200).json({ success: true, message: "Designations fetched (cache)", designations: cached });
   }
 
+  // include salary in the returned payload
   const designations = await Designation.find().populate("department", "name").lean();
   myCache.set(cacheKey, designations);
 
@@ -38,9 +39,10 @@ const getDesignationById = catchErrors(async (req, res) => {
 
 const updateDesignation = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { name, description, department, status, createdAt } = req.body;
+  const { name, description, department, status, salary, createdAt } = req.body;
   if (!id) throw new Error("Please provide designation id");
   const updateData = { name, description, department, status };
+  if (salary !== undefined) updateData.salary = salary;
   if (createdAt) updateData.createdAt = new Date(createdAt);
   const designation = await Designation.findByIdAndUpdate(id, updateData, { new: true }).populate("department", "name");
   myCache.del("designations");

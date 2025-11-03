@@ -51,7 +51,8 @@ const createEmployeeSchema = z.object({
 
   department: z.string().min(1, "* Department is required"),
   role: z.string().min(1, "* Role is required"),
-  salary: z.string().regex(/^\d+$/, "* Salary must be a number"),
+  designation: z.string().min(1, "* Designation is required"),
+  salary: z.coerce.number().min(0, "* Salary must be a positive number"),
   shift: z.enum(["Morning", "Evening", "Night"]),
   status: z.enum(["Active", "Inactive", "Leave"]),
   dateOfJoining: z
