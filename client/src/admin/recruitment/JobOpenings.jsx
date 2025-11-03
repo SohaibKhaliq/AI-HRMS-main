@@ -34,7 +34,6 @@ function JobOpenings() {
   const handleReviewFilter = (filter) => {
     dispatch(setFetchFlag(true));
     setReviewFilter(filter);
-    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -43,7 +42,7 @@ function JobOpenings() {
         getJobOpenings({ status: reviewFilter.toLowerCase(), deadline: "" })
       );
     }
-  }, [reviewFilter, fetch]);
+  }, [reviewFilter, fetch, dispatch]);
 
   if (error) return <FetchError error={error} />;
 
@@ -89,7 +88,7 @@ function JobOpenings() {
                       {job.title}
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">
-                      {job.role.name}
+                      {job.role?.name || "N/A"}
                     </td>
 
                     <td className="py-3 px-4 border-b border-secondary">
