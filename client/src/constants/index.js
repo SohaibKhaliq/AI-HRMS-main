@@ -145,6 +145,11 @@ const navbarLinks = [
     link: "/documents",
   },
   {
+    name: "My Payroll",
+    iconClass: "fa-solid fa-file-invoice-dollar",
+    link: "/payroll",
+  },
+  {
     name: "Report Workplace Issues",
     iconClass: "fas fa-circle-exclamation",
     link: "/complaint",

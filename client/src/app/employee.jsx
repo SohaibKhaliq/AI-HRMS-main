@@ -18,6 +18,7 @@ const TimeTracking = lazy(() => import("../pages/timeTracking/TimeTracking"));
 const LeaveBalance = lazy(() => import("../pages/leaveBalance/LeaveBalance"));
 const EmployeeMeetings = lazy(() => import("../pages/meetings/EmployeeMeetings"));
 const EmployeeDocuments = lazy(() => import("../pages/documents/EmployeeDocuments"));
+const Payroll = lazy(() => import("../pages/payroll/Payroll"));
 
 const EmployeeApp = () => {
   const dispatch = useDispatch();
@@ -49,6 +50,7 @@ const EmployeeApp = () => {
             <Route path="/leave-balance" element={<LeaveBalance />} />
             <Route path="/meetings" element={<EmployeeMeetings />} />
             <Route path="/documents" element={<EmployeeDocuments />} />
+            <Route path="/payroll" element={<Payroll />} />
             <Route path="/resignation" element={<Resignation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
