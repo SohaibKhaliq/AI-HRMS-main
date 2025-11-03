@@ -54,7 +54,13 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const allowedOrigins = [process.env.CLIENT_URL];
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:8000",
+  "http://localhost:5173",
+  "http://127.0.0.1:8000",
+  "http://127.0.0.1:5173"
+].filter(Boolean);
 
 app.use(
   cors({
