@@ -140,6 +140,11 @@ const navbarLinks = [
     link: "/meetings",
   },
   {
+    name: "My Documents",
+    iconClass: "fa-solid fa-folder-open",
+    link: "/documents",
+  },
+  {
     name: "Report Workplace Issues",
     iconClass: "fas fa-circle-exclamation",
     link: "/complaint",
