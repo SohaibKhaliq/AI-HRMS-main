@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import axiosInstance from "./axios";
+import axiosInstance from "../axios/axiosInstance";
 
 // Get my documents (employee)
 export const getMyDocuments = createAsyncThunk(

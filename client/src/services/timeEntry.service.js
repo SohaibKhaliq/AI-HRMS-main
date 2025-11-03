@@ -1,12 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import api from "./api";
+import axiosInstance from "../axios/axiosInstance";
 
 // Clock in
 export const clockIn = createAsyncThunk(
   "timeEntry/clockIn",
   async (data, { rejectWithValue }) => {
     try {
-      const response = await api.post("/time-entries/clock-in", data);
+      const response = await axiosInstance.post("/time-entries/clock-in", data);
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -21,7 +21,7 @@ export const clockOut = createAsyncThunk(
   "timeEntry/clockOut",
   async (data, { rejectWithValue }) => {
     try {
-      const response = await api.post("/time-entries/clock-out", data);
+      const response = await axiosInstance.post("/time-entries/clock-out", data);
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -36,7 +36,7 @@ export const startBreak = createAsyncThunk(
   "timeEntry/startBreak",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.post("/time-entries/break/start");
+      const response = await axiosInstance.post("/time-entries/break/start");
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -51,7 +51,7 @@ export const endBreak = createAsyncThunk(
   "timeEntry/endBreak",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.post("/time-entries/break/end");
+      const response = await axiosInstance.post("/time-entries/break/end");
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -66,7 +66,7 @@ export const getActiveTimeEntry = createAsyncThunk(
   "timeEntry/getActive",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/time-entries/active");
+      const response = await axiosInstance.get("/time-entries/active");
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -85,7 +85,7 @@ export const getMyTimeEntries = createAsyncThunk(
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
       
-      const response = await api.get(`/time-entries/my?${params.toString()}`);
+      const response = await axiosInstance.get(`/time-entries/my?${params.toString()}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -106,7 +106,7 @@ export const getAllTimeEntries = createAsyncThunk(
       if (endDate) params.append("endDate", endDate);
       if (status) params.append("status", status);
       
-      const response = await api.get(`/time-entries?${params.toString()}`);
+      const response = await axiosInstance.get(`/time-entries?${params.toString()}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -121,7 +121,7 @@ export const approveTimeEntry = createAsyncThunk(
   "timeEntry/approve",
   async ({ id, notes }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/time-entries/${id}/approve`, { notes });
+      const response = await axiosInstance.patch(`/time-entries/${id}/approve`, { notes });
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -136,7 +136,7 @@ export const rejectTimeEntry = createAsyncThunk(
   "timeEntry/reject",
   async ({ id, reason, adminNotes }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/time-entries/${id}/reject`, { reason, adminNotes });
+      const response = await axiosInstance.patch(`/time-entries/${id}/reject`, { reason, adminNotes });
       return response.data;
     } catch (error) {
       return rejectWithValue(

@@ -1,12 +1,12 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import api from './api';
+import axiosInstance from '../axios/axiosInstance';
 
 // Get my leave balances (employee)
 export const getMyLeaveBalances = createAsyncThunk(
   'leaveBalance/getMyLeaveBalances',
   async ({ year }, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/leave-balances/my?year=${year}`);
+      const response = await axiosInstance.get(`/leave-balances/my?year=${year}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leave balances');
@@ -24,7 +24,7 @@ export const getAllLeaveBalances = createAsyncThunk(
       if (year) params.append('year', year);
       if (leaveType) params.append('leaveType', leaveType);
       
-      const response = await api.get(`/leave-balances?${params.toString()}`);
+      const response = await axiosInstance.get(`/leave-balances?${params.toString()}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leave balances');
@@ -37,7 +37,7 @@ export const initializeLeaveBalance = createAsyncThunk(
   'leaveBalance/initializeLeaveBalance',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await api.post('/leave-balances/initialize', data);
+      const response = await axiosInstance.post('/leave-balances/initialize', data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to initialize leave balance');
@@ -50,7 +50,7 @@ export const adjustLeaveBalance = createAsyncThunk(
   'leaveBalance/adjustLeaveBalance',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await api.post('/leave-balances/adjust', data);
+      const response = await axiosInstance.post('/leave-balances/adjust', data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to adjust leave balance');
@@ -63,7 +63,7 @@ export const carryForwardBalances = createAsyncThunk(
   'leaveBalance/carryForwardBalances',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await api.post('/leave-balances/carry-forward', data);
+      const response = await axiosInstance.post('/leave-balances/carry-forward', data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to carry forward balances');
@@ -76,7 +76,7 @@ export const getBalanceByEmployeeAndYear = createAsyncThunk(
   'leaveBalance/getBalanceByEmployeeAndYear',
   async ({ employee, year }, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/leave-balances?employee=${employee}&year=${year}`);
+      const response = await axiosInstance.get(`/leave-balances?employee=${employee}&year=${year}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch employee balance');
