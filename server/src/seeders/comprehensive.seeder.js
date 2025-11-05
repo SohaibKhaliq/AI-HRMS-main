@@ -981,6 +981,55 @@ export const seedRecruitmentData = async () => {
     }
 
     // Create job postings
+    // Sample applicant data to add to jobs
+    const sampleApplicants = [
+      {
+        name: "Sara Ahmed",
+        email: "sara.ahmed@example.com",
+        phone: "03001234567",
+        resume: "/uploads/resumes/sara_ahmed_resume.pdf",
+        coverLetter: "I am excited to apply for this position and believe my skills align perfectly with your requirements.",
+        status: "Applied",
+        appliedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      },
+      {
+        name: "Ali Hassan",
+        email: "ali.hassan@example.com",
+        phone: "03009876543",
+        resume: "/uploads/resumes/ali_hassan_resume.pdf",
+        coverLetter: "With 5 years of experience in the field, I am confident I can contribute significantly to your team.",
+        status: "Under Review",
+        appliedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+      },
+      {
+        name: "Fatima Khan",
+        email: "fatima.khan@example.com",
+        phone: "03007654321",
+        resume: "/uploads/resumes/fatima_khan_resume.pdf",
+        coverLetter: "I am passionate about this role and have the necessary qualifications to excel.",
+        status: "Interview",
+        appliedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+      },
+      {
+        name: "Ahmed Raza",
+        email: "ahmed.raza@example.com",
+        phone: "03005432109",
+        resume: "/uploads/resumes/ahmed_raza_resume.pdf",
+        coverLetter: "Looking forward to bringing my expertise to your organization.",
+        status: "Applied",
+        appliedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      },
+      {
+        name: "Zainab Malik",
+        email: "zainab.malik@example.com",
+        phone: "03008765432",
+        resume: "/uploads/resumes/zainab_malik_resume.pdf",
+        coverLetter: "I have been following your company for years and would love to be part of the team.",
+        status: "Hired",
+        appliedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+      },
+    ];
+
     const jobs = [
       {
         title: "Senior Software Engineer",
@@ -993,6 +1042,7 @@ export const seedRecruitmentData = async () => {
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         status: "Open",
         postedBy: employees[0]._id,
+        applicants: [sampleApplicants[0], sampleApplicants[1], sampleApplicants[2]],
       },
       {
         title: "Marketing Manager",
@@ -1005,6 +1055,7 @@ export const seedRecruitmentData = async () => {
         deadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
         status: "Open",
         postedBy: employees[0]._id,
+        applicants: [sampleApplicants[3], sampleApplicants[4]],
       },
       {
         title: "HR Intern",
@@ -1017,6 +1068,7 @@ export const seedRecruitmentData = async () => {
         deadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
         status: "Open",
         postedBy: employees[0]._id,
+        applicants: [sampleApplicants[0]],
       },
       {
         title: "Part-time Sales Associate",
@@ -1029,11 +1081,12 @@ export const seedRecruitmentData = async () => {
         deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
         status: "Open",
         postedBy: employees[0]._id,
+        applicants: [],
       },
     ];
 
     await Recruitment.insertMany(jobs);
-    console.log("✓ Successfully seeded recruitment data (categories, types, locations, jobs)");
+    console.log("✓ Successfully seeded recruitment data (categories, types, locations, jobs with applicants)");
   } catch (error) {
     console.error("✗ Error seeding recruitment data:", error.message);
   }
