@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { MdClose } from "react-icons/md";
 import { complaintSchema } from "../../../validations";
 import ValidatedInput from "../../ui/ValidatedInput";
@@ -438,5 +439,33 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
     </div>
   );
 };
+
+  ComplaintModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    complaint: PropTypes.shape({
+      _id: PropTypes.string,
+      employee: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.shape({ _id: PropTypes.string })
+      ]),
+      againstEmployee: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.shape({ _id: PropTypes.string })
+      ]),
+      complainType: PropTypes.string,
+      complainSubject: PropTypes.string,
+      complaintDetails: PropTypes.string,
+      status: PropTypes.string,
+      documentUrl: PropTypes.string,
+      remarks: PropTypes.string,
+    }),
+    action: PropTypes.oneOf(["create", "edit", "view"]).isRequired,
+    employees: PropTypes.arrayOf(PropTypes.shape({
+      _id: PropTypes.string,
+      name: PropTypes.string,
+    })),
+    onSubmit: PropTypes.func.isRequired,
+  };
 
 export default ComplaintModal;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { createDesignation, updateDesignation } from "../../../services/designation.service";
 import ValidatedInput from "../../ui/ValidatedInput";
@@ -126,6 +127,22 @@ const DesignationModal = ({ action, onClose, designation }) => {
       </form>
     </div>
   );
+};
+
+DesignationModal.propTypes = {
+  action: PropTypes.oneOf(["create", "update", "view"]).isRequired,
+  onClose: PropTypes.func.isRequired,
+  designation: PropTypes.shape({
+    _id: PropTypes.string,
+    name: PropTypes.string,
+    description: PropTypes.string,
+    department: PropTypes.shape({
+      _id: PropTypes.string,
+    }),
+    status: PropTypes.string,
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    salary: PropTypes.number,
+  }),
 };
 
 export default DesignationModal;

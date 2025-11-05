@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 import { MdClose } from "react-icons/md";
 import { holidaySchema } from "../../../validations";
@@ -301,6 +302,21 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
       </div>
     </div>
   );
+};
+
+HolidayModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  holiday: PropTypes.shape({
+    _id: PropTypes.string,
+    holidayName: PropTypes.string,
+    date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    category: PropTypes.string,
+    type: PropTypes.string,
+    description: PropTypes.string,
+    isPaid: PropTypes.bool,
+  }),
+  action: PropTypes.oneOf(["create", "edit", "view"]).isRequired,
 };
 
 export default HolidayModal;

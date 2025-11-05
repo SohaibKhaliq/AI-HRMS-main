@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import ValidatedInput from "../../ui/ValidatedInput";
 
 const SimpleNameModal = ({ title, action = "create", defaultValue = "", onSubmit, onClose }) => {
@@ -48,6 +49,14 @@ const SimpleNameModal = ({ title, action = "create", defaultValue = "", onSubmit
       </form>
     </div>
   );
+};
+
+SimpleNameModal.propTypes = {
+  title: PropTypes.string,
+  action: PropTypes.oneOf(["create", "update", "view"]),
+  defaultValue: PropTypes.string,
+  onSubmit: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default SimpleNameModal;
