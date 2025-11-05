@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ValidatedInput from "../../ui/ValidatedInput";
 
 const SimpleNameModal = ({ title, action = "create", defaultValue = "", onSubmit, onClose }) => {
   const [name, setName] = useState("");
@@ -24,14 +25,16 @@ const SimpleNameModal = ({ title, action = "create", defaultValue = "", onSubmit
         </div>
 
         <div className="w-full">
-          <input
+          <ValidatedInput
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
+            validationType="name"
+            validationOptions={{ fieldName: title || "Name" }}
+            label={title || "Name"}
             disabled={isView}
             required
-            className="w-full bg-[#EFEFEF] text-sm sm:text-center p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium"
+            className="w-full bg-[#EFEFEF] text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium"
           />
         </div>
 

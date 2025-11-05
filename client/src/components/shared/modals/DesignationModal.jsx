@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createDesignation, updateDesignation } from "../../../services/designation.service";
+import ValidatedInput from "../../ui/ValidatedInput";
 
 const DesignationModal = ({ action, onClose, designation }) => {
   const dispatch = useDispatch();
@@ -49,7 +50,18 @@ const DesignationModal = ({ action, onClose, designation }) => {
         </div>
 
         <div>
-          <input name="name" value={formData.name} onChange={handleChange} disabled={isView} required placeholder="Designation name" className="w-full p-3 bg-[#EFEFEF] rounded-full" />
+          <ValidatedInput
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            validationType="name"
+            validationOptions={{ fieldName: "Designation name" }}
+            label="Designation Name"
+            disabled={isView}
+            required
+            className="w-full p-3 bg-[#EFEFEF] rounded-full"
+          />
         </div>
 
         <div>
@@ -67,11 +79,37 @@ const DesignationModal = ({ action, onClose, designation }) => {
         </div>
 
         <div>
-          <textarea name="description" value={formData.description} onChange={handleChange} disabled={isView} rows={4} placeholder="Description" className="w-full p-3 bg-[#EFEFEF] rounded-lg" />
+          <ValidatedInput
+            type="textarea"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            validationType="description"
+            validationOptions={{ 
+              fieldName: "Description",
+              minLength: 10,
+              maxLength: 500,
+              required: false 
+            }}
+            label="Description"
+            disabled={isView}
+            required={false}
+            className="w-full p-3 bg-[#EFEFEF] rounded-lg"
+          />
         </div>
 
         <div>
-          <input name="salary" value={formData.salary} onChange={handleChange} disabled={isView} placeholder="Salary (numeric)" type="number" className="w-full p-3 bg-[#EFEFEF] rounded-full" />
+          <ValidatedInput
+            type="number"
+            name="salary"
+            value={formData.salary}
+            onChange={handleChange}
+            validationType="salary"
+            label="Salary"
+            disabled={isView}
+            required={false}
+            className="w-full p-3 bg-[#EFEFEF] rounded-full"
+          />
         </div>
 
         {action === "update" && (

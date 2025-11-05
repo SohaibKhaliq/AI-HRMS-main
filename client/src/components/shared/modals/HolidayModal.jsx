@@ -4,6 +4,7 @@ import { MdClose } from "react-icons/md";
 import { holidaySchema } from "../../../validations";
 import { createHoliday, updateHoliday } from "../../../services/holiday.service";
 import { setFetchFlag } from "../../../reducers/holiday.reducer";
+import ValidatedInput from "../../ui/ValidatedInput";
 
 const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
   const dispatch = useDispatch();
@@ -126,17 +127,23 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Holiday Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Holiday Name *
-            </label>
-            <input
+            <ValidatedInput
               type="text"
               name="holidayName"
               value={formData.holidayName}
               onChange={handleChange}
+              validationType="text"
+              validationOptions={{
+                fieldName: "Holiday name",
+                minLength: 2,
+                maxLength: 100,
+                allowNumbers: true,
+                allowSpecialChars: true
+              }}
+              label="Holiday Name"
               disabled={action === "view"}
-              placeholder="e.g., New Year's Day"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             {validationErrors.holidayName && (
               <p className="text-red-500 text-sm mt-1">
@@ -215,18 +222,22 @@ const HolidayModal = ({ isOpen, onClose, holiday = null, action }) => {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description *
-            </label>
-            <textarea
+            <ValidatedInput
+              type="textarea"
               name="description"
               value={formData.description}
               onChange={handleChange}
+              validationType="description"
+              validationOptions={{
+                fieldName: "Description",
+                minLength: 5,
+                maxLength: 500,
+                required: true
+              }}
+              label="Description"
               disabled={action === "view"}
-              placeholder="Enter holiday description"
-              rows="3"
-              maxLength="500"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              required
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             <div className="text-xs text-gray-500 mt-1">
               {formData.description.length}/500 characters

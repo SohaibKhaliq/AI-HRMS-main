@@ -5,6 +5,7 @@ import {
   createDepartment,
   updateDepartment,
 } from "../../../services/department.service";
+import ValidatedInput from "../../ui/ValidatedInput";
 
 const DepartmentModal = ({ action, onClose, department }) => {
   const dispatch = useDispatch();
@@ -74,19 +75,18 @@ const DepartmentModal = ({ action, onClose, department }) => {
         </div>
 
         <div className="w-full">
-          <div className="w-full relative">
-            <i className="fa fa-calendar text-sm absolute left-4 pl-1 top-1/2 transform -translate-y-1/2 text-gray-700"></i>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Department name"
-              className="w-full bg-[#EFEFEF] text-sm sm:text-center p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium pl-12"
-              disabled={isView}
-              required
-            />
-          </div>
+          <ValidatedInput
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            validationType="name"
+            validationOptions={{ fieldName: "Department name" }}
+            label="Department Name"
+            className="w-full bg-[#EFEFEF] text-sm p-[17px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-medium"
+            disabled={isView}
+            required
+          />
         </div>
 
         {/* Department head removed — no selection UI */}
@@ -121,14 +121,22 @@ const DepartmentModal = ({ action, onClose, department }) => {
         </div>
 
         <div className="w-full">
-          <textarea
+          <ValidatedInput
+            type="textarea"
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Write your description (optional)"
+            validationType="description"
+            validationOptions={{ 
+              fieldName: "Description",
+              minLength: 10,
+              maxLength: 500,
+              required: false 
+            }}
+            label="Description"
             className="w-full p-4 bg-[#EFEFEF] text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700 resize-none medium"
             disabled={isView}
-            rows={4}
+            required={false}
           />
         </div>
 

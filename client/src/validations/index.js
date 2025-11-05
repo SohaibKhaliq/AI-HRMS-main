@@ -1,5 +1,66 @@
 import { z } from "zod";
 
+// Common validation patterns
+const nameRegex = /^[A-Za-z\s'-]+$/;
+const cityRegex = /^[A-Za-z\s-]+$/;
+const addressRegex = /^[A-Za-z0-9\s,.-]+$/;
+const postalCodeRegex = /^[A-Za-z0-9\s-]+$/;
+
+// Reusable address schema with strict validation
+const addressSchema = z.object({
+  street: z
+    .string()
+    .min(5, "* Street address must be at least 5 characters")
+    .max(200, "* Street address must not exceed 200 characters")
+    .regex(addressRegex, "* Street address contains invalid characters"),
+  city: z
+    .string()
+    .min(2, "* City must be at least 2 characters")
+    .max(50, "* City must not exceed 50 characters")
+    .regex(cityRegex, "* City name can only contain letters, spaces, and hyphens")
+    .refine((val) => !/\d/.test(val), {
+      message: "* City name cannot contain numbers",
+    }),
+  state: z
+    .string()
+    .min(2, "* State must be at least 2 characters")
+    .max(50, "* State must not exceed 50 characters")
+    .regex(cityRegex, "* State name can only contain letters, spaces, and hyphens")
+    .refine((val) => !/\d/.test(val), {
+      message: "* State name cannot contain numbers",
+    }),
+  postalCode: z
+    .string()
+    .min(4, "* Postal code must be at least 4 characters")
+    .max(10, "* Postal code must not exceed 10 characters")
+    .regex(postalCodeRegex, "* Postal code contains invalid characters"),
+  country: z
+    .string()
+    .min(2, "* Country must be at least 2 characters")
+    .max(50, "* Country must not exceed 50 characters")
+    .regex(cityRegex, "* Country name can only contain letters, spaces, and hyphens")
+    .refine((val) => !/\d/.test(val), {
+      message: "* Country name cannot contain numbers",
+    }),
+});
+
+// Reusable emergency contact schema
+const emergencyContactSchema = z.object({
+  name: z
+    .string()
+    .min(2, "* Emergency contact name must be at least 2 characters")
+    .max(100, "* Emergency contact name must not exceed 100 characters")
+    .regex(nameRegex, "* Name can only contain letters, spaces, hyphens, and apostrophes")
+    .refine((val) => !/\d/.test(val), {
+      message: "* Name cannot contain numbers",
+    }),
+  relationship: z.enum(["Father", "Brother", "Friend"]),
+  phoneNumber: z
+    .string()
+    .regex(/^\d+$/, "* Phone number can only contain digits (0-9)")
+    .length(11, "* Phone number must be exactly 11 digits"),
+});
+
 const authenticationSchema = z.object({
   authority: z.string().nonempty("* Authority is required"),
   employeeId: z
@@ -20,7 +81,17 @@ const createEmployeeSchema = z.object({
   employeeId: z
     .string()
     .regex(/^\d{3}$/, "* Employee ID must be exactly 3 digits"),
-  name: z.string().min(6, "* Full name must be at least 6 characters"),
+  name: z
+    .string()
+    .min(2, "* Full name must be at least 2 characters")
+    .max(100, "* Full name must not exceed 100 characters")
+    .regex(/^[A-Za-z\s'-]+$/, "* Name can only contain letters, spaces, hyphens, and apostrophes")
+    .refine((val) => !/\d/.test(val), {
+      message: "* Name cannot contain numbers",
+    })
+    .refine((val) => !/^\s|\s$/.test(val), {
+      message: "* Name cannot start or end with spaces",
+    }),
   email: z
     .string()
     .email("* Invalid email address")
@@ -41,18 +112,15 @@ const createEmployeeSchema = z.object({
     ),
   gender: z.enum(["Male", "Female"]),
   martialStatus: z.enum(["Single", "Married"]),
-  address: z.object({
-    street: z.string().min(1, "* Street is required"),
-    city: z.string().min(1, "* City is required"),
-    state: z.string().min(1, "* State is required"),
-    postalCode: z.string().min(1, "* Postal Code is required"),
-    country: z.string().min(1, "* Country is required"),
-  }),
+  address: addressSchema,
 
   department: z.string().min(1, "* Department is required"),
   role: z.string().min(1, "* Role is required"),
   designation: z.string().min(1, "* Designation is required"),
-  salary: z.coerce.number().min(0, "* Salary must be a positive number"),
+  salary: z.coerce
+    .number()
+    .min(0, "* Salary must be a positive number")
+    .max(10000000, "* Salary must not exceed 10,000,000"),
   shift: z.enum(["Morning", "Evening", "Night"]),
   status: z.enum(["Active", "Inactive", "Leave"]),
   dateOfJoining: z
@@ -67,21 +135,27 @@ const createEmployeeSchema = z.object({
       .string()
       .min(8, "* Account number must be at least 8 digits")
       .max(16, "* Account number cannot exceed 16 digits")
-      .regex(/^\d+$/, "* Account number must contain only digits"),
+      .regex(/^\d+$/, "* Account number can only contain digits (0-9)"),
     bankName: z.enum(["HBL", "ABL", "GOP"]),
   }),
-  emergencyContact: z.object({
-    name: z.string().min(1, "Emergency Contact required"),
-    relationship: z.enum(["Father", "Brother", "Friend"]),
-    phoneNumber: z.string().regex(/^\d+$/, "* Phone number must be a number"),
-  }),
+  emergencyContact: emergencyContactSchema,
 });
 
 const updateEmployeeSchema = z.object({
   employeeId: z
     .string()
     .regex(/^\d{3}$/, "* Employee ID must be exactly 3 digits"),
-  name: z.string().min(6, "* Full name must be at least 6 characters"),
+  name: z
+    .string()
+    .min(2, "* Full name must be at least 2 characters")
+    .max(100, "* Full name must not exceed 100 characters")
+    .regex(nameRegex, "* Name can only contain letters, spaces, hyphens, and apostrophes")
+    .refine((val) => !/\d/.test(val), {
+      message: "* Name cannot contain numbers",
+    })
+    .refine((val) => !/^\s|\s$/.test(val), {
+      message: "* Name cannot start or end with spaces",
+    }),
   email: z
     .string()
     .email("* Invalid email address")
@@ -101,17 +175,14 @@ const updateEmployeeSchema = z.object({
     ),
   gender: z.enum(["Male", "Female"]),
   martialStatus: z.enum(["Single", "Married"]),
-  address: z.object({
-    street: z.string().min(1, "* Street is required"),
-    city: z.string().min(1, "* City is required"),
-    state: z.string().min(1, "* State is required"),
-    postalCode: z.string().min(1, "* Postal Code is required"),
-    country: z.string().min(1, "* Country is required"),
-  }),
+  address: addressSchema,
 
   department: z.string().min(1, "* Department is required"),
   role: z.string().min(1, "* Role is required"),
-  salary: z.coerce.number().min(0, "* Salary must be a positive number"),
+  salary: z.coerce
+    .number()
+    .min(0, "* Salary must be a positive number")
+    .max(10000000, "* Salary must not exceed 10,000,000"),
   shift: z.enum(["Morning", "Evening", "Night"]),
   status: z.enum(["Active", "Inactive", "Leave"]),
   dateOfJoining: z
@@ -126,14 +197,10 @@ const updateEmployeeSchema = z.object({
       .string()
       .min(8, "* Account number must be at least 8 digits")
       .max(16, "* Account number cannot exceed 16 digits")
-      .regex(/^\d+$/, "* Account number must contain only digits"),
+      .regex(/^\d+$/, "* Account number can only contain digits (0-9)"),
     bankName: z.enum(["HBL", "ABL", "GOP"]),
   }),
-  emergencyContact: z.object({
-    name: z.string().min(1, "* Emergency Contact required"),
-    relationship: z.enum(["Father", "Brother", "Friend"]),
-    phoneNumber: z.string().regex(/^\d+$/, "* Phone number must be a number"),
-  }),
+  emergencyContact: emergencyContactSchema,
 });
 
 const resetPasswordSchema = z

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MdClose } from "react-icons/md";
 import { complaintSchema } from "../../../validations";
+import ValidatedInput from "../../ui/ValidatedInput";
 
 const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees = [], onSubmit }) => {
   const [documentFile, setDocumentFile] = useState(null);
@@ -288,22 +289,23 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
 
             {/* Subject */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Subject <span className="text-red-500">*</span>
-              </label>
-              <input
+              <ValidatedInput
                 type="text"
                 name="complainSubject"
                 value={formData.complainSubject}
                 onChange={handleChange}
+                validationType="subject"
+                validationOptions={{
+                  fieldName: "Subject",
+                  minLength: 5,
+                  maxLength: 150
+                }}
+                label="Subject"
                 disabled={isViewMode}
-                placeholder="Brief complaint subject"
-                className={`w-full px-3 py-2 border ${
-                  validationErrors.complainSubject ? "border-red-500" : "border-gray-300"
-                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                required
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
-                required
               />
               {validationErrors.complainSubject && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.complainSubject}</p>
@@ -312,22 +314,23 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
 
             {/* Complaint Details */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Complaint Details <span className="text-red-500">*</span>
-              </label>
-              <textarea
+              <ValidatedInput
+                type="textarea"
                 name="complaintDetails"
                 value={formData.complaintDetails}
                 onChange={handleChange}
+                validationType="description"
+                validationOptions={{
+                  fieldName: "Complaint details",
+                  minLength: 10,
+                  maxLength: 1000
+                }}
+                label="Complaint Details"
                 disabled={isViewMode}
-                rows="3"
-                placeholder="Detailed description of the complaint"
-                className={`w-full px-3 py-2 border ${
-                  validationErrors.complaintDetails ? "border-red-500" : "border-gray-300"
-                } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                required
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
-                required
               />
               <div className="flex justify-between items-start">
                 {validationErrors.complaintDetails && (
