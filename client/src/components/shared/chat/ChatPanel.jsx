@@ -3,6 +3,7 @@ import { IoMdSend } from "react-icons/io";
 import { useRef, useEffect, useState } from "react";
 import { BsEmojiSmile, BsPaperclip } from "react-icons/bs";
 import { FaPaperPlane, FaArrowLeft, FaEllipsisV } from "react-icons/fa";
+import PropTypes from "prop-types";
 
 const ChatPanel = ({ selectedEmployee, message, setMessage, onBack }) => {
   const [messages, setMessages] = useState([]);
@@ -159,3 +160,10 @@ const ChatPanel = ({ selectedEmployee, message, setMessage, onBack }) => {
 };
 
 export default ChatPanel;
+
+ChatPanel.propTypes = {
+  selectedEmployee: PropTypes.object,
+  message: PropTypes.string,
+  setMessage: PropTypes.func,
+  onBack: PropTypes.func,
+};
