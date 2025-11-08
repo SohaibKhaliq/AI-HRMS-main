@@ -44,7 +44,7 @@ function JobApplications() {
     dispatch(
       getJobApplicants({ status: reviewFilter.toLowerCase(), jobId: id })
     );
-  }, [reviewFilter]);
+  }, [reviewFilter, dispatch, id]);
 
   if (error) return <FetchError error={error} />;
 
@@ -171,7 +171,6 @@ function JobApplications() {
           {!loading && !error && jobApplications.length === 0 && (
             <NoDataMessage message={`No ${reviewFilter} applicant found`} />
           )}
-
         </div>
 
         {toggleModal && (
