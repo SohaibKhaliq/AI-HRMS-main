@@ -60,7 +60,7 @@ function Payroll() {
         })
       );
     }
-  }, [currentPage, payrollFilter, selectedMonth, fetch]);
+  }, [currentPage, payrollFilter, selectedMonth, fetch, dispatch]);
 
   if (error) return <FetchError error={error} />;
 
