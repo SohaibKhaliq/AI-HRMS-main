@@ -9,6 +9,8 @@ import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 import { FiSearch, FiEye, FiPlus } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import toast from "react-hot-toast";
+import SentimentBadge from "../../components/analysis/SentimentBadge";
+import TopicChips from "../../components/analysis/TopicChips";
 
 const Feedback = () => {
   const dispatch = useDispatch();
@@ -31,6 +33,7 @@ const Feedback = () => {
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [reviewFilter, setReviewFilter] = useState("");
+  const [topicFilter, setTopicFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [category, setCategory] = useState("");
@@ -80,13 +83,24 @@ const Feedback = () => {
       feedback.suggestion?.toLowerCase().includes(searchLower) ||
       feedback.review?.toLowerCase().includes(searchLower);
 
+    // topic filtering (client-side)
+    if (topicFilter) {
+      const t = topicFilter.trim().toLowerCase();
+      const has = (feedback.topics || []).some((x) =>
+        String(x).toLowerCase().includes(t)
+      );
+      if (!has) return false;
+    }
+
     return matchesSearch;
   });
 
   const onSubmit = (data) => {
     const payload = {
       ...data,
-      suggestion: category ? `[${category}] ${data.suggestion}` : data.suggestion,
+      suggestion: category
+        ? `[${category}] ${data.suggestion}`
+        : data.suggestion,
     };
     dispatch(createFeedback(payload))
       .unwrap()
@@ -164,7 +178,10 @@ const Feedback = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Search Bar */}
             <div className="relative">
-              <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+              <FiSearch
+                className="absolute left-3 top-3 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search by description, suggestion..."
@@ -209,6 +226,9 @@ const Feedback = () => {
                     AI Sentiment
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Topics
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                     Suggestion
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
@@ -239,14 +259,21 @@ const Feedback = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getReviewColor(feedback.review)}`}>
-                          {feedback.review}
-                        </span>
+                        <SentimentBadge
+                          label={feedback.sentimentLabel || feedback.review}
+                          score={feedback.sentimentScore}
+                        />
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                         <div className="max-w-xs truncate">
                           {feedback.suggestion || "N/A"}
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <TopicChips
+                          topics={feedback.topics || []}
+                          onClick={(t) => setTopicFilter(t)}
+                        />
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                         <div className="max-w-xs truncate">
@@ -276,7 +303,7 @@ const Feedback = () => {
                             No feedback found
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {feedbacks.length > 0 
+                            {feedbacks.length > 0
                               ? "You don't have any feedback matching the current filters."
                               : "You haven't submitted any feedback yet. Click 'New Feedback' to share your thoughts."}
                           </p>
@@ -326,7 +353,9 @@ const Feedback = () => {
                 {currentPage}
               </span>
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               >
@@ -367,13 +396,25 @@ const Feedback = () => {
                     >
                       <option value="">Select a category</option>
                       <option value="Work Environment">Work Environment</option>
-                      <option value="Compensation & Benefits">Compensation & Benefits</option>
-                      <option value="Management & Leadership">Management & Leadership</option>
+                      <option value="Compensation & Benefits">
+                        Compensation & Benefits
+                      </option>
+                      <option value="Management & Leadership">
+                        Management & Leadership
+                      </option>
                       <option value="Career Growth">Career Growth</option>
-                      <option value="Training & Development">Training & Development</option>
-                      <option value="Policies & Compliance">Policies & Compliance</option>
-                      <option value="Facilities & Tools">Facilities & Tools</option>
-                      <option value="Work-Life Balance">Work-Life Balance</option>
+                      <option value="Training & Development">
+                        Training & Development
+                      </option>
+                      <option value="Policies & Compliance">
+                        Policies & Compliance
+                      </option>
+                      <option value="Facilities & Tools">
+                        Facilities & Tools
+                      </option>
+                      <option value="Work-Life Balance">
+                        Work-Life Balance
+                      </option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
@@ -432,7 +473,9 @@ const Feedback = () => {
                       rows="5"
                       {...register("description")}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                        errors.description ? "border-red-500" : "border-gray-300"
+                        errors.description
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       disabled={loading}
                     ></textarea>
@@ -496,15 +539,23 @@ const Feedback = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Rating</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Rating
+                      </p>
                       <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
                         {selectedFeedback.rating}
                         <FaStar className="text-yellow-400" size={20} />
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">AI Sentiment</p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getReviewColor(selectedFeedback.review)}`}>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        AI Sentiment
+                      </p>
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getReviewColor(
+                          selectedFeedback.review
+                        )}`}
+                      >
                         {selectedFeedback.review}
                       </span>
                     </div>
@@ -512,7 +563,9 @@ const Feedback = () => {
 
                   {selectedFeedback.suggestion && (
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Suggestion</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Suggestion
+                      </p>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
                         {selectedFeedback.suggestion}
                       </p>
@@ -520,14 +573,18 @@ const Feedback = () => {
                   )}
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Feedback Description</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Feedback Description
+                    </p>
                     <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
                       {selectedFeedback.description}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Submitted On</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Submitted On
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-gray-100">
                       {new Date(selectedFeedback.createdAt).toLocaleString()}
                     </p>
@@ -538,10 +595,30 @@ const Feedback = () => {
                       <i className="fas fa-robot text-blue-600 mr-2"></i>
                       AI Analysis
                     </p>
-                    <p className="text-gray-900 dark:text-gray-100">
-                      Our AI has analyzed your feedback and classified it as <strong>{selectedFeedback.review}</strong> sentiment.
-                      This helps management understand and prioritize employee feedback effectively.
+                    <p className="text-gray-900 dark:text-gray-100 mb-2">
+                      Our AI has analyzed your feedback and classified it as{" "}
+                      <strong>{selectedFeedback.review}</strong> sentiment. This
+                      helps management understand and prioritize employee
+                      feedback effectively.
                     </p>
+                    <div className="flex flex-col gap-2">
+                      <SentimentBadge
+                        label={
+                          selectedFeedback.sentimentLabel ||
+                          selectedFeedback.review
+                        }
+                        score={selectedFeedback.sentimentScore}
+                      />
+                      {selectedFeedback.topics &&
+                        selectedFeedback.topics.length > 0 && (
+                          <div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                              Topics
+                            </p>
+                            <TopicChips topics={selectedFeedback.topics} />
+                          </div>
+                        )}
+                    </div>
                   </div>
                 </div>
 
