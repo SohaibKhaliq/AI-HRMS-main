@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const NoDataMessage = ({ message }) => {
   return (
@@ -10,3 +10,7 @@ const NoDataMessage = ({ message }) => {
 };
 
 export default NoDataMessage;
+
+NoDataMessage.propTypes = {
+  message: PropTypes.string,
+};
