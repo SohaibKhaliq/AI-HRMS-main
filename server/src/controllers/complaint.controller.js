@@ -4,6 +4,10 @@ import { createUpdate } from "./update.controller.js";
 import { complaintRespond } from "../templates/index.js";
 import { catchErrors, myCache } from "../utils/index.js";
 import { sendFullNotification } from "../services/notification.service.js";
+import {
+  analyzeSentiment,
+  extractTopics,
+} from "../services/analysisService.js";
 
 const getComplaints = catchErrors(async (req, res) => {
   const { status, page = 1, limit = 12 } = req.query;
@@ -72,7 +76,15 @@ const getComplaints = catchErrors(async (req, res) => {
 });
 
 const createComplaint = catchErrors(async (req, res) => {
-  const { employee, againstEmployee, complainType, complaintDetails, complainSubject, assignComplaint, remarks } = req.body;
+  const {
+    employee,
+    againstEmployee,
+    complainType,
+    complaintDetails,
+    complainSubject,
+    assignComplaint,
+    remarks,
+  } = req.body;
 
   if (!employee || !complainType || !complaintDetails || !complainSubject)
     throw new Error("All required fields are required");
@@ -93,6 +105,22 @@ const createComplaint = catchErrors(async (req, res) => {
     documentUrl,
     remarks: remarks || null,
   });
+  // Analyze complaint text and persist sentiment/topics (best-effort)
+  try {
+    const sentiment = await analyzeSentiment(complaintDetails);
+    const topicResults = extractTopics(complaintDetails, 5);
+    complaint.sentimentScore = sentiment.score;
+    complaint.sentimentLabel = sentiment.label;
+    complaint.topics = topicResults.map((t) => t.tag);
+    complaint.analysisMeta = { provider: "local-transformers" };
+    complaint.lastAnalyzedAt = new Date();
+    await complaint.save();
+  } catch (err) {
+    console.warn(
+      "Complaint analysis failed:",
+      err && err.message ? err.message : err
+    );
+  }
 
   // Send notification to employee confirming complaint submission
   const employeeData = await Employee.findById(employee);
@@ -179,7 +207,9 @@ const respondComplaint = catchErrors(async (req, res) => {
     await sendFullNotification({
       employee: employeeData,
       title: `Complaint ${status}`,
-      message: `Your complaint regarding ${complaint.complainType} has been ${status.toLowerCase()}. ${remarks || ''}`,
+      message: `Your complaint regarding ${
+        complaint.complainType
+      } has been ${status.toLowerCase()}. ${remarks || ""}`,
       type: "complaint",
       priority: status === "Resolved" ? "low" : "medium",
       link: "/complaints",
@@ -205,7 +235,16 @@ const respondComplaint = catchErrors(async (req, res) => {
 
 const updateComplaint = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { employee, againstEmployee, complainType, complainSubject, complaintDetails, status, assignComplaint, remarks } = req.body;
+  const {
+    employee,
+    againstEmployee,
+    complainType,
+    complainSubject,
+    complaintDetails,
+    status,
+    assignComplaint,
+    remarks,
+  } = req.body;
 
   if (!id) throw new Error("Complaint ID is required");
 
@@ -224,6 +263,27 @@ const updateComplaint = catchErrors(async (req, res) => {
   if (req.file) complaint.documentUrl = req.file.path;
 
   await complaint.save();
+
+  // If complaint details changed, re-run analysis asynchronously (best-effort)
+  if (complaintDetails) {
+    (async () => {
+      try {
+        const sentiment = await analyzeSentiment(complaintDetails);
+        const topicResults = extractTopics(complaintDetails, 5);
+        complaint.sentimentScore = sentiment.score;
+        complaint.sentimentLabel = sentiment.label;
+        complaint.topics = topicResults.map((t) => t.tag);
+        complaint.analysisMeta = { provider: "local-transformers" };
+        complaint.lastAnalyzedAt = new Date();
+        await complaint.save();
+      } catch (err) {
+        console.warn(
+          "Complaint re-analysis failed:",
+          err && err.message ? err.message : err
+        );
+      }
+    })();
+  }
 
   myCache.del("insights");
 
