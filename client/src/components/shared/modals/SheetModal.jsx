@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const SheetModal = ({
   onClose,
@@ -75,3 +75,13 @@ const SheetModal = ({
 };
 
 export default SheetModal;
+
+SheetModal.propTypes = {
+  onClose: PropTypes.func,
+  departments: PropTypes.array,
+  selectedDate: PropTypes.any,
+  setSelectedDate: PropTypes.func,
+  handleModalSubmit: PropTypes.func,
+  selectedDepartment: PropTypes.any,
+  setSelectedDepartment: PropTypes.func,
+};
