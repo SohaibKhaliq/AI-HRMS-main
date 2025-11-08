@@ -5,37 +5,42 @@ let modelsLoaded = false;
 // Load face-api models
 export const loadModels = async () => {
   if (modelsLoaded) return;
-  
+
   try {
     // Try local models first, fallback to CDN
     let MODEL_URL = "/models";
-    
+
     try {
       // Test if local models are accessible
-      const testResponse = await fetch(`${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`);
+      const testResponse = await fetch(
+        `${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`
+      );
       if (!testResponse.ok) {
         throw new Error("Local models not found");
       }
-    } catch (localError) {
+    } catch {
+      // local models not accessible; fallback to CDN
       console.log("Local models not accessible, using CDN...");
       // Use jsDelivr CDN as fallback
       MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model";
     }
-    
+
     console.log("Loading face recognition models from:", MODEL_URL);
-    
+
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
       faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
     ]);
-    
+
     modelsLoaded = true;
     console.log("✅ Face recognition models loaded successfully");
   } catch (error) {
     console.error("❌ Error loading face recognition models:", error);
-    throw new Error("Failed to load face recognition models. Please check your internet connection.");
+    throw new Error(
+      "Failed to load face recognition models. Please check your internet connection."
+    );
   }
 };
 
@@ -46,7 +51,7 @@ export const detectFaceFromVideo = async (videoElement) => {
       .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
       .withFaceDescriptor();
-    
+
     return detection;
   } catch (error) {
     console.error("Error detecting face:", error);
@@ -61,7 +66,7 @@ export const detectFaceFromImage = async (imageElement) => {
       .detectSingleFace(imageElement, new faceapi.SsdMobilenetv1Options())
       .withFaceLandmarks()
       .withFaceDescriptor();
-    
+
     return detection;
   } catch (error) {
     console.error("Error detecting face:", error);
@@ -72,7 +77,7 @@ export const detectFaceFromImage = async (imageElement) => {
 // Compare two face descriptors
 export const compareFaces = (descriptor1, descriptor2, threshold = 0.6) => {
   if (!descriptor1 || !descriptor2) return false;
-  
+
   const distance = faceapi.euclideanDistance(descriptor1, descriptor2);
   return distance < threshold;
 };
@@ -86,15 +91,15 @@ export const getFaceDescriptor = (detection) => {
 // Draw face detection on canvas
 export const drawFaceDetection = (canvas, detection, videoElement) => {
   if (!detection) return;
-  
+
   const displaySize = {
     width: videoElement.videoWidth,
     height: videoElement.videoHeight,
   };
-  
+
   faceapi.matchDimensions(canvas, displaySize);
   const resizedDetection = faceapi.resizeResults(detection, displaySize);
-  
+
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   faceapi.draw.drawDetections(canvas, resizedDetection);
