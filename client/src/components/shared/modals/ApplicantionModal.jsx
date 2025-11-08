@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
+import PropTypes from "prop-types";
 import { jobStatus } from "../../../constants";
 import { updateApplication } from "../../../services/recruitment.service";
 
@@ -83,3 +84,15 @@ const ApplicationModal = ({ onClose, application, jobId }) => {
 };
 
 export default ApplicationModal;
+
+ApplicationModal.propTypes = {
+  onClose: PropTypes.func,
+  application: PropTypes.object,
+  jobId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+
+ApplicationModal.defaultProps = {
+  onClose: () => {},
+  application: null,
+  jobId: null,
+};
