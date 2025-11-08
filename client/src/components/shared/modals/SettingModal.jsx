@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import PropTypes from "prop-types";
 import { useForm } from "react-hook-form";
 import { HiOutlineKey } from "react-icons/hi";
 import { useTheme } from "../../../context";
@@ -67,7 +68,7 @@ const SettingModal = ({ onClose, location = "admin" }) => {
     formDataReq.append("email", formData.email);
     formDataReq.append("profilePicture", formData.profilePicture);
 
-      const updatedProfile = await updateProfile(setProfileLoading, formDataReq);
+    const updatedProfile = await updateProfile(setProfileLoading, formDataReq);
 
     if (updatedProfile) {
       dispatch(updateProfileState(updatedProfile));
@@ -384,3 +385,8 @@ const SettingModal = ({ onClose, location = "admin" }) => {
 };
 
 export default SettingModal;
+
+SettingModal.propTypes = {
+  onClose: PropTypes.func,
+  location: PropTypes.string,
+};
