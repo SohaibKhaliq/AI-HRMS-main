@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createJob, updateJob } from "../../../services/recruitment.service";
+import PropTypes from "prop-types";
 
 const JobOpeningModal = ({ onClose, job, action }) => {
   const dispatch = useDispatch();
@@ -69,7 +70,9 @@ const JobOpeningModal = ({ onClose, job, action }) => {
         {/* Modal Header */}
         <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3">
           <h2 className="font-bold text-xl">
-            {action === "create" ? "Create New Job Opening" : "Update Job Opening"}
+            {action === "create"
+              ? "Create New Job Opening"
+              : "Update Job Opening"}
           </h2>
           <button
             type="button"
@@ -102,7 +105,9 @@ const JobOpeningModal = ({ onClose, job, action }) => {
 
           {/* Department */}
           <div>
-            <label className="block text-sm font-medium mb-1">Department *</label>
+            <label className="block text-sm font-medium mb-1">
+              Department *
+            </label>
             <select
               name="department"
               value={formData.department}
@@ -229,7 +234,9 @@ const JobOpeningModal = ({ onClose, job, action }) => {
 
           {/* Description */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1">Job Description *</label>
+            <label className="block text-sm font-medium mb-1">
+              Job Description *
+            </label>
             <textarea
               name="description"
               value={formData.description}
@@ -264,3 +271,15 @@ const JobOpeningModal = ({ onClose, job, action }) => {
 };
 
 export default JobOpeningModal;
+
+JobOpeningModal.propTypes = {
+  onClose: PropTypes.func,
+  job: PropTypes.object,
+  action: PropTypes.string,
+};
+
+JobOpeningModal.defaultProps = {
+  onClose: () => {},
+  job: null,
+  action: "create",
+};
