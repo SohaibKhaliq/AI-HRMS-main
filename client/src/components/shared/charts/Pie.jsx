@@ -9,7 +9,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
-import { useSelector } from "react-redux";
+import PropTypes from 'prop-types';
 
 ChartJS.register(
   CategoryScale,
@@ -21,7 +21,7 @@ ChartJS.register(
   Legend
 );
 
-const PieGraph = ({ labels, title, label, data1, data2 }) => {
+const PieGraph = ({ labels, title, label, data1, data2, height = 220 }) => {
   const pieData = {
     labels: [labels.category1, labels.category2],
     datasets: [
@@ -39,6 +39,7 @@ const PieGraph = ({ labels, title, label, data1, data2 }) => {
 
   const pieOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -50,7 +51,23 @@ const PieGraph = ({ labels, title, label, data1, data2 }) => {
     },
   };
 
-  return <Pie data={pieData} options={pieOptions} />;
+  return (
+    <div className="w-full" style={{ height: typeof height === 'number' ? `${height}px` : height }}>
+      <Pie data={pieData} options={pieOptions} height={height} />
+    </div>
+  );
+};
+
+PieGraph.propTypes = {
+  labels: PropTypes.shape({
+    category1: PropTypes.string,
+    category2: PropTypes.string,
+  }).isRequired,
+  title: PropTypes.string,
+  label: PropTypes.string,
+  data1: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  data2: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 export default PieGraph;

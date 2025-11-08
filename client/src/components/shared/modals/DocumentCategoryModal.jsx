@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
+import ValidatedInput from "../../ui/ValidatedInput";
+import PropTypes from 'prop-types';
 
 const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) => {
   const [formData, setFormData] = useState({
@@ -96,17 +98,15 @@ const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category Name <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
+            <ValidatedInput
+              validationType="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
               disabled={isViewMode}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 
-                ${isViewMode ? "bg-gray-100 dark:bg-gray-700" : "bg-white dark:bg-gray-900"} 
-                ${errors.name ? "border-red-500" : "border-gray-300 dark:border-gray-600"}
-                text-gray-900 dark:text-white`}
+              required
               placeholder="e.g., Employment Contracts"
+              className={errors.name ? 'border-red-500' : ''}
             />
             {errors.name && (
               <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -179,3 +179,11 @@ const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) 
 };
 
 export default DocumentCategoryModal;
+
+DocumentCategoryModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+  category: PropTypes.object,
+  onSubmit: PropTypes.func,
+  action: PropTypes.string,
+};

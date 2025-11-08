@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { createDocumentType, updateDocumentType } from "../../../services/documentType.service";
+import ValidatedInput from "../../ui/ValidatedInput";
+import PropTypes from 'prop-types';
 
 const DocumentTypeModal = ({ action, onClose, documentType }) => {
   const dispatch = useDispatch();
@@ -41,7 +43,16 @@ const DocumentTypeModal = ({ action, onClose, documentType }) => {
         </div>
 
         <div>
-          <input name="name" value={formData.name} onChange={handleChange} disabled={isView} required placeholder="Document type name" className="w-full p-3 bg-[#EFEFEF] rounded-full" />
+          <ValidatedInput
+            validationType="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            disabled={isView}
+            required
+            placeholder="Document type name"
+            className="w-full"
+          />
         </div>
 
         <div>
@@ -73,3 +84,9 @@ const DocumentTypeModal = ({ action, onClose, documentType }) => {
 };
 
 export default DocumentTypeModal;
+
+DocumentTypeModal.propTypes = {
+  action: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+  documentType: PropTypes.object,
+};
