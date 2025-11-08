@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
 import { MdAdd } from "react-icons/md";
@@ -14,7 +14,6 @@ import FetchError from "../../components/shared/error/FetchError";
 const Holiday = () => {
   const dispatch = useDispatch();
   const holidayState = useSelector((state) => state.holiday) || {};
-  const auth = useSelector((state) => state.authentication) || {};
   const {
     holidays = [],
     loading = false,
@@ -27,7 +26,6 @@ const Holiday = () => {
     },
     fetch = true,
   } = holidayState;
-  const { user = {} } = auth;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -110,25 +108,26 @@ const Holiday = () => {
     document.body.removeChild(element);
   };
 
-  const isAdmin = user?.admin || false;
+  // authentication not needed in this component
 
   // Status colors for display
   const categoryColors = {
     National: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    Religious: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    "Company Specific": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    Religious:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "Company Specific":
+      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   };
 
   const typeColors = {
     "Full Day": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    "Half Day": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    Floating: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+    "Half Day":
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    Floating:
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
   };
 
-  const paidColors = {
-    Paid: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    Unpaid: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  };
+  // paidColors not currently used
 
   if (error) {
     return (
@@ -420,9 +419,7 @@ const Holiday = () => {
               {/* Pagination Controls */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() =>
-                    setCurrentPage(Math.max(currentPage - 1, 1))
-                  }
+                  onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                   disabled={currentPage === 1}
                   className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition text-sm"
                 >
