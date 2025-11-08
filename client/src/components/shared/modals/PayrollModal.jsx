@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { updatePayroll } from "../../../services/payroll.service";
+import PropTypes from "prop-types";
 
 const PayrollModal = ({ onClose, payroll }) => {
   const dispatch = useDispatch();
@@ -105,6 +106,15 @@ const PayrollModal = ({ onClose, payroll }) => {
       </form>
     </div>
   );
+};
+PayrollModal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  payroll: PropTypes.shape({
+    allowances: PropTypes.number,
+    bonuses: PropTypes.number,
+    deductions: PropTypes.number,
+    _id: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default PayrollModal;
