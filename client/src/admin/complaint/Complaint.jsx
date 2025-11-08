@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
-import { MdAdd } from "react-icons/md";
+// Removed unused MdAdd import
 import { FiSearch, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
-import { getComplaints, respondToComplaintRequest, deleteComplaint } from "../../services/complaint.service";
+import {
+  getComplaints,
+  respondToComplaintRequest,
+  deleteComplaint,
+} from "../../services/complaint.service";
 import { getAllEmployees } from "../../services/employee.service";
 import ComplaintModal from "../../components/shared/modals/ComplaintModal";
 import Loader from "../../components/shared/loaders/Loader";
@@ -102,7 +106,7 @@ const Complaint = () => {
 
   const handleStatusChange = (complaintId, newStatus, currentStatus) => {
     if (newStatus === currentStatus) return; // No change
-    
+
     dispatch(
       respondToComplaintRequest({
         complaintID: complaintId,
@@ -163,12 +167,12 @@ const Complaint = () => {
   // Pagination calculations
   const totalPages = pagination?.totalPages || 1;
   const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, pagination?.totalComplaints || 0);
+  const endIndex = Math.min(
+    currentPage * pageSize,
+    pagination?.totalComplaints || 0
+  );
 
-  // Get current user from authentication state
-  const authState = useSelector((state) => state.authentication) || {};
-  const { user = {} } = authState;
-  const isAdmin = user?.admin === true;
+  // current user authentication state not needed in this component
 
   if (error) return <FetchError error={error} />;
 
@@ -193,7 +197,10 @@ const Complaint = () => {
           {/* Search Bar */}
           <div className="md:col-span-2">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+              <FiSearch
+                className="absolute left-3 top-3 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search by complainant, against, subject..."
@@ -309,7 +316,11 @@ const Complaint = () => {
                       <select
                         value={complaint.status}
                         onChange={(e) =>
-                          handleStatusChange(complaint._id, e.target.value, complaint.status)
+                          handleStatusChange(
+                            complaint._id,
+                            e.target.value,
+                            complaint.status
+                          )
                         }
                         className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
                           complaint.status === "Pending"
@@ -373,7 +384,10 @@ const Complaint = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="10" className="px-4 py-8 text-center text-gray-500">
+                  <td
+                    colSpan="10"
+                    className="px-4 py-8 text-center text-gray-500"
+                  >
                     No complaints found
                   </td>
                 </tr>
@@ -420,7 +434,9 @@ const Complaint = () => {
               {currentPage}
             </span>
             <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage === totalPages}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
