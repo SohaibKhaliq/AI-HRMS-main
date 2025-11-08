@@ -1,17 +1,36 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import FetchError from "../../components/shared/error/FetchError";
 import MeetingModal from "../../components/shared/modals/MeetingModal";
-import { getAllMeetings, deleteMeeting, updateMeeting, createMeeting } from "../../services/meeting.service";
+import {
+  getAllMeetings,
+  deleteMeeting,
+  updateMeeting,
+  createMeeting,
+} from "../../services/meeting.service";
 import { getAllEmployees } from "../../services/employee.service";
-import { FaEye, FaEdit, FaTrash, FaPlus, FaCheck, FaUsers, FaCalendar, FaMapMarkerAlt, FaVideo } from "react-icons/fa";
+import {
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaPlus,
+  FaCheck,
+  FaUsers,
+  FaCalendar,
+  FaMapMarkerAlt,
+  FaVideo,
+} from "react-icons/fa";
 
 const AdminMeeting = () => {
   const dispatch = useDispatch();
-  const { meetings, loading, error } = useSelector(state => state.meeting || { meetings: [], loading: false, error: null });
-  const { employees } = useSelector(state => state.employee || { employees: [] });
+  const { meetings, loading, error } = useSelector(
+    (state) => state.meeting || { meetings: [], loading: false, error: null }
+  );
+  const { employees } = useSelector(
+    (state) => state.employee || { employees: [] }
+  );
 
   const [action, setAction] = useState("");
   const [modalOpen, setModalOpen] = useState(null);
@@ -20,7 +39,8 @@ const AdminMeeting = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // pageSize is used for pagination; setter not required here
+  const [pageSize] = useState(10);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
@@ -29,7 +49,7 @@ const AdminMeeting = () => {
     if (!employees || employees.length === 0) {
       dispatch(getAllEmployees({ currentPage: 1, filters: {} }));
     }
-  }, [dispatch]);
+  }, [dispatch, employees]);
 
   useEffect(() => {
     if (showSuccessPopup) {
@@ -40,29 +60,36 @@ const AdminMeeting = () => {
 
   const filtered = useMemo(() => {
     let result = meetings || [];
-    
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(m => 
-        m.title?.toLowerCase().includes(q) || 
-        m.description?.toLowerCase().includes(q) ||
-        m.location?.toLowerCase().includes(q)
+      result = result.filter(
+        (m) =>
+          m.title?.toLowerCase().includes(q) ||
+          m.description?.toLowerCase().includes(q) ||
+          m.location?.toLowerCase().includes(q)
       );
     }
-    
+
     if (typeFilter) {
-      result = result.filter(m => m.type === typeFilter);
+      result = result.filter((m) => m.type === typeFilter);
     }
-    
+
     if (dateFrom) {
-      result = result.filter(m => new Date(m.startTime) >= new Date(dateFrom));
+      result = result.filter(
+        (m) => new Date(m.startTime) >= new Date(dateFrom)
+      );
     }
     if (dateTo) {
-      result = result.filter(m => new Date(m.startTime) <= new Date(dateTo + "T23:59:59"));
+      result = result.filter(
+        (m) => new Date(m.startTime) <= new Date(dateTo + "T23:59:59")
+      );
     }
-    
+
     // Create a copy before sorting to avoid mutating the original array
-    return [...result].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    return [...result].sort(
+      (a, b) => new Date(b.startTime) - new Date(a.startTime)
+    );
   }, [meetings, searchQuery, typeFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -71,11 +98,20 @@ const AdminMeeting = () => {
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
 
-  const openCreate = () => { setAction("create"); setModalOpen({}); };
-  const openEdit = (m) => { setAction("update"); setModalOpen(m); };
-  const openView = (m) => { setAction("view"); setModalOpen(m); };
-  const handleDelete = (id) => { 
-    if (!confirm("Are you sure you want to delete this meeting?")) return; 
+  const openCreate = () => {
+    setAction("create");
+    setModalOpen({});
+  };
+  const openEdit = (m) => {
+    setAction("update");
+    setModalOpen(m);
+  };
+  const openView = (m) => {
+    setAction("view");
+    setModalOpen(m);
+  };
+  const handleDelete = (id) => {
+    if (!confirm("Are you sure you want to delete this meeting?")) return;
     dispatch(deleteMeeting(id));
   };
 
@@ -107,12 +143,12 @@ const AdminMeeting = () => {
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -120,17 +156,31 @@ const AdminMeeting = () => {
     const now = new Date();
     const start = new Date(meeting.startTime);
     const end = new Date(meeting.endTime);
-    
-    if (now < start) return { label: "Upcoming", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" };
-    if (now >= start && now <= end) return { label: "In Progress", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" };
-    return { label: "Completed", class: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300" };
+
+    if (now < start)
+      return {
+        label: "Upcoming",
+        class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+      };
+    if (now >= start && now <= end)
+      return {
+        label: "In Progress",
+        class:
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      };
+    return {
+      label: "Completed",
+      class: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+    };
   };
 
   if (error) return <FetchError error={error} />;
 
   return (
     <>
-      <Helmet><title>Meeting Management - Metro HR</title></Helmet>
+      <Helmet>
+        <title>Meeting Management - Metro HR</title>
+      </Helmet>
 
       {showSuccessPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -140,8 +190,12 @@ const AdminMeeting = () => {
                 <FaCheck className="text-green-600 dark:text-green-400 text-2xl" />
               </div>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Success!</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{successMessage}</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Success!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {successMessage}
+            </p>
           </div>
         </div>
       )}
@@ -152,7 +206,9 @@ const AdminMeeting = () => {
           <div className="p-6 border-b dark:border-gray-700">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meeting Management</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Meeting Management
+                </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Schedule and manage team meetings
                 </p>
@@ -248,9 +304,14 @@ const AdminMeeting = () => {
                     {pageData.map((meeting) => {
                       const status = getMeetingStatus(meeting);
                       return (
-                        <tr key={meeting._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <tr
+                          key={meeting._id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
                           <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">{meeting.title}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {meeting.title}
+                            </div>
                             {meeting.meetingLink && (
                               <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1">
                                 <FaVideo size={10} /> Online
@@ -264,13 +325,18 @@ const AdminMeeting = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 dark:text-white capitalize">{meeting.type}</div>
+                            <div className="text-sm text-gray-900 dark:text-white capitalize">
+                              {meeting.type}
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900 dark:text-white flex items-center gap-1">
                               {meeting.location ? (
                                 <>
-                                  <FaMapMarkerAlt size={12} className="text-gray-400" />
+                                  <FaMapMarkerAlt
+                                    size={12}
+                                    className="text-gray-400"
+                                  />
                                   {meeting.location}
                                 </>
                               ) : (
@@ -285,7 +351,9 @@ const AdminMeeting = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${status.class}`}>
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${status.class}`}
+                            >
                               {status.label}
                             </span>
                           </td>
@@ -324,18 +392,22 @@ const AdminMeeting = () => {
               {/* Pagination */}
               <div className="px-6 py-4 flex items-center justify-between border-t dark:border-gray-700">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} meetings
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, filtered.length)} of{" "}
+                  {filtered.length} meetings
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white"
                   >
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white"
                   >
