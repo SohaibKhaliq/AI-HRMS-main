@@ -1,4 +1,5 @@
-import React from "react";
+import PropTypes from "prop-types";
+
 import { months } from "../../../constants";
 
 const MonthSheetModal = ({
@@ -59,7 +60,9 @@ const MonthSheetModal = ({
           >
             <option value="">--- Select Month ---</option>
             {months.map((month) => (
-              <option value={month.value}>{month.name}</option>
+              <option key={month.value} value={month.value}>
+                {month.name}
+              </option>
             ))}
           </select>
         </div>
@@ -78,3 +81,13 @@ const MonthSheetModal = ({
 };
 
 export default MonthSheetModal;
+
+MonthSheetModal.propTypes = {
+  onClose: PropTypes.func,
+  departments: PropTypes.array,
+  selectedDate: PropTypes.any,
+  setSelectedDate: PropTypes.func,
+  handleModalSubmit: PropTypes.func,
+  selectedDepartment: PropTypes.any,
+  setSelectedDepartment: PropTypes.func,
+};
