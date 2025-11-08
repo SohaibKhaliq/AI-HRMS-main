@@ -1,7 +1,8 @@
 import * as XLSX from "xlsx";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { bulkUploadEmployees } from "../../../services/employee.service";
+import PropTypes from "prop-types";
 
 const ImportExcelModal = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -156,3 +157,7 @@ const ImportExcelModal = ({ onClose }) => {
 };
 
 export default ImportExcelModal;
+
+ImportExcelModal.propTypes = {
+  onClose: PropTypes.func,
+};
