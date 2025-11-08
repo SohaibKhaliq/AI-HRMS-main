@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
 import { MdAdd } from "react-icons/md";
-import { FiSearch, FiEye, FiEdit, FiTrash2, FiFilter, FiFile } from "react-icons/fi";
+import {
+  FiSearch,
+  FiEye,
+  FiEdit,
+  FiTrash2,
+  FiFilter,
+  FiFile,
+} from "react-icons/fi";
 import { IoArrowDownOutline } from "react-icons/io5";
 import { BsMegaphone } from "react-icons/bs";
-import { getAnnouncements, deleteAnnouncement } from "../../services/announcement.service";
+import {
+  getAnnouncements,
+  deleteAnnouncement,
+} from "../../services/announcement.service";
 import { getDesignations } from "../../services/designation.service";
 import { setFetchFlag } from "../../reducers/announcement.reducer";
 import AnnouncementModal from "../../components/shared/modals/AnnouncementModal";
@@ -15,7 +25,6 @@ import FetchError from "../../components/shared/error/FetchError";
 const Announcement = () => {
   const dispatch = useDispatch();
   const announcementState = useSelector((state) => state.announcement) || {};
-  const auth = useSelector((state) => state.authentication) || {};
   const {
     announcements = [],
     loading = false,
@@ -28,7 +37,7 @@ const Announcement = () => {
     },
     fetch = true,
   } = announcementState;
-  const { user = {} } = auth;
+  // auth user currently unused in this component
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -41,18 +50,28 @@ const Announcement = () => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const announcementCategories = ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"];
+  const announcementCategories = [
+    "General",
+    "Policy",
+    "Event",
+    "Training",
+    "Urgent",
+    "Benefits",
+    "Recognition",
+  ];
   const priorityLevels = ["Low", "Medium", "High", "Critical"];
 
   // Designations list for filters and rendering
-  const { designations: allDesignations = [] } = useSelector((s) => s.designation || {});
+  const { designations: allDesignations = [] } = useSelector(
+    (s) => s.designation || {}
+  );
 
   useEffect(() => {
     // prefetch designations to power filters/modals if not present
     if (!allDesignations || allDesignations.length === 0) {
       dispatch(getDesignations());
     }
-  }, [dispatch]);
+  }, [dispatch, allDesignations]);
 
   // Fetch announcements
   useEffect(() => {
@@ -75,9 +94,11 @@ const Announcement = () => {
       title.toLowerCase().includes(searchLower) ||
       description.toLowerCase().includes(searchLower);
     const matchesDesignation = designationFilter
-      ? (announcement.targetDesignations || ["All"]).some((d) =>
-          d.toLowerCase() === designationFilter.toLowerCase()
-        ) || (designationFilter === "All" && (announcement.targetDesignations || ["All"]).includes("All"))
+      ? (announcement.targetDesignations || ["All"]).some(
+          (d) => d.toLowerCase() === designationFilter.toLowerCase()
+        ) ||
+        (designationFilter === "All" &&
+          (announcement.targetDesignations || ["All"]).includes("All"))
       : true;
     return matchesText && matchesDesignation;
   });
@@ -109,13 +130,18 @@ const Announcement = () => {
 
   const handleExportPDF = () => {
     // Create CSV export
-  let csvContent = "Title,Category,Date Range,Priority,Designations,Description\n";
+    let csvContent =
+      "Title,Category,Date Range,Priority,Designations,Description\n";
     filteredAnnouncements.forEach((announcement) => {
-      const startDate = new Date(announcement.startDate).toLocaleDateString("en-US");
-      const endDate = new Date(announcement.endDate).toLocaleDateString("en-US");
+      const startDate = new Date(announcement.startDate).toLocaleDateString(
+        "en-US"
+      );
+      const endDate = new Date(announcement.endDate).toLocaleDateString(
+        "en-US"
+      );
       const dateRange = `${startDate} - ${endDate}`;
-  const desig = (announcement.targetDesignations || ["All"]).join("; ");
-  csvContent += `"${announcement.title}","${announcement.category}","${dateRange}","${announcement.priority}","${desig}","${announcement.description}"\n`;
+      const desig = (announcement.targetDesignations || ["All"]).join("; ");
+      csvContent += `"${announcement.title}","${announcement.category}","${dateRange}","${announcement.priority}","${desig}","${announcement.description}"\n`;
     });
 
     const element = document.createElement("a");
@@ -123,7 +149,10 @@ const Announcement = () => {
       "href",
       "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
     );
-    element.setAttribute("download", `announcements_${new Date().getTime()}.csv`);
+    element.setAttribute(
+      "download",
+      `announcements_${new Date().getTime()}.csv`
+    );
     element.style.display = "none";
     document.body.appendChild(element);
     element.click();
@@ -135,12 +164,16 @@ const Announcement = () => {
   // Colors for display
   const categoryColors = {
     General: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    Policy: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    Policy:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     Event: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    Training: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    Training:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
     Urgent: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    Benefits: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-    Recognition: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
+    Benefits:
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+    Recognition:
+      "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
   };
 
   const priorityColors = {
@@ -382,31 +415,39 @@ const Announcement = () => {
                       <td className="px-4 md:px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                         <div>
                           <div className="font-medium">
-                            {new Date(announcement.startDate).toLocaleDateString("en-US", {
+                            {new Date(
+                              announcement.startDate
+                            ).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
                               year: "numeric",
                             })}
                           </div>
                           <div className="text-xs text-gray-500">
-                            to {new Date(announcement.endDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            to{" "}
+                            {new Date(announcement.endDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 md:px-6 py-3 text-sm">
                         <div className="flex flex-wrap gap-1">
-                          {(announcement.targetDesignations || ["All"]).map((d, i) => (
-                            <span
-                              key={`${announcement._id}-des-${i}`}
-                              className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                            >
-                              {d}
-                            </span>
-                          ))}
+                          {(announcement.targetDesignations || ["All"]).map(
+                            (d, i) => (
+                              <span
+                                key={`${announcement._id}-des-${i}`}
+                                className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                              >
+                                {d}
+                              </span>
+                            )
+                          )}
                         </div>
                       </td>
                       <td className="px-4 md:px-6 py-3 text-sm">
@@ -427,14 +468,18 @@ const Announcement = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleOpenModal("view", announcement)}
+                            onClick={() =>
+                              handleOpenModal("view", announcement)
+                            }
                             className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition"
                             title="View"
                           >
                             <FiEye size={18} />
                           </button>
                           <button
-                            onClick={() => handleOpenModal("edit", announcement)}
+                            onClick={() =>
+                              handleOpenModal("edit", announcement)
+                            }
                             className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-gray-600 rounded transition"
                             title="Edit"
                           >
@@ -475,7 +520,9 @@ const Announcement = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {(() => {
-                const total = pagination?.totalAnnouncements || filteredAnnouncements.length;
+                const total =
+                  pagination?.totalAnnouncements ||
+                  filteredAnnouncements.length;
                 const start = (currentPage - 1) * pageSize + 1;
                 const end = Math.min(currentPage * pageSize, total);
                 return `Showing ${start} to ${end} of ${total} announcements`;
@@ -506,9 +553,7 @@ const Announcement = () => {
               {/* Pagination Controls */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() =>
-                    setCurrentPage(Math.max(currentPage - 1, 1))
-                  }
+                  onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                   disabled={currentPage === 1}
                   className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition text-sm"
                 >
@@ -517,7 +562,12 @@ const Announcement = () => {
 
                 <div className="flex items-center gap-1">
                   {Array.from(
-                    { length: pagination?.totalPages || Math.ceil(filteredAnnouncements.length / pageSize) || 1 },
+                    {
+                      length:
+                        pagination?.totalPages ||
+                        Math.ceil(filteredAnnouncements.length / pageSize) ||
+                        1,
+                    },
                     (_, i) => i + 1
                   ).map((page) => (
                     <button
@@ -536,11 +586,17 @@ const Announcement = () => {
 
                 <button
                   onClick={() => {
-                    const totalPages = pagination?.totalPages || Math.ceil(filteredAnnouncements.length / pageSize) || 1;
+                    const totalPages =
+                      pagination?.totalPages ||
+                      Math.ceil(filteredAnnouncements.length / pageSize) ||
+                      1;
                     setCurrentPage(Math.min(currentPage + 1, totalPages));
                   }}
                   disabled={
-                    currentPage === (pagination?.totalPages || Math.ceil(filteredAnnouncements.length / pageSize) || 1)
+                    currentPage ===
+                    (pagination?.totalPages ||
+                      Math.ceil(filteredAnnouncements.length / pageSize) ||
+                      1)
                   }
                   className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition text-sm"
                 >
