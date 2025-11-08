@@ -1,15 +1,23 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import FetchError from "../../components/shared/error/FetchError";
 import LeaveTypeModal from "../../components/shared/modals/LeaveTypeModal";
-import { getLeaveTypes, deleteLeaveType, updateLeaveType, createLeaveType } from "../../services/leaveType.service";
+import {
+  getLeaveTypes,
+  deleteLeaveType,
+  updateLeaveType,
+  createLeaveType,
+} from "../../services/leaveType.service";
 import { FaEye, FaEdit, FaTrash, FaPlus, FaCheck } from "react-icons/fa";
 
 const LeaveType = () => {
   const dispatch = useDispatch();
-  const { leaveTypes, loading, error } = useSelector(state => state.leaveType || { leaveTypes: [], loading: false, error: null });
+  const { leaveTypes, loading, error } = useSelector(
+    (state) =>
+      state.leaveType || { leaveTypes: [], loading: false, error: null }
+  );
 
   const [action, setAction] = useState("");
   const [modalOpen, setModalOpen] = useState(null);
@@ -17,7 +25,8 @@ const LeaveType = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // pageSize is used for pagination; setter not required here
+  const [pageSize] = useState(10);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
@@ -34,28 +43,29 @@ const LeaveType = () => {
 
   const filtered = useMemo(() => {
     let result = leaveTypes || [];
-    
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(lt => 
-        lt.name?.toLowerCase().includes(q) || 
-        lt.code?.toLowerCase().includes(q) ||
-        lt.description?.toLowerCase().includes(q)
+      result = result.filter(
+        (lt) =>
+          lt.name?.toLowerCase().includes(q) ||
+          lt.code?.toLowerCase().includes(q) ||
+          lt.description?.toLowerCase().includes(q)
       );
     }
-    
+
     if (statusFilter === "active") {
-      result = result.filter(lt => lt.isActive === true);
+      result = result.filter((lt) => lt.isActive === true);
     } else if (statusFilter === "inactive") {
-      result = result.filter(lt => lt.isActive === false);
+      result = result.filter((lt) => lt.isActive === false);
     }
 
     if (typeFilter === "paid") {
-      result = result.filter(lt => lt.isPaid === true);
+      result = result.filter((lt) => lt.isPaid === true);
     } else if (typeFilter === "unpaid") {
-      result = result.filter(lt => lt.isPaid === false);
+      result = result.filter((lt) => lt.isPaid === false);
     }
-    
+
     return result;
   }, [leaveTypes, searchQuery, statusFilter, typeFilter]);
 
@@ -65,11 +75,20 @@ const LeaveType = () => {
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
 
-  const openCreate = () => { setAction("create"); setModalOpen({}); };
-  const openEdit = (lt) => { setAction("update"); setModalOpen(lt); };
-  const openView = (lt) => { setAction("view"); setModalOpen(lt); };
-  const handleDelete = (id) => { 
-    if (!confirm("Are you sure you want to delete this leave type?")) return; 
+  const openCreate = () => {
+    setAction("create");
+    setModalOpen({});
+  };
+  const openEdit = (lt) => {
+    setAction("update");
+    setModalOpen(lt);
+  };
+  const openView = (lt) => {
+    setAction("view");
+    setModalOpen(lt);
+  };
+  const handleDelete = (id) => {
+    if (!confirm("Are you sure you want to delete this leave type?")) return;
     dispatch(deleteLeaveType(id));
   };
 
@@ -102,7 +121,9 @@ const LeaveType = () => {
 
   return (
     <>
-      <Helmet><title>Leave Type Management - Metro HR</title></Helmet>
+      <Helmet>
+        <title>Leave Type Management - Metro HR</title>
+      </Helmet>
 
       {showSuccessPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -112,8 +133,12 @@ const LeaveType = () => {
                 <FaCheck className="text-green-600 dark:text-green-400 text-2xl" />
               </div>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Success!</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{successMessage}</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Success!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {successMessage}
+            </p>
           </div>
         </div>
       )}
@@ -124,7 +149,9 @@ const LeaveType = () => {
           <div className="p-6 border-b dark:border-gray-700">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Type Management</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Leave Type Management
+                </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Configure leave types and policies
                 </p>
@@ -209,27 +236,38 @@ const LeaveType = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {pageData.map((leaveType) => (
-                      <tr key={leaveType._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <tr
+                        key={leaveType._id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div 
+                          <div
                             className="w-8 h-8 rounded-full"
                             style={{ backgroundColor: leaveType.color }}
                             title={leaveType.color}
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{leaveType.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{leaveType.code}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {leaveType.name}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {leaveType.code}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{leaveType.maxDaysPerYear} days/year</div>
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            {leaveType.maxDaysPerYear} days/year
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            leaveType.isPaid 
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
-                              : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-                          }`}>
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              leaveType.isPaid
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                            }`}
+                          >
                             {leaveType.isPaid ? "Paid" : "Unpaid"}
                           </span>
                         </td>
@@ -253,11 +291,13 @@ const LeaveType = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            leaveType.isActive 
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
-                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                          }`}>
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              leaveType.isActive
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                            }`}
+                          >
                             {leaveType.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
@@ -295,18 +335,22 @@ const LeaveType = () => {
               {/* Pagination */}
               <div className="px-6 py-4 flex items-center justify-between border-t dark:border-gray-700">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} leave types
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, filtered.length)} of{" "}
+                  {filtered.length} leave types
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white"
                   >
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white"
                   >
