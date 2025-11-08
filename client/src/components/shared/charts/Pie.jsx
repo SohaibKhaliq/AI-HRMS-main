@@ -9,7 +9,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
 ChartJS.register(
   CategoryScale,
@@ -52,7 +52,10 @@ const PieGraph = ({ labels, title, label, data1, data2, height = 220 }) => {
   };
 
   return (
-    <div className="w-full" style={{ height: typeof height === 'number' ? `${height}px` : height }}>
+    <div
+      className="w-full"
+      style={{ height: typeof height === "number" ? `${height}px` : height }}
+    >
       <Pie data={pieData} options={pieOptions} height={height} />
     </div>
   );

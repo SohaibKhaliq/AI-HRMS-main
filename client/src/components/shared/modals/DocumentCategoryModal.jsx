@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import ValidatedInput from "../../ui/ValidatedInput";
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
-const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) => {
+const DocumentCategoryModal = ({
+  isOpen,
+  onClose,
+  category,
+  onSubmit,
+  action,
+}) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -54,7 +60,7 @@ const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (action === "view") {
       onClose();
       return;
@@ -106,7 +112,7 @@ const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) 
               disabled={isViewMode}
               required
               placeholder="e.g., Employment Contracts"
-              className={errors.name ? 'border-red-500' : ''}
+              className={errors.name ? "border-red-500" : ""}
             />
             {errors.name && (
               <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -125,7 +131,11 @@ const DocumentCategoryModal = ({ isOpen, onClose, category, onSubmit, action }) 
               disabled={isViewMode}
               rows="4"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 
-                ${isViewMode ? "bg-gray-100 dark:bg-gray-700" : "bg-white dark:bg-gray-900"} 
+                ${
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700"
+                    : "bg-white dark:bg-gray-900"
+                } 
                 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white`}
               placeholder="Optional description of this document category"
             ></textarea>
