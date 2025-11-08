@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { set, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -17,8 +17,6 @@ const ResetPassword = () => {
   const forgetPasswordToken = searchQuery.get("verifyToken") || "";
   const employeeId = searchQuery.get("employee") || "";
 
-  if (!employeeId || !forgetPasswordToken) return <Navigate to={"/"} />;
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -34,6 +32,9 @@ const ResetPassword = () => {
   } = useForm({
     resolver: zodResolver(resetPasswordSchema),
   });
+
+  // token checks moved below after hooks to satisfy Rules of Hooks (hooks must be
+  // called unconditionally in the same order on every render)
 
   const onSubmit = (data) => {
     dispatch(
@@ -63,6 +64,10 @@ const ResetPassword = () => {
 
     validateResetLink();
   }, [employeeId, forgetPasswordToken, navigate]);
+
+  // If token or employee id missing, redirect to home. Placed after hooks so hooks
+  // are always invoked in the same order.
+  if (!employeeId || !forgetPasswordToken) return <Navigate to={"/"} />;
 
   if (validateLoading)
     return (
@@ -94,7 +99,7 @@ const ResetPassword = () => {
             {resetPasswordError && (
               <div id="modal" className="flex justify-center items-center mb-4">
                 <div className="text-sm bg-red-100 text-red-800 w-[80%] p-3 rounded-lg flex gap-3 items-start border border-red-200 shadow-sm border-l-4 border-l-red-500 font-normal">
-                  <i class="fa-solid fa-triangle-exclamation text-red-600 text-lg"></i>
+                  <i className="fa-solid fa-triangle-exclamation text-red-600 text-lg"></i>
                   <p className="text-[0.82rem]">{resetPasswordError}</p>
                 </div>
               </div>
