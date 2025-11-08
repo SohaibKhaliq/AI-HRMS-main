@@ -9,6 +9,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
+import PropTypes from "prop-types";
 
 ChartJS.register(
   CategoryScale,
@@ -88,3 +89,10 @@ const BarGraph = ({
 };
 
 export default BarGraph;
+
+BarGraph.propTypes = {
+  text: PropTypes.string,
+  title: PropTypes.string,
+  departments: PropTypes.array,
+  departmentAttendancePercentage: PropTypes.array,
+};
