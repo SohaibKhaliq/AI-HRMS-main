@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useSelector, useDispatch } from "react-redux";
 import { io } from "socket.io-client";
 import { getUnreadCount } from "../services/notification.service";
@@ -24,7 +26,8 @@ export const SocketProvider = ({ children }) => {
     if (!user?._id) return;
 
     // Connect to socket server
-    const socketUrl = import.meta.env.VITE_URL?.replace('/api', '') || "http://localhost:3000";
+    const socketUrl =
+      import.meta.env.VITE_URL?.replace("/api", "") || "http://localhost:3000";
     const newSocket = io(socketUrl, {
       auth: {
         userId: user._id,
@@ -48,7 +51,7 @@ export const SocketProvider = ({ children }) => {
     // Listen for new notifications
     newSocket.on("notification", (notification) => {
       console.log("New notification received:", notification);
-      
+
       // Show toast notification
       toast.custom(
         (t) => (
@@ -125,4 +128,8 @@ export const SocketProvider = ({ children }) => {
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
+};
+
+SocketProvider.propTypes = {
+  children: PropTypes.node,
 };
