@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const ProfileModal = ({
   handleFileChange,
@@ -8,7 +8,6 @@ const ProfileModal = ({
   loading,
   handleClick,
 }) => {
-  
   const handleEditImage = () => {
     document.getElementById("fileInput").click();
   };
@@ -69,4 +68,12 @@ const ProfileModal = ({
   );
 };
 
+ProfileModal.propTypes = {
+  handleFileChange: PropTypes.func,
+  imagePreview: PropTypes.string,
+  name: PropTypes.string,
+  showButton: PropTypes.bool,
+  loading: PropTypes.bool,
+  handleClick: PropTypes.func,
+};
 export default ProfileModal;
