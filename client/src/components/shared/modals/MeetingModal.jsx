@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
+import PropTypes from "prop-types";
 
-const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => {
-  const { employees } = useSelector(state => state.employee || { employees: [] });
-  
+const MeetingModal = ({
+  isOpen,
+  onClose,
+  meeting = null,
+  onSubmit,
+  action,
+}) => {
+  const { employees } = useSelector(
+    (state) => state.employee || { employees: [] }
+  );
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -24,11 +33,18 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
       setFormData({
         title: meeting.title || "",
         description: meeting.description || "",
-        startTime: meeting.startTime ? new Date(meeting.startTime).toISOString().slice(0, 16) : "",
-        endTime: meeting.endTime ? new Date(meeting.endTime).toISOString().slice(0, 16) : "",
+        startTime: meeting.startTime
+          ? new Date(meeting.startTime).toISOString().slice(0, 16)
+          : "",
+        endTime: meeting.endTime
+          ? new Date(meeting.endTime).toISOString().slice(0, 16)
+          : "",
         location: meeting.location || "",
         meetingLink: meeting.meetingLink || "",
-        participants: meeting.participants?.map(p => typeof p === 'string' ? p : p._id) || [],
+        participants:
+          meeting.participants?.map((p) =>
+            typeof p === "string" ? p : p._id
+          ) || [],
         agenda: meeting.agenda || "",
         type: meeting.type || "general",
       });
@@ -74,14 +90,15 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
     if (!formData.title.trim()) errors.title = "Title is required";
     if (!formData.startTime) errors.startTime = "Start time is required";
     if (!formData.endTime) errors.endTime = "End time is required";
-    if (formData.participants.length === 0) errors.participants = "Select at least one participant";
-    
+    if (formData.participants.length === 0)
+      errors.participants = "Select at least one participant";
+
     if (formData.startTime && formData.endTime) {
       if (new Date(formData.endTime) <= new Date(formData.startTime)) {
         errors.endTime = "End time must be after start time";
       }
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -89,14 +106,14 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     // Convert datetime-local to ISO string
     const submitData = {
       ...formData,
       startTime: new Date(formData.startTime).toISOString(),
       endTime: new Date(formData.endTime).toISOString(),
     };
-    
+
     if (onSubmit) onSubmit(submitData);
   };
 
@@ -110,9 +127,16 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {action === "create" ? "Schedule New Meeting" : action === "update" ? "Edit Meeting" : "Meeting Details"}
+            {action === "create"
+              ? "Schedule New Meeting"
+              : action === "update"
+              ? "Edit Meeting"
+              : "Meeting Details"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
             <MdClose size={24} />
           </button>
         </div>
@@ -132,14 +156,20 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.title ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                  validationErrors.title
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="e.g., Sprint Planning Meeting"
               />
               {validationErrors.title && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.title}
+                </p>
               )}
             </div>
 
@@ -155,13 +185,19 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.startTime ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                  validationErrors.startTime
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               />
               {validationErrors.startTime && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.startTime}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.startTime}
+                </p>
               )}
             </div>
 
@@ -177,13 +213,19 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.endTime ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                  validationErrors.endTime
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               />
               {validationErrors.endTime && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.endTime}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.endTime}
+                </p>
               )}
             </div>
 
@@ -198,7 +240,9 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               >
                 <option value="general">General</option>
@@ -222,7 +266,9 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="e.g., Conference Room A"
               />
@@ -240,7 +286,9 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="https://zoom.us/j/..."
               />
@@ -258,7 +306,9 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 disabled={isViewMode}
                 rows="3"
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="Brief description of the meeting..."
               />
@@ -276,7 +326,9 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                 disabled={isViewMode}
                 rows="3"
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="Meeting agenda items..."
               />
@@ -299,7 +351,9 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                       <input
                         type="checkbox"
                         checked={formData.participants.includes(emp._id)}
-                        onChange={() => !isViewMode && handleParticipantToggle(emp._id)}
+                        onChange={() =>
+                          !isViewMode && handleParticipantToggle(emp._id)
+                        }
                         disabled={isViewMode}
                         className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                       />
@@ -309,11 +363,15 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
                     </label>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No employees available</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No employees available
+                  </p>
                 )}
               </div>
               {validationErrors.participants && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.participants}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.participants}
+                </p>
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {formData.participants.length} participant(s) selected
@@ -346,3 +404,19 @@ const MeetingModal = ({ isOpen, onClose, meeting = null, onSubmit, action }) => 
 };
 
 export default MeetingModal;
+
+MeetingModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  meeting: PropTypes.object,
+  onSubmit: PropTypes.func,
+  action: PropTypes.string,
+};
+
+MeetingModal.defaultProps = {
+  isOpen: false,
+  onClose: () => {},
+  meeting: null,
+  onSubmit: () => {},
+  action: "view",
+};
