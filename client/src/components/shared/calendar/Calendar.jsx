@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaCalendarAlt } from "react-icons/fa";
+import PropTypes from "prop-types";
 import {
   getCalendarGrid,
   getMonthName,
@@ -11,7 +12,7 @@ import {
   getEventColor,
 } from "../../../utils/calendarUtils";
 
-const Calendar = ({ events = [], onDateClick, onEventClick, view = "month" }) => {
+const Calendar = ({ events = [], onDateClick, onEventClick }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -118,7 +119,11 @@ const Calendar = ({ events = [], onDateClick, onEventClick, view = "month" }) =>
                     : "bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-50"
                 }
                 ${today ? "ring-2 ring-blue-500" : ""}
-                ${selected ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700" : ""}
+                ${
+                  selected
+                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
+                    : ""
+                }
                 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600
               `}
             >
@@ -169,15 +174,21 @@ const Calendar = ({ events = [], onDateClick, onEventClick, view = "month" }) =>
       <div className="mt-6 flex flex-wrap gap-4 justify-center">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-blue-500 rounded"></div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Meeting</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Meeting
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-orange-500 rounded"></div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Leave</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Leave
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-green-500 rounded"></div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Holiday</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Holiday
+          </span>
         </div>
       </div>
     </div>
@@ -185,3 +196,9 @@ const Calendar = ({ events = [], onDateClick, onEventClick, view = "month" }) =>
 };
 
 export default Calendar;
+
+Calendar.propTypes = {
+  events: PropTypes.array,
+  onDateClick: PropTypes.func,
+  onEventClick: PropTypes.func,
+};
