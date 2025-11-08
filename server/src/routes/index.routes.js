@@ -3,6 +3,7 @@ import leave from "./leave.routes.js";
 import payroll from "./payroll.routes.js";
 import employee from "./employee.routes.js";
 import feedback from "./feedback.routes.js";
+import analysis from "./analysis.routes.js";
 import inshight from "./insights.routes.js";
 import complaint from "./complaint.routes.js";
 import holiday from "./holiday.routes.js";
@@ -32,6 +33,7 @@ export {
   payroll,
   employee,
   feedback,
+  analysis,
   inshight,
   complaint,
   holiday,
