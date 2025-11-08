@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import PropTypes from "prop-types";
 
 const RemarksModal = ({ onClose, isConfirm }) => {
   const [remarks, setRemarks] = useState("");
@@ -42,3 +43,12 @@ const RemarksModal = ({ onClose, isConfirm }) => {
 };
 
 export default RemarksModal;
+
+RemarksModal.propTypes = {
+  onClose: PropTypes.func,
+  isConfirm: PropTypes.func.isRequired,
+};
+
+RemarksModal.defaultProps = {
+  onClose: () => {},
+};
