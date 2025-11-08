@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { MdClose } from "react-icons/md";
+import PropTypes from "prop-types";
 
 const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
   const [formData, setFormData] = useState({
@@ -15,7 +16,15 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
 
   const [validationErrors, setValidationErrors] = useState({});
 
-  const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const allDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   useEffect(() => {
     if (shift && isOpen) {
@@ -24,7 +33,13 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
         startTime: shift.startTime || "",
         endTime: shift.endTime || "",
         breakDuration: shift.breakDuration || 60,
-        workingDays: shift.workingDays || ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        workingDays: shift.workingDays || [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+        ],
         description: shift.description || "",
         graceTime: shift.graceTime || 15,
         isActive: shift.isActive !== undefined ? shift.isActive : true,
@@ -70,8 +85,9 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
     if (!formData.name.trim()) errors.name = "Shift name is required";
     if (!formData.startTime) errors.startTime = "Start time is required";
     if (!formData.endTime) errors.endTime = "End time is required";
-    if (formData.workingDays.length === 0) errors.workingDays = "Select at least one working day";
-    
+    if (formData.workingDays.length === 0)
+      errors.workingDays = "Select at least one working day";
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -92,9 +108,16 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {action === "create" ? "Add New Shift" : action === "update" ? "Edit Shift" : "View Shift"}
+            {action === "create"
+              ? "Add New Shift"
+              : action === "update"
+              ? "Edit Shift"
+              : "View Shift"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
             <MdClose size={24} />
           </button>
         </div>
@@ -114,14 +137,20 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.name ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                  validationErrors.name
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="e.g., Morning Shift"
               />
               {validationErrors.name && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.name}
+                </p>
               )}
             </div>
 
@@ -137,13 +166,19 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.startTime ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                  validationErrors.startTime
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               />
               {validationErrors.startTime && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.startTime}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.startTime}
+                </p>
               )}
             </div>
 
@@ -159,13 +194,19 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.endTime ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                  validationErrors.endTime
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               />
               {validationErrors.endTime && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.endTime}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.endTime}
+                </p>
               )}
             </div>
 
@@ -182,7 +223,9 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                 disabled={isViewMode}
                 min="0"
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               />
             </div>
@@ -200,7 +243,9 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                 disabled={isViewMode}
                 min="0"
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
               />
             </div>
@@ -221,14 +266,20 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                       formData.workingDays.includes(day)
                         ? "bg-green-600 text-white"
                         : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                    } ${isViewMode ? "cursor-not-allowed" : "hover:opacity-80 cursor-pointer"}`}
+                    } ${
+                      isViewMode
+                        ? "cursor-not-allowed"
+                        : "hover:opacity-80 cursor-pointer"
+                    }`}
                   >
                     {day.substring(0, 3)}
                   </button>
                 ))}
               </div>
               {validationErrors.workingDays && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.workingDays}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.workingDays}
+                </p>
               )}
             </div>
 
@@ -244,7 +295,9 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                 disabled={isViewMode}
                 rows="3"
                 className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:text-white`}
                 placeholder="Optional description"
               />
@@ -261,7 +314,9 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Active
+                </span>
               </label>
             </div>
           </div>
@@ -291,3 +346,11 @@ const ShiftModal = ({ isOpen, onClose, shift = null, onSubmit, action }) => {
 };
 
 export default ShiftModal;
+
+ShiftModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  shift: PropTypes.object,
+  onSubmit: PropTypes.func,
+  action: PropTypes.string,
+};
