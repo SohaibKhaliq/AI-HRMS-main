@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { MdClose } from "react-icons/md";
+import PropTypes from "prop-types";
 
-const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action }) => {
+const LeaveTypeModal = ({
+  isOpen,
+  onClose,
+  leaveType = null,
+  onSubmit,
+  action,
+}) => {
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -38,13 +45,23 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
         code: leaveType.code || "",
         description: leaveType.description || "",
         maxDaysPerYear: leaveType.maxDaysPerYear || 15,
-        carryForwardEnabled: leaveType.carryForwardEnabled !== undefined ? leaveType.carryForwardEnabled : false,
+        carryForwardEnabled:
+          leaveType.carryForwardEnabled !== undefined
+            ? leaveType.carryForwardEnabled
+            : false,
         carryForwardLimit: leaveType.carryForwardLimit || 5,
         isPaid: leaveType.isPaid !== undefined ? leaveType.isPaid : true,
-        requiresApproval: leaveType.requiresApproval !== undefined ? leaveType.requiresApproval : true,
-        requiresDocument: leaveType.requiresDocument !== undefined ? leaveType.requiresDocument : false,
+        requiresApproval:
+          leaveType.requiresApproval !== undefined
+            ? leaveType.requiresApproval
+            : true,
+        requiresDocument:
+          leaveType.requiresDocument !== undefined
+            ? leaveType.requiresDocument
+            : false,
         minimumDaysNotice: leaveType.minimumDaysNotice || 1,
-        allowHalfDay: leaveType.allowHalfDay !== undefined ? leaveType.allowHalfDay : true,
+        allowHalfDay:
+          leaveType.allowHalfDay !== undefined ? leaveType.allowHalfDay : true,
         color: leaveType.color || "#10b981",
         isActive: leaveType.isActive !== undefined ? leaveType.isActive : true,
       });
@@ -84,11 +101,12 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
     const errors = {};
     if (!formData.name.trim()) errors.name = "Leave type name is required";
     if (!formData.code.trim()) errors.code = "Leave type code is required";
-    if (formData.maxDaysPerYear < 0) errors.maxDaysPerYear = "Max days must be positive";
+    if (formData.maxDaysPerYear < 0)
+      errors.maxDaysPerYear = "Max days must be positive";
     if (formData.carryForwardEnabled && formData.carryForwardLimit < 0) {
       errors.carryForwardLimit = "Carry forward limit must be positive";
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -96,7 +114,7 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     // Convert string numbers to actual numbers
     const submitData = {
       ...formData,
@@ -104,7 +122,7 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
       carryForwardLimit: Number(formData.carryForwardLimit),
       minimumDaysNotice: Number(formData.minimumDaysNotice),
     };
-    
+
     if (onSubmit) onSubmit(submitData);
   };
 
@@ -118,9 +136,16 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {action === "create" ? "Create Leave Type" : action === "update" ? "Edit Leave Type" : "Leave Type Details"}
+            {action === "create"
+              ? "Create Leave Type"
+              : action === "update"
+              ? "Edit Leave Type"
+              : "Leave Type Details"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
             <MdClose size={24} />
           </button>
         </div>
@@ -129,7 +154,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Basic Information</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+              Basic Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Name */}
               <div>
@@ -143,14 +170,20 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   onChange={handleChange}
                   disabled={isViewMode}
                   className={`w-full px-3 py-2 border ${
-                    validationErrors.name ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    validationErrors.name
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                    isViewMode
+                      ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-700"
                   } dark:text-white`}
                   placeholder="e.g., Sick Leave"
                 />
                 {validationErrors.name && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.name}
+                  </p>
                 )}
               </div>
 
@@ -166,15 +199,21 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   onChange={handleChange}
                   disabled={isViewMode}
                   className={`w-full px-3 py-2 border ${
-                    validationErrors.code ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    validationErrors.code
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                    isViewMode
+                      ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-700"
                   } dark:text-white uppercase`}
                   placeholder="e.g., SL"
                   maxLength="5"
                 />
                 {validationErrors.code && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.code}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.code}
+                  </p>
                 )}
               </div>
 
@@ -190,7 +229,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   rows="2"
                   className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                    isViewMode
+                      ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-700"
                   } dark:text-white`}
                   placeholder="Brief description of this leave type..."
                 />
@@ -200,7 +241,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
 
           {/* Leave Policy */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Leave Policy</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+              Leave Policy
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Max Days Per Year */}
               <div>
@@ -215,7 +258,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   min="0"
                   className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                    isViewMode
+                      ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-700"
                   } dark:text-white`}
                 />
               </div>
@@ -233,7 +278,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   min="0"
                   className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                    isViewMode
+                      ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-700"
                   } dark:text-white`}
                 />
               </div>
@@ -252,7 +299,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                     disabled={isViewMode}
                     min="0"
                     className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                      isViewMode
+                        ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                        : "bg-white dark:bg-gray-700"
                     } dark:text-white`}
                   />
                 </div>
@@ -262,7 +311,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
 
           {/* Leave Options */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Leave Options</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+              Leave Options
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -273,7 +324,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Paid Leave</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Paid Leave
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -285,7 +338,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Requires Approval</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Requires Approval
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -297,7 +352,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Requires Document</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Requires Document
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -309,7 +366,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Allow Half Day</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Allow Half Day
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -321,7 +380,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Carry Forward</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Enable Carry Forward
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -333,14 +394,18 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   disabled={isViewMode}
                   className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Active
+                </span>
               </label>
             </div>
           </div>
 
           {/* Calendar Color */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Display Settings</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+              Display Settings
+            </h3>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Calendar Color
@@ -350,13 +415,20 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                   <button
                     key={color.value}
                     type="button"
-                    onClick={() => !isViewMode && setFormData(prev => ({ ...prev, color: color.value }))}
+                    onClick={() =>
+                      !isViewMode &&
+                      setFormData((prev) => ({ ...prev, color: color.value }))
+                    }
                     disabled={isViewMode}
                     className={`w-12 h-12 rounded-lg ${color.class} ${
                       formData.color === color.value
                         ? "ring-4 ring-offset-2 ring-gray-400 dark:ring-gray-500"
                         : "hover:ring-2 ring-gray-300"
-                    } ${isViewMode ? "cursor-not-allowed opacity-50" : "cursor-pointer"} transition`}
+                    } ${
+                      isViewMode
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer"
+                    } transition`}
                     title={color.label}
                   />
                 ))}
@@ -378,7 +450,9 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
                 type="submit"
                 className="px-6 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg font-medium transition"
               >
-                {action === "update" ? "Update Leave Type" : "Create Leave Type"}
+                {action === "update"
+                  ? "Update Leave Type"
+                  : "Create Leave Type"}
               </button>
             )}
           </div>
@@ -389,3 +463,19 @@ const LeaveTypeModal = ({ isOpen, onClose, leaveType = null, onSubmit, action })
 };
 
 export default LeaveTypeModal;
+
+LeaveTypeModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  leaveType: PropTypes.object,
+  onSubmit: PropTypes.func,
+  action: PropTypes.string,
+};
+
+LeaveTypeModal.defaultProps = {
+  isOpen: false,
+  onClose: () => {},
+  leaveType: null,
+  onSubmit: () => {},
+  action: "create",
+};
