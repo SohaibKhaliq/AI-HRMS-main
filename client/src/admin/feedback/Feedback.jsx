@@ -13,6 +13,8 @@ import FilterButton from "../../components/shared/buttons/FilterButton";
 import NoDataMessage from "../../components/shared/error/NoDataMessage";
 import { FiSearch, FiEye } from "react-icons/fi";
 import FeedbackViewModal from "../../components/shared/modals/FeedbackViewModal";
+import SentimentBadge from "../../components/analysis/SentimentBadge";
+import TopicChips from "../../components/analysis/TopicChips";
 
 function Feedback() {
   const dispatch = useDispatch();
@@ -23,6 +25,8 @@ function Feedback() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewFilter, setReviewFilter] = useState("");
+  const [sentimentFilter, setSentimentFilter] = useState("");
+  const [topicFilter, setTopicFilter] = useState("");
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -77,8 +81,24 @@ function Feedback() {
       to.setHours(23, 59, 59, 999);
       list = list.filter((f) => new Date(f.createdAt) <= to);
     }
+    // sentiment filter (client-side)
+    if (sentimentFilter) {
+      list = list.filter(
+        (f) =>
+          (f.sentimentLabel || f.review || "").toLowerCase() ===
+          sentimentFilter.toLowerCase()
+      );
+    }
+    // topic filter (client-side, partial match)
+    if (topicFilter) {
+      const t = topicFilter.trim().toLowerCase();
+      list = list.filter((f) =>
+        (f.topics || []).some((x) => String(x).toLowerCase().includes(t))
+      );
+    }
     return list;
-  }, [feedbacks, searchQuery, dateFrom, dateTo]);
+  }, [feedbacks, searchQuery, dateFrom, dateTo, sentimentFilter, topicFilter]);
+  // include sentiment/topic filters in memo dependencies
 
   const handleExportCSV = () => {
     const rows = filteredFeedbacks.length ? filteredFeedbacks : feedbacks;
@@ -154,6 +174,32 @@ function Feedback() {
               className="px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm"
               title="To date"
             />
+            <select
+              value={sentimentFilter}
+              onChange={(e) => {
+                setSentimentFilter(e.target.value);
+                dispatch(setFetchFlag(true));
+              }}
+              className="px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm"
+              title="Filter by sentiment"
+            >
+              <option value="">All Sentiments</option>
+              <option value="positive">Positive</option>
+              <option value="neutral">Neutral</option>
+              <option value="negative">Negative</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="Filter by topic"
+              value={topicFilter}
+              onChange={(e) => {
+                setTopicFilter(e.target.value);
+                dispatch(setFetchFlag(true));
+              }}
+              className="px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm"
+              title="Filter by topic"
+            />
             <button
               type="button"
               onClick={handleExportCSV}
@@ -177,6 +223,7 @@ function Feedback() {
                     {header}
                   </th>
                 ))}
+                <th className="py-3 px-4 border-b border-secondary">Topics</th>
               </tr>
             </thead>
             <tbody>
@@ -203,7 +250,17 @@ function Feedback() {
                       {feedback.employee?.role?.name || "--"}
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">
-                      {feedback.review}
+                      <SentimentBadge
+                        label={feedback.sentimentLabel || feedback.review}
+                        score={feedback.sentimentScore}
+                      />
+                    </td>
+
+                    <td className="py-3 px-4 border-b border-secondary">
+                      <TopicChips
+                        topics={feedback.topics || []}
+                        onClick={(t) => setTopicFilter(t)}
+                      />
                     </td>
 
                     {/* Description with Tooltip */}
