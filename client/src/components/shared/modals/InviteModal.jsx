@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { inviteForInterview } from "../../../services/recruitment.service";
+import PropTypes from "prop-types";
 
 const InviteModal = ({ onClose, application, jobId }) => {
   const dispatch = useDispatch();
@@ -86,3 +87,9 @@ const InviteModal = ({ onClose, application, jobId }) => {
 };
 
 export default InviteModal;
+
+InviteModal.propTypes = {
+  onClose: PropTypes.func,
+  application: PropTypes.object,
+  jobId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
