@@ -25,7 +25,7 @@ const DocumentType = () => {
 
   useEffect(() => {
     dispatch(getDocumentTypes());
-  }, []);
+  }, [dispatch]);
 
   const filtered = useMemo(() => {
     if (!searchQuery) return documentTypes || [];
@@ -41,7 +41,7 @@ const DocumentType = () => {
   const pageData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
-  }, [filtered, currentPage]);
+  }, [filtered, currentPage, pageSize]);
 
   const openCreate = () => {
     setAction("create");
