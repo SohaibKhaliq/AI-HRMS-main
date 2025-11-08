@@ -1,17 +1,27 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllEmployees } from "../../../services/employee.service";
 import { MdClose } from "react-icons/md";
 import { resignationSchema } from "../../../validations";
+import PropTypes from "prop-types";
 
-const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, action, employees: propEmployees }) => {
+const ResignationModal = ({
+  isOpen,
+  onClose,
+  resignation = null,
+  onSubmit,
+  action,
+  employees: propEmployees,
+}) => {
   const dispatch = useDispatch();
-  const { employees: storeEmployees } = useSelector((state) => state.employee || {});
+  const { employees: storeEmployees } = useSelector(
+    (state) => state.employee || {}
+  );
   const employees = propEmployees || storeEmployees || [];
   const [documentFile, setDocumentFile] = useState(null);
   const [documentPreview, setDocumentPreview] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
-  
+
   const [formData, setFormData] = useState({
     employee: "",
     resignationDate: "",
@@ -129,7 +139,7 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -161,7 +171,11 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
           <h2 className="text-xl font-semibold text-gray-900">
-            {action === "create" ? "Add New Resignation" : action === "update" ? "Edit Resignation" : "View Resignation"}
+            {action === "create"
+              ? "Add New Resignation"
+              : action === "update"
+              ? "Edit Resignation"
+              : "View Resignation"}
           </h2>
           <button
             onClick={onClose}
@@ -185,7 +199,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.employee ? "border-red-500" : "border-gray-300"
+                  validationErrors.employee
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
@@ -193,7 +209,8 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
               >
                 <option value="">Select Employee</option>
                 {employees?.map((emp) => {
-                  const empName = emp.name || `${emp.firstName} ${emp.lastName}`;
+                  const empName =
+                    emp.name || `${emp.firstName} ${emp.lastName}`;
                   return (
                     <option key={emp._id} value={emp._id}>
                       {empName} ({emp.employeeId})
@@ -202,7 +219,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 })}
               </select>
               {validationErrors.employee && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.employee}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.employee}
+                </p>
               )}
             </div>
 
@@ -218,14 +237,18 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.resignationDate ? "border-red-500" : "border-gray-300"
+                  validationErrors.resignationDate
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
                 required
               />
               {validationErrors.resignationDate && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.resignationDate}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.resignationDate}
+                </p>
               )}
             </div>
 
@@ -241,14 +264,18 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.lastWorkingDay ? "border-red-500" : "border-gray-300"
+                  validationErrors.lastWorkingDay
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
                 required
               />
               {validationErrors.lastWorkingDay && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.lastWorkingDay}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.lastWorkingDay}
+                </p>
               )}
             </div>
 
@@ -264,14 +291,18 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.noticePeriod ? "border-red-500" : "border-gray-300"
+                  validationErrors.noticePeriod
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
                 required
               />
               {validationErrors.noticePeriod && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.noticePeriod}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.noticePeriod}
+                </p>
               )}
             </div>
 
@@ -294,7 +325,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
               >
                 <option value="">Select Reason</option>
                 <option value="Career change">Career change</option>
-                <option value="Better opportunities">Better opportunities</option>
+                <option value="Better opportunities">
+                  Better opportunities
+                </option>
                 <option value="Relocation">Relocation</option>
                 <option value="Further education">Further education</option>
                 <option value="Personal reasons">Personal reasons</option>
@@ -303,7 +336,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 <option value="Other">Other</option>
               </select>
               {validationErrors.reason && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.reason}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.reason}
+                </p>
               )}
             </div>
 
@@ -330,7 +365,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 <option value="Completed">Completed</option>
               </select>
               {validationErrors.status && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.status}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.status}
+                </p>
               )}
             </div>
 
@@ -339,9 +376,13 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Upload Resignation Letter or Document
               </label>
-              <div className={`border-2 border-dashed rounded-lg p-4 ${
-                validationErrors.document ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"
-              } ${isViewMode ? "" : "hover:bg-gray-100 cursor-pointer"}`}>
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 ${
+                  validationErrors.document
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300 bg-gray-50"
+                } ${isViewMode ? "" : "hover:bg-gray-100 cursor-pointer"}`}
+              >
                 {documentPreview ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-center gap-2">
@@ -361,11 +402,15 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                     )}
                   </div>
                 ) : (
-                  <label className={`block ${isViewMode ? "" : "cursor-pointer"}`}>
+                  <label
+                    className={`block ${isViewMode ? "" : "cursor-pointer"}`}
+                  >
                     <div className="flex flex-col items-center gap-2 text-gray-500">
                       <i className="fa-solid fa-cloud-arrow-up text-2xl text-gray-400"></i>
                       <span className="text-sm">
-                        {isViewMode ? "No document uploaded" : "Click to upload or drag and drop"}
+                        {isViewMode
+                          ? "No document uploaded"
+                          : "Click to upload or drag and drop"}
                       </span>
                       <span className="text-xs text-gray-400">
                         PDF, DOC, DOCX, JPG, PNG (max 5MB)
@@ -384,7 +429,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 )}
               </div>
               {validationErrors.document && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.document}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.document}
+                </p>
               )}
             </div>
 
@@ -405,7 +452,9 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
                 placeholder="Additional remarks or notes"
               />
               {validationErrors.remarks && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.remarks}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.remarks}
+                </p>
               )}
             </div>
           </div>
@@ -435,3 +484,12 @@ const ResignationModal = ({ isOpen, onClose, resignation = null, onSubmit, actio
 };
 
 export default ResignationModal;
+
+ResignationModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  resignation: PropTypes.object,
+  onSubmit: PropTypes.func,
+  action: PropTypes.string,
+  employees: PropTypes.array,
+};
