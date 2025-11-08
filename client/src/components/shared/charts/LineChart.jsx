@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -84,3 +84,9 @@ const LineChart = ({ label, title, chartData }) => {
 };
 
 export default LineChart;
+
+LineChart.propTypes = {
+  label: PropTypes.string,
+  title: PropTypes.string,
+  chartData: PropTypes.array,
+};
