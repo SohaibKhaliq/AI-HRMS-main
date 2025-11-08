@@ -1,4 +1,6 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect, useContext } from "react";
+import PropTypes from "prop-types";
 
 const ThemeContext = createContext();
 
@@ -28,3 +30,7 @@ export const useTheme = () => useContext(ThemeContext);
 
 // Export Socket context
 export { SocketProvider, useSocket } from "./SocketContext";
+
+ThemeProvider.propTypes = {
+  children: PropTypes.node,
+};
