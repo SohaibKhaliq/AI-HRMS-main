@@ -49,6 +49,22 @@ const complaintSchema = new mongoose.Schema(
     documentUrl: {
       type: String,
     },
+    sentimentScore: {
+      type: Number,
+    },
+    sentimentLabel: {
+      type: String,
+    },
+    topics: {
+      type: [String],
+      default: [],
+    },
+    analysisMeta: {
+      type: Object,
+    },
+    lastAnalyzedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
