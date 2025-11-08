@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet";
 import { FaPlus, FaEdit, FaEye, FaTrash, FaCheck } from "react-icons/fa";
@@ -13,12 +13,15 @@ import {
 
 const DocumentCategory = () => {
   const dispatch = useDispatch();
-  const { categories = [], loading } = useSelector((state) => state.documentCategory);
+  const { categories = [], loading } = useSelector(
+    (state) => state.documentCategory
+  );
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // itemsPerPage is used for pagination; setter not needed here
+  const [itemsPerPage] = useState(10);
   const [modalOpen, setModalOpen] = useState(null);
   const [action, setAction] = useState("create");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -43,7 +46,10 @@ const DocumentCategory = () => {
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredCategories.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
 
   const handleModalClose = () => {
@@ -71,7 +77,9 @@ const DocumentCategory = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this document category?")) {
+    if (
+      window.confirm("Are you sure you want to delete this document category?")
+    ) {
       try {
         await dispatch(deleteDocumentCategory(id)).unwrap();
         toast.success("Document category deleted successfully");
@@ -171,7 +179,9 @@ const DocumentCategory = () => {
             </div>
           ) : currentItems.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">No document categories found</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No document categories found
+              </p>
             </div>
           ) : (
             <>
@@ -195,7 +205,10 @@ const DocumentCategory = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {currentItems.map((category) => (
-                      <tr key={category._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <tr
+                        key={category._id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {category.name}
@@ -254,7 +267,9 @@ const DocumentCategory = () => {
                 <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
                   <div className="flex-1 flex justify-between sm:hidden">
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
                       disabled={currentPage === 1}
                       className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 
                         text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 
@@ -263,7 +278,9 @@ const DocumentCategory = () => {
                       Previous
                     </button>
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
                       disabled={currentPage === totalPages}
                       className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 
                         text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 
@@ -275,16 +292,26 @@ const DocumentCategory = () => {
                   <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                        Showing{" "}
+                        <span className="font-medium">
+                          {indexOfFirstItem + 1}
+                        </span>{" "}
+                        to{" "}
                         <span className="font-medium">
                           {Math.min(indexOfLastItem, filteredCategories.length)}
                         </span>{" "}
-                        of <span className="font-medium">{filteredCategories.length}</span> results
+                        of{" "}
+                        <span className="font-medium">
+                          {filteredCategories.length}
+                        </span>{" "}
+                        results
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
                         disabled={currentPage === 1}
                         className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 
                           text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 
@@ -293,7 +320,11 @@ const DocumentCategory = () => {
                         Previous
                       </button>
                       <button
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
                         disabled={currentPage === totalPages}
                         className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 
                           text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 
@@ -326,8 +357,12 @@ const DocumentCategory = () => {
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 mb-4">
               <FaCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Success!</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{successMessage}</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Success!
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {successMessage}
+            </p>
           </div>
         </div>
       )}
