@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createRole, updateRole } from "../../../services/role.service";
+import PropTypes from "prop-types";
 
 const RoleModal = ({ action, onClose, role }) => {
   const dispatch = useDispatch();
@@ -102,3 +103,9 @@ const RoleModal = ({ action, onClose, role }) => {
 };
 
 export default RoleModal;
+
+RoleModal.propTypes = {
+  action: PropTypes.string,
+  onClose: PropTypes.func,
+  role: PropTypes.object,
+};
