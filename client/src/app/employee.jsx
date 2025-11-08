@@ -16,8 +16,12 @@ const MarkAttendance = lazy(() => import("../pages/attendance/MarkAttendance"));
 const Resignation = lazy(() => import("../pages/resignation/Resignation"));
 const TimeTracking = lazy(() => import("../pages/timeTracking/TimeTracking"));
 const LeaveBalance = lazy(() => import("../pages/leaveBalance/LeaveBalance"));
-const EmployeeMeetings = lazy(() => import("../pages/meetings/EmployeeMeetings"));
-const EmployeeDocuments = lazy(() => import("../pages/documents/EmployeeDocuments"));
+const EmployeeMeetings = lazy(() =>
+  import("../pages/meetings/EmployeeMeetings")
+);
+const EmployeeDocuments = lazy(() =>
+  import("../pages/documents/EmployeeDocuments")
+);
 const Payroll = lazy(() => import("../pages/payroll/Payroll"));
 const CalendarView = lazy(() => import("../pages/calendar/CalendarView"));
 
@@ -26,7 +30,7 @@ const EmployeeApp = () => {
 
   useEffect(() => {
     dispatch(getEmployeeInsights());
-  }, []);
+  }, [dispatch]);
 
   return (
     <div
