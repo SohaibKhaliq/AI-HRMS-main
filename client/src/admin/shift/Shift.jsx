@@ -1,22 +1,30 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import FetchError from "../../components/shared/error/FetchError";
 import ShiftModal from "../../components/shared/modals/ShiftModal";
-import { getShifts, deleteShift, updateShift, createShift } from "../../services/shift.service";
+import {
+  getShifts,
+  deleteShift,
+  updateShift,
+  createShift,
+} from "../../services/shift.service";
 import { FaEye, FaEdit, FaTrash, FaPlus, FaCheck } from "react-icons/fa";
 
 const Shift = () => {
   const dispatch = useDispatch();
-  const { shifts, loading, error } = useSelector(state => state.shift || { shifts: [], loading: false, error: null });
+  const { shifts, loading, error } = useSelector(
+    (state) => state.shift || { shifts: [], loading: false, error: null }
+  );
 
   const [action, setAction] = useState("");
   const [modalOpen, setModalOpen] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // pageSize is used for pagination; setter not required here
+  const [pageSize] = useState(10);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
@@ -33,21 +41,22 @@ const Shift = () => {
 
   const filtered = useMemo(() => {
     let result = shifts || [];
-    
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(s => 
-        s.name?.toLowerCase().includes(q) || 
-        s.description?.toLowerCase().includes(q)
+      result = result.filter(
+        (s) =>
+          s.name?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q)
       );
     }
-    
+
     if (statusFilter === "active") {
-      result = result.filter(s => s.isActive === true);
+      result = result.filter((s) => s.isActive === true);
     } else if (statusFilter === "inactive") {
-      result = result.filter(s => s.isActive === false);
+      result = result.filter((s) => s.isActive === false);
     }
-    
+
     return result;
   }, [shifts, searchQuery, statusFilter]);
 
@@ -57,11 +66,20 @@ const Shift = () => {
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
 
-  const openCreate = () => { setAction("create"); setModalOpen({}); };
-  const openEdit = (s) => { setAction("update"); setModalOpen(s); };
-  const openView = (s) => { setAction("view"); setModalOpen(s); };
-  const handleDelete = (id) => { 
-    if (!confirm("Are you sure you want to delete this shift?")) return; 
+  const openCreate = () => {
+    setAction("create");
+    setModalOpen({});
+  };
+  const openEdit = (s) => {
+    setAction("update");
+    setModalOpen(s);
+  };
+  const openView = (s) => {
+    setAction("view");
+    setModalOpen(s);
+  };
+  const handleDelete = (id) => {
+    if (!confirm("Are you sure you want to delete this shift?")) return;
     dispatch(deleteShift(id));
   };
 
@@ -93,7 +111,9 @@ const Shift = () => {
 
   return (
     <>
-      <Helmet><title>Shift Management - Metro HR</title></Helmet>
+      <Helmet>
+        <title>Shift Management - Metro HR</title>
+      </Helmet>
 
       {showSuccessPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -103,8 +123,12 @@ const Shift = () => {
                 <FaCheck className="text-green-600 dark:text-green-400 text-2xl" />
               </div>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Success!</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{successMessage}</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Success!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {successMessage}
+            </p>
           </div>
         </div>
       )}
@@ -115,7 +139,9 @@ const Shift = () => {
           <div className="p-6 border-b dark:border-gray-700">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Shift Management</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Shift Management
+                </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Manage work shifts and schedules
                 </p>
@@ -188,9 +214,14 @@ const Shift = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {pageData.map((shift) => (
-                      <tr key={shift._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <tr
+                        key={shift._id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{shift.name}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {shift.name}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900 dark:text-white">
@@ -198,7 +229,9 @@ const Shift = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{shift.breakDuration}</div>
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            {shift.breakDuration}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 dark:text-white">
@@ -206,11 +239,13 @@ const Shift = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            shift.isActive 
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
-                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                          }`}>
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              shift.isActive
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                            }`}
+                          >
                             {shift.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
@@ -248,18 +283,22 @@ const Shift = () => {
               {/* Pagination */}
               <div className="px-6 py-4 flex items-center justify-between border-t dark:border-gray-700">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} shifts
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, filtered.length)} of{" "}
+                  {filtered.length} shifts
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white"
                   >
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white"
                   >
