@@ -46,7 +46,7 @@ function Feedback() {
         getFeedbacks({ review: reviewFilter.toLowerCase(), currentPage })
       );
     }
-  }, [reviewFilter, currentPage, fetch]);
+  }, [reviewFilter, currentPage, fetch, dispatch]);
 
   const filteredFeedbacks = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -82,7 +82,8 @@ function Feedback() {
 
   const handleExportCSV = () => {
     const rows = filteredFeedbacks.length ? filteredFeedbacks : feedbacks;
-    let csv = "Emp ID,Name,Department,Position,AI Review,Suggestion,Description,Date,Rating\n";
+    let csv =
+      "Emp ID,Name,Department,Position,AI Review,Suggestion,Description,Date,Rating\n";
     for (const f of rows) {
       const line = [
         f.employee?.employeeId || "--",
@@ -90,8 +91,8 @@ function Feedback() {
         f.employee?.department?.name || "--",
         f.employee?.role?.name || "--",
         f.review || "--",
-        (f.suggestion || "").replaceAll("\"", "'"),
-        (f.description || "").replaceAll("\"", "'"),
+        (f.suggestion || "").replaceAll('"', "'"),
+        (f.description || "").replaceAll('"', "'"),
         formatDate(f.createdAt || f.updatedAt || new Date()),
         f.rating ?? "",
       ]
@@ -179,10 +180,14 @@ function Feedback() {
               </tr>
             </thead>
             <tbody>
-                {(filteredFeedbacks.length > 0 ? filteredFeedbacks : feedbacks).length > 0 &&
-                (filteredFeedbacks.length > 0 ? filteredFeedbacks : feedbacks).map((feedback, index) => (
+              {(filteredFeedbacks.length > 0 ? filteredFeedbacks : feedbacks)
+                .length > 0 &&
+                (filteredFeedbacks.length > 0
+                  ? filteredFeedbacks
+                  : feedbacks
+                ).map((feedback, index) => (
                   <tr
-                    key={index}
+                    key={feedback._id || index}
                     className="dark:even:bg-gray-800 odd:bg-gray-200 dark:odd:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     <td className="py-3 px-4 border-b border-secondary">
@@ -192,10 +197,10 @@ function Feedback() {
                       {feedback.employee?.name || "--"}
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">
-                      {feedback.employee.department?.name || "--"}
+                      {feedback.employee?.department?.name || "--"}
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">
-                      {feedback.employee.role?.name || "--"}
+                      {feedback.employee?.role?.name || "--"}
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">
                       {feedback.review}
@@ -207,12 +212,12 @@ function Feedback() {
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                     >
-                      {feedback.description.slice(0, 10) + "...."}
+                      {(feedback.description || "").slice(0, 10) + "...."}
 
                       {hoveredIndex === index && (
                         <div className="absolute left-0 top-full mt-1 max-w-[300px] h-auto bg-gray-900 dark:bg-gray-200 dark:text-black text-white text-xs p-2 rounded shadow-lg z-10 break-words whitespace-normal">
                           <i className="fas fa-quote-left dark:text-gray-700 text-white mr-2"></i>
-                          {feedback.description}
+                          {feedback.description || ""}
                         </div>
                       )}
                     </td>
@@ -236,12 +241,15 @@ function Feedback() {
             </tbody>
           </table>
 
-          {!loading && !error && (filteredFeedbacks.length === 0 && feedbacks.length === 0) && (
-            <NoDataMessage message={"No feedback found"} />
-          )}
+          {!loading &&
+            !error &&
+            filteredFeedbacks.length === 0 &&
+            feedbacks.length === 0 && (
+              <NoDataMessage message={"No feedback found"} />
+            )}
         </div>
 
-        {!loading && (feedbacks.length > 0) && (
+        {!loading && feedbacks.length > 0 && (
           <Pagination
             currentPage={currentPage}
             onPageChange={handlePageChange}
