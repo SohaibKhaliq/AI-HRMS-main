@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,12 +7,13 @@ import { BsMegaphone } from "react-icons/bs";
 import {
   createAnnouncement,
   updateAnnouncement,
-  getAnnouncementById,
 } from "../../../services/announcement.service";
 import { setFetchFlag } from "../../../reducers/announcement.reducer";
 import { announcementSchema } from "../../../validations";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import ValidatedInput from "../../ui/ValidatedInput";
+import PropTypes from "prop-types";
 
 const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
   const dispatch = useDispatch();
@@ -38,9 +39,19 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
       attachment: null,
     },
   });
-  const { designations: allDesignations = [] } = useSelector((s) => s.designation || {});
+  const { designations: allDesignations = [] } = useSelector(
+    (s) => s.designation || {}
+  );
 
-  const announcementCategories = ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"];
+  const announcementCategories = [
+    "General",
+    "Policy",
+    "Event",
+    "Training",
+    "Urgent",
+    "Benefits",
+    "Recognition",
+  ];
   const priorityLevels = ["Low", "Medium", "High", "Critical"];
 
   // Populate form when editing
@@ -93,7 +104,10 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
       const selectedDesignations = Array.isArray(data.targetDesignations)
         ? data.targetDesignations
         : [];
-      formData.append("targetDesignations", JSON.stringify(selectedDesignations));
+      formData.append(
+        "targetDesignations",
+        JSON.stringify(selectedDesignations)
+      );
 
       // Handle file upload
       if (data.attachment && data.attachment[0]) {
@@ -146,7 +160,10 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <BsMegaphone className="text-green-600 dark:text-green-400" size={20} />
+                <BsMegaphone
+                  className="text-green-600 dark:text-green-400"
+                  size={20}
+                />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {modalTitle}
@@ -168,15 +185,18 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Title *
                 </label>
-                <input
-                  type="text"
-                  {...register("title")}
+                <ValidatedInput
+                  validationType="subject"
+                  value={watch("title")}
+                  onChange={(e) => setValue("title", e.target.value)}
                   disabled={isReadOnly}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   placeholder="Enter announcement title"
+                  className="w-full"
                 />
                 {errors.title && (
-                  <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.title.message}
+                  </p>
                 )}
               </div>
 
@@ -198,7 +218,9 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                     ))}
                   </select>
                   {errors.category && (
-                    <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.category.message}
+                    </p>
                   )}
                 </div>
 
@@ -241,7 +263,9 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                     ))}
                   </select>
                   {errors.priority && (
-                    <p className="text-red-500 text-sm mt-1">{errors.priority.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.priority.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -260,7 +284,9 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   />
                   {errors.startDate && (
-                    <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.startDate.message}
+                    </p>
                   )}
                 </div>
 
@@ -276,7 +302,9 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   />
                   {errors.endDate && (
-                    <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.endDate.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -294,7 +322,9 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                   placeholder="Enter detailed description of the announcement"
                 />
                 {errors.description && (
-                  <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.description.message}
+                  </p>
                 )}
               </div>
 
@@ -312,30 +342,32 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT (Max: 5MB)
+                    Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT (Max:
+                    5MB)
                   </p>
                 </div>
               )}
 
               {/* Show existing attachment in view/edit mode */}
-              {(action === "view" || action === "edit") && announcement?.attachmentUrl && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Current Attachment
-                  </label>
-                  <div className="flex items-center gap-2 p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <FiDownload className="text-blue-500" />
-                    <a
-                      href={announcement.attachmentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-700 underline"
-                    >
-                      Download Attachment
-                    </a>
+              {(action === "view" || action === "edit") &&
+                announcement?.attachmentUrl && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Current Attachment
+                    </label>
+                    <div className="flex items-center gap-2 p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                      <FiDownload className="text-blue-500" />
+                      <a
+                        href={announcement.attachmentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 underline"
+                      >
+                        Download Attachment
+                      </a>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Modal Footer */}
@@ -369,3 +401,10 @@ const AnnouncementModal = ({ isOpen, onClose, action, announcement }) => {
 };
 
 export default AnnouncementModal;
+
+AnnouncementModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+  action: PropTypes.string,
+  announcement: PropTypes.object,
+};
