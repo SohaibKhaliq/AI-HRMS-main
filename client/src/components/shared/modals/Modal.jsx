@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const Modal = ({ onClose, isConfirm, action }) => {
   return (
@@ -36,3 +36,15 @@ const Modal = ({ onClose, isConfirm, action }) => {
 };
 
 export default Modal;
+
+Modal.propTypes = {
+  onClose: PropTypes.func,
+  isConfirm: PropTypes.func,
+  action: PropTypes.string,
+};
+
+Modal.defaultProps = {
+  onClose: () => {},
+  isConfirm: () => {},
+  action: "",
+};
