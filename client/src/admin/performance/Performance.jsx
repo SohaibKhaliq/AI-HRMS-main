@@ -47,7 +47,7 @@ function Perfromance() {
     if (fetch) {
       dispatch(getPerformances({ status: status.toLowerCase(), currentPage }));
     }
-  }, [currentPage, status, fetch]);
+  }, [currentPage, status, fetch, dispatch]);
 
   if (error) return <FetchError error={error} />;
 
