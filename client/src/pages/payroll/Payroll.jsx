@@ -104,23 +104,23 @@ const Payroll = () => {
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="company-name">Metro Cash & Carry</div>
-          <div class="payslip-title">PAYSLIP</div>
+        <div className="header">
+          <div className="company-name">Metro Cash & Carry</div>
+          <div className="payslip-title">PAYSLIP</div>
         </div>
         
-        <div class="info-section">
-          <div class="info-row">
-            <div><span class="info-label">Employee Name:</span> <span class="info-value">${user?.name || 'N/A'}</span></div>
-            <div><span class="info-label">Employee ID:</span> <span class="info-value">${user?.employeeId || 'N/A'}</span></div>
+        <div className="info-section">
+          <div className="info-row">
+            <div><span className="info-label">Employee Name:</span> <span className="info-value">${user?.name || 'N/A'}</span></div>
+            <div><span className="info-label">Employee ID:</span> <span className="info-value">${user?.employeeId || 'N/A'}</span></div>
           </div>
-          <div class="info-row">
-            <div><span class="info-label">Period:</span> <span class="info-value">${monthNames[payroll.month - 1]} ${payroll.year}</span></div>
-            <div><span class="info-label">Status:</span> <span class="status ${payroll.isPaid ? 'status-paid' : 'status-pending'}">${payroll.isPaid ? 'PAID' : 'PENDING'}</span></div>
+          <div className="info-row">
+            <div><span className="info-label">Period:</span> <span className="info-value">${monthNames[payroll.month - 1]} ${payroll.year}</span></div>
+            <div><span className="info-label">Status:</span> <span className="status ${payroll.isPaid ? 'status-paid' : 'status-pending'}">${payroll.isPaid ? 'PAID' : 'PENDING'}</span></div>
           </div>
           ${payroll.isPaid && payroll.paymentDate ? `
-          <div class="info-row">
-            <div><span class="info-label">Payment Date:</span> <span class="info-value">${new Date(payroll.paymentDate).toLocaleDateString()}</span></div>
+          <div className="info-row">
+            <div><span className="info-label">Payment Date:</span> <span className="info-value">${new Date(payroll.paymentDate).toLocaleDateString()}</span></div>
           </div>
           ` : ''}
         </div>
@@ -149,19 +149,19 @@ const Payroll = () => {
               <td>Deductions</td>
               <td style="text-align: right; color: red;">-${payroll.deductions?.toLocaleString()}</td>
             </tr>
-            <tr class="total-row">
+            <tr className="total-row">
               <td>Net Salary</td>
               <td style="text-align: right;">Rs. ${payroll.netSalary?.toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
 
-        <div class="footer">
+        <div className="footer">
           <p>This is a computer-generated payslip and does not require a signature.</p>
           <p>Generated on ${new Date().toLocaleDateString()}</p>
         </div>
 
-        <div class="no-print" style="text-align: center; margin-top: 30px;">
+        <div className="no-print" style="text-align: center; margin-top: 30px;">
           <button onclick="window.print()" style="padding: 10px 30px; background-color: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px;">Print / Save as PDF</button>
           <button onclick="window.close()" style="padding: 10px 30px; background-color: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Close</button>
         </div>
