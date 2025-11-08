@@ -1,5 +1,7 @@
 import { formatDate } from "../../../utils";
 import PropTypes from "prop-types";
+import SentimentBadge from "../../analysis/SentimentBadge";
+import TopicChips from "../../analysis/TopicChips";
 
 const Row = ({ label, children }) => (
   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 py-1">
@@ -51,10 +53,17 @@ const FeedbackViewModal = ({ feedback, onClose }) => {
             {rating} <i className="fa-solid fa-star text-yellow-400 ml-1" />
           </Row>
           <Row label="AI Review">
-            <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100">
-              {review || "--"}
-            </span>
+            <SentimentBadge
+              label={feedback.sentimentLabel || review}
+              score={feedback.sentimentScore}
+            />
           </Row>
+
+          {feedback.topics && feedback.topics.length > 0 && (
+            <Row label="Topics">
+              <TopicChips topics={feedback.topics} />
+            </Row>
+          )}
           <Row label="Suggestion">{suggestion || "--"}</Row>
           <Row label="Description">
             <div className="whitespace-pre-wrap">{description || "--"}</div>
