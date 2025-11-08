@@ -22,6 +22,22 @@ const feedbackSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    sentimentScore: {
+      type: Number,
+    },
+    sentimentLabel: {
+      type: String,
+    },
+    topics: {
+      type: [String],
+      default: [],
+    },
+    analysisMeta: {
+      type: Object,
+    },
+    lastAnalyzedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
