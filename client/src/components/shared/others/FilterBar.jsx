@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useTheme } from "../../../context";
 import { statuses } from "../../../constants";
+import PropTypes from "prop-types";
 
 const FilterBar = ({ isOpen, hideFilterBar, handleApplyFilters }) => {
   const { theme } = useTheme();
@@ -179,3 +180,9 @@ const FilterBar = ({ isOpen, hideFilterBar, handleApplyFilters }) => {
 };
 
 export default FilterBar;
+
+FilterBar.propTypes = {
+  isOpen: PropTypes.bool,
+  hideFilterBar: PropTypes.func,
+  handleApplyFilters: PropTypes.func,
+};
