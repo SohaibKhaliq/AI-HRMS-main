@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllEmployees } from "../../../services/employee.service";
 import { MdClose } from "react-icons/md";
 import { terminationSchema } from "../../../validations";
 
-const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, action, employees: propEmployees }) => {
+const TerminationModal = ({
+  isOpen,
+  onClose,
+  termination = null,
+  onSubmit,
+  action,
+  employees: propEmployees,
+}) => {
   const dispatch = useDispatch();
-  const { employees: storeEmployees } = useSelector((state) => state.employee || {});
+  const { employees: storeEmployees } = useSelector(
+    (state) => state.employee || {}
+  );
   const employees = propEmployees || storeEmployees || [];
   const [documentFile, setDocumentFile] = useState(null);
   const [documentPreview, setDocumentPreview] = useState(null);
@@ -161,7 +171,11 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
           <h2 className="text-xl font-semibold text-gray-900">
-            {action === "create" ? "Add New Termination" : action === "update" ? "Edit Termination" : "View Termination"}
+            {action === "create"
+              ? "Add New Termination"
+              : action === "update"
+              ? "Edit Termination"
+              : "View Termination"}
           </h2>
           <button
             onClick={onClose}
@@ -185,7 +199,9 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.employee ? "border-red-500" : "border-gray-300"
+                  validationErrors.employee
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
@@ -193,7 +209,8 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
               >
                 <option value="">Select Employee</option>
                 {employees?.map((emp) => {
-                  const empName = emp.name || `${emp.firstName} ${emp.lastName}`;
+                  const empName =
+                    emp.name || `${emp.firstName} ${emp.lastName}`;
                   return (
                     <option key={emp._id} value={emp._id}>
                       {empName} ({emp.employeeId})
@@ -202,7 +219,9 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 })}
               </select>
               {validationErrors.employee && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.employee}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.employee}
+                </p>
               )}
             </div>
 
@@ -232,7 +251,9 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 <option value="Involuntary">Involuntary</option>
               </select>
               {validationErrors.type && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.type}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.type}
+                </p>
               )}
             </div>
 
@@ -248,14 +269,18 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.terminationDate ? "border-red-500" : "border-gray-300"
+                  validationErrors.terminationDate
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
                 required
               />
               {validationErrors.terminationDate && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.terminationDate}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.terminationDate}
+                </p>
               )}
             </div>
 
@@ -271,14 +296,18 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.noticeDate ? "border-red-500" : "border-gray-300"
+                  validationErrors.noticeDate
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   isViewMode ? "bg-gray-100 cursor-not-allowed" : "bg-white"
                 }`}
                 required
               />
               {validationErrors.noticeDate && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.noticeDate}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.noticeDate}
+                </p>
               )}
             </div>
 
@@ -303,9 +332,17 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
               />
               <div className="flex justify-between items-start">
                 {validationErrors.reason && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.reason}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.reason}
+                  </p>
                 )}
-                <p className={`text-xs mt-1 ${formData.reason.length > 450 ? "text-red-500" : "text-gray-500"}`}>
+                <p
+                  className={`text-xs mt-1 ${
+                    formData.reason.length > 450
+                      ? "text-red-500"
+                      : "text-gray-500"
+                  }`}
+                >
                   {formData.reason.length}/500
                 </p>
               </div>
@@ -333,7 +370,9 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 <option value="Cancelled">Cancelled</option>
               </select>
               {validationErrors.status && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.status}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.status}
+                </p>
               )}
             </div>
 
@@ -342,9 +381,13 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Upload Termination Document
               </label>
-              <div className={`border-2 border-dashed rounded-lg p-4 ${
-                validationErrors.document ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"
-              } ${isViewMode ? "" : "hover:bg-gray-100 cursor-pointer"}`}>
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 ${
+                  validationErrors.document
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300 bg-gray-50"
+                } ${isViewMode ? "" : "hover:bg-gray-100 cursor-pointer"}`}
+              >
                 {documentPreview ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-center gap-2">
@@ -364,11 +407,15 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                     )}
                   </div>
                 ) : (
-                  <label className={`block ${isViewMode ? "" : "cursor-pointer"}`}>
+                  <label
+                    className={`block ${isViewMode ? "" : "cursor-pointer"}`}
+                  >
                     <div className="flex flex-col items-center gap-2 text-gray-500">
                       <i className="fa-solid fa-cloud-arrow-up text-2xl text-gray-400"></i>
                       <span className="text-sm">
-                        {isViewMode ? "No document uploaded" : "Click to upload or drag and drop"}
+                        {isViewMode
+                          ? "No document uploaded"
+                          : "Click to upload or drag and drop"}
                       </span>
                       <span className="text-xs text-gray-400">
                         PDF, DOC, DOCX, JPG, PNG (max 5MB)
@@ -387,7 +434,9 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
                 )}
               </div>
               {validationErrors.document && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.document}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.document}
+                </p>
               )}
             </div>
 
@@ -409,9 +458,17 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
               />
               <div className="flex justify-between items-start">
                 {validationErrors.remarks && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.remarks}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.remarks}
+                  </p>
                 )}
-                <p className={`text-xs mt-1 ${formData.remarks.length > 450 ? "text-red-500" : "text-gray-500"}`}>
+                <p
+                  className={`text-xs mt-1 ${
+                    formData.remarks.length > 450
+                      ? "text-red-500"
+                      : "text-gray-500"
+                  }`}
+                >
                   {formData.remarks.length}/500
                 </p>
               </div>
@@ -443,3 +500,20 @@ const TerminationModal = ({ isOpen, onClose, termination = null, onSubmit, actio
 };
 
 export default TerminationModal;
+
+TerminationModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+  termination: PropTypes.object,
+  onSubmit: PropTypes.func,
+  action: PropTypes.string,
+  employees: PropTypes.arrayOf(PropTypes.object),
+};
+
+TerminationModal.defaultProps = {
+  isOpen: false,
+  termination: null,
+  onSubmit: null,
+  action: "create",
+  employees: [],
+};
