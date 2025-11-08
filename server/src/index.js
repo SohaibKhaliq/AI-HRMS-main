@@ -38,7 +38,9 @@ import {
   timeEntry,
   leaveBalance,
   documentCategory,
+  analysis,
 } from "./routes/index.routes.js";
+import { warmup as analysisWarmup } from "./services/analysisService.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
 
 // ========================================
@@ -47,7 +49,7 @@ import { swaggerUi, swaggerSpec } from "./doc/index.js";
 // import {
 //   // Comprehensive HCM Seeders - Seeds all new modules at once
 //   seedAllHCMData,
-//   
+//
 //   // Individual HCM Seeders - Use for targeted seeding
 //   seedShifts,
 //   seedLeaveTypes,
@@ -60,7 +62,7 @@ import { swaggerUi, swaggerSpec } from "./doc/index.js";
 //   seedAttendance,
 //   seedNotifications,
 //   seedFeedback,
-//   
+//
 //   // Legacy Seeders
 //   deleteAllPayrollRecords,
 //   generatePayrollDataForYear,
@@ -87,7 +89,7 @@ const allowedOrigins = [
   "http://localhost:8000",
   "http://localhost:5173",
   "http://127.0.0.1:8000",
-  "http://127.0.0.1:5173"
+  "http://127.0.0.1:5173",
 ].filter(Boolean);
 
 app.use(
@@ -116,7 +118,7 @@ cloudinary.v2.config({
 // ========================================
 // 🌱 RUN SEEDERS (Uncomment what you need)
 // ========================================
-// 
+//
 // Seed ALL HCM modules at once (recommended for fresh setup):
 // seedAllHCMData();
 //
@@ -170,13 +172,14 @@ app.use("/api/employee-documents", employeeDocument);
 app.use("/api/time-entries", timeEntry);
 app.use("/api/leave-balances", leaveBalance);
 app.use("/api/document-categories", documentCategory);
+app.use("/api/analysis", analysis);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "welcome.html"));
 });
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const port = process.env.PORT || 3000;
 
 // Create HTTP server
@@ -188,6 +191,14 @@ console.log("✅ Socket.IO initialized");
 
 connectDB()
   .then(() => {
+    // Warm up analysis models in background (do not block server start).
+    analysisWarmup().catch((err) => {
+      console.warn(
+        "analysis warmup error:",
+        err && err.message ? err.message : err
+      );
+    });
+
     server.listen(port, () => {
       console.log(`Express running → On http://localhost:${port} 🚀`);
       console.log(`Socket.IO running → ws://localhost:${port} 🔌`);
