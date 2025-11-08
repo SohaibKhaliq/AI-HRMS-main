@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { updatePerformance } from "../../../services/performance.service";
+import PropTypes from "prop-types";
 
 const PerformanceModal = ({ onClose, performance }) => {
   const dispatch = useDispatch();
@@ -98,3 +99,13 @@ const PerformanceModal = ({ onClose, performance }) => {
 };
 
 export default PerformanceModal;
+
+PerformanceModal.propTypes = {
+  onClose: PropTypes.func,
+  performance: PropTypes.object,
+};
+
+PerformanceModal.defaultProps = {
+  onClose: () => {},
+  performance: {},
+};
