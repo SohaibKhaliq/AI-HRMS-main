@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 const ContactItem = ({ employee, isSelected, onSelect }) => (
   <div
     className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
@@ -36,3 +38,15 @@ const ContactItem = ({ employee, isSelected, onSelect }) => (
 );
 
 export default ContactItem;
+
+ContactItem.propTypes = {
+  employee: PropTypes.shape({
+    profilePic: PropTypes.string,
+    name: PropTypes.string,
+    status: PropTypes.string,
+    designation: PropTypes.string,
+    lastSeen: PropTypes.string,
+  }).isRequired,
+  isSelected: PropTypes.bool,
+  onSelect: PropTypes.func.isRequired,
+};
