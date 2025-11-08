@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const FilterButton = ({ setState, state, filter }) => {
   return (
@@ -18,6 +18,16 @@ const FilterButton = ({ setState, state, filter }) => {
       {filter.label}
     </button>
   );
+};
+
+FilterButton.propTypes = {
+  setState: PropTypes.func.isRequired,
+  state: PropTypes.any,
+  filter: PropTypes.shape({
+    value: PropTypes.any,
+    icon: PropTypes.string,
+    label: PropTypes.string,
+  }).isRequired,
 };
 
 export default FilterButton;
