@@ -1,4 +1,5 @@
 import { formatDate } from "../../../utils";
+import PropTypes from "prop-types";
 
 const JobCard = ({ job, onApply }) => {
   return (
@@ -52,6 +53,22 @@ const JobCard = ({ job, onApply }) => {
       </div>
     </div>
   );
+};
+
+JobCard.propTypes = {
+  job: PropTypes.shape({
+    _id: PropTypes.string,
+    title: PropTypes.string,
+    type: PropTypes.string,
+    department: PropTypes.object,
+    role: PropTypes.object,
+    location: PropTypes.string,
+    minSalary: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    maxSalary: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    description: PropTypes.string,
+    deadline: PropTypes.string,
+  }).isRequired,
+  onApply: PropTypes.func.isRequired,
 };
 
 export default JobCard;
