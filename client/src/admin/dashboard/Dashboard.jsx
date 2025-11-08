@@ -12,24 +12,56 @@ const Dashboard = () => {
   const { insights, loading, error } = useSelector((state) => state.insight);
 
   const infoCardData = [
-    { id: 1, title: "Total Employees", stats: insights?.totalEmployees || 0, icon: "fas fa-users" },
-    { id: 2, title: "Job Applications", stats: insights?.jobApplications || 0, icon: "fas fa-file-alt" },
-    { id: 3, title: "Pending Complaints", stats: insights?.totalComplaints || 0, icon: "fas fa-exclamation-circle" },
-    { id: 4, title: "Pending Leaves", stats: insights?.pendingLeaves || 0, icon: "fas fa-calendar-times" },
-    { id: 5, title: "Employees on Leave", stats: insights?.employeesOnLeave || 0, icon: "fas fa-user-clock" },
+    {
+      id: 1,
+      title: "Total Employees",
+      stats: insights?.totalEmployees || 0,
+      icon: "fas fa-users",
+    },
+    {
+      id: 2,
+      title: "Job Applications",
+      stats: insights?.jobApplications || 0,
+      icon: "fas fa-file-alt",
+    },
+    {
+      id: 3,
+      title: "Pending Complaints",
+      stats: insights?.totalComplaints || 0,
+      icon: "fas fa-exclamation-circle",
+    },
+    {
+      id: 4,
+      title: "Pending Leaves",
+      stats: insights?.pendingLeaves || 0,
+      icon: "fas fa-calendar-times",
+    },
+    {
+      id: 5,
+      title: "Employees on Leave",
+      stats: insights?.employeesOnLeave || 0,
+      icon: "fas fa-user-clock",
+    },
     {
       id: 6,
       title: "Average Rating",
       stats: insights?.feedbackResult?.[0]?.avgRating?.toFixed(2) || "N/A",
-      icon: "fas fa-star"
+      icon: "fas fa-star",
     },
   ];
 
   const femalePercentage = insights?.totalEmployees
-    ? (
-        (insights?.totalFemaleEmployees / insights?.totalEmployees) *
-        100
-      ).toFixed(0)
+    ? Math.round(
+        (insights?.totalFemaleEmployees / insights?.totalEmployees) * 100
+      )
+    : 0;
+
+  const malePercentage = insights?.totalEmployees
+    ? Math.round(
+        ((insights?.totalEmployees - (insights?.totalFemaleEmployees || 0)) /
+          insights?.totalEmployees) *
+          100
+      )
     : 0;
 
   const departments = insights?.departmentAttandancePercent?.map(
@@ -109,14 +141,14 @@ const Dashboard = () => {
               Employee Category Distribution
             </h3>
             <div className="w-full flex justify-center items-center">
-              <div className="py-4">
-                {/* <PieChart
+              <div className="py-4 w-full">
+                <PieChart
                   labels={{ category1: "Male", category2: "Female" }}
                   label="Employee Category %"
                   title="Employee Category Overview"
                   data1={malePercentage}
                   data2={femalePercentage}
-                /> */}
+                />
               </div>
             </div>
           </div>
