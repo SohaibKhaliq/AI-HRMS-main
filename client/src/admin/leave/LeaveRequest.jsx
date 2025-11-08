@@ -66,7 +66,7 @@ function LeaveRequest() {
     if (fetch) {
       dispatch(getLeavesByStatus(status));
     }
-  }, [status, fetch]);
+  }, [status, fetch, dispatch]);
 
   return (
     <>
