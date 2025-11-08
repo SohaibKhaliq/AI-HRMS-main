@@ -1,14 +1,18 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import toast from "react-hot-toast";
-import { loadModels, detectFaceFromVideo, getFaceDescriptor } from "../../utils/faceRecognition";
+import {
+  loadModels,
+  detectFaceFromVideo,
+  getFaceDescriptor,
+} from "../../utils/faceRecognition";
 
 const FaceRegistration = ({ onFaceRegistered, onClose }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const detectionIntervalRef = useRef(null);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
@@ -20,7 +24,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 
   useEffect(() => {
     initializeCamera();
-    
+
     return () => {
       stopCamera();
       if (detectionIntervalRef.current) {
@@ -34,22 +38,24 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
     if (modelsReady && videoRef.current && !isCapturing) {
       startContinuousDetection();
     }
-    
+
     return () => {
       if (detectionIntervalRef.current) {
         clearInterval(detectionIntervalRef.current);
       }
     };
-  }, [modelsReady, isCapturing]);
+  }, [modelsReady, isCapturing, startContinuousDetection]);
 
   const initializeCamera = async () => {
     try {
       setIsLoading(true);
       setCameraError(null);
-      
+
       // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera API not supported in this browser. Please use a modern browser.");
+        throw new Error(
+          "Camera API not supported in this browser. Please use a modern browser."
+        );
       }
 
       // Load models first
@@ -60,36 +66,39 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 
       // Request camera access with basic constraints first
       toast.loading("Requesting camera access...", { id: "camera" });
-      
+
       let stream;
       try {
         // Try with simple constraints first
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
-          audio: false
+          audio: false,
         });
       } catch (simpleError) {
-        console.log("Simple constraints failed, trying specific constraints:", simpleError);
+        console.log(
+          "Simple constraints failed, trying specific constraints:",
+          simpleError
+        );
         // If simple fails, try with specific constraints
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             width: { min: 640, ideal: 1280 },
             height: { min: 480, ideal: 720 },
-            facingMode: "user"
+            facingMode: "user",
           },
-          audio: false
+          audio: false,
         });
       }
-      
+
       if (!stream) {
         throw new Error("Failed to get camera stream");
       }
 
       streamRef.current = stream;
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        
+
         // Simple play without promise
         videoRef.current.onloadedmetadata = () => {
           videoRef.current.play();
@@ -103,37 +112,53 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       console.error("Full camera error:", error);
       console.error("Error name:", error.name);
       console.error("Error message:", error.message);
-      
+
       let errorMessage = "";
       let errorDetails = "";
-      
-      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+
+      if (
+        error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError"
+      ) {
         errorMessage = "Camera permission denied.";
-        errorDetails = "Click the camera icon in your address bar and select 'Allow'.";
-      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        errorDetails =
+          "Click the camera icon in your address bar and select 'Allow'.";
+      } else if (
+        error.name === "NotFoundError" ||
+        error.name === "DevicesNotFoundError"
+      ) {
         errorMessage = "No camera found.";
         errorDetails = "Please connect a webcam and refresh the page.";
-      } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+      } else if (
+        error.name === "NotReadableError" ||
+        error.name === "TrackStartError"
+      ) {
         errorMessage = "Camera is busy.";
-        errorDetails = "Close other apps using the camera (Teams, Zoom, etc.) and try again.";
-      } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+        errorDetails =
+          "Close other apps using the camera (Teams, Zoom, etc.) and try again.";
+      } else if (
+        error.name === "OverconstrainedError" ||
+        error.name === "ConstraintNotSatisfiedError"
+      ) {
         errorMessage = "Camera doesn't meet requirements.";
         errorDetails = "Your camera may not support the required resolution.";
       } else if (error.name === "TypeError") {
         errorMessage = "Browser security restriction.";
-        errorDetails = "Camera access requires HTTPS or localhost. Make sure you're using the correct URL.";
+        errorDetails =
+          "Camera access requires HTTPS or localhost. Make sure you're using the correct URL.";
       } else {
         errorMessage = "Failed to access camera.";
-        errorDetails = error.message || "Unknown error. Check browser console for details.";
+        errorDetails =
+          error.message || "Unknown error. Check browser console for details.";
       }
-      
+
       setCameraError(errorMessage + " " + errorDetails);
       toast.error(errorMessage, { id: "camera" });
       setIsLoading(false);
     }
   };
 
-  const startContinuousDetection = () => {
+  const startContinuousDetection = useCallback(() => {
     if (detectionIntervalRef.current) {
       clearInterval(detectionIntervalRef.current);
     }
@@ -142,10 +167,10 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       if (videoRef.current && modelsReady && !isCapturing) {
         try {
           const detection = await detectFaceFromVideo(videoRef.current);
-          
+
           if (detection) {
             setFaceDetected(true);
-            
+
             // Analyze face quality
             const quality = analyzeFaceQuality(detection);
             setFaceQuality(quality);
@@ -159,16 +184,35 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
         }
       }
     }, 500); // Check every 500ms
-  };
+  }, [modelsReady, isCapturing]);
 
   const analyzeFaceQuality = (detection) => {
     // Analyze detection quality
     const score = detection.detection.score;
-    
-    if (score > 0.95) return { level: "excellent", message: "Perfect! Face clearly visible", color: "text-green-500" };
-    if (score > 0.85) return { level: "good", message: "Good position", color: "text-blue-500" };
-    if (score > 0.7) return { level: "fair", message: "Try to improve lighting", color: "text-yellow-500" };
-    return { level: "poor", message: "Face not clear, adjust position", color: "text-red-500" };
+
+    if (score > 0.95)
+      return {
+        level: "excellent",
+        message: "Perfect! Face clearly visible",
+        color: "text-green-500",
+      };
+    if (score > 0.85)
+      return {
+        level: "good",
+        message: "Good position",
+        color: "text-blue-500",
+      };
+    if (score > 0.7)
+      return {
+        level: "fair",
+        message: "Try to improve lighting",
+        color: "text-yellow-500",
+      };
+    return {
+      level: "poor",
+      message: "Face not clear, adjust position",
+      color: "text-red-500",
+    };
   };
 
   const stopCamera = () => {
@@ -192,9 +236,11 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 
     try {
       const detection = await detectFaceFromVideo(videoRef.current);
-      
+
       if (!detection) {
-        toast.error("No face detected. Please position your face in the frame.");
+        toast.error(
+          "No face detected. Please position your face in the frame."
+        );
         setIsCapturing(false);
         return;
       }
@@ -202,19 +248,23 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       // Check quality
       const quality = analyzeFaceQuality(detection);
       if (quality.level === "poor") {
-        toast.error("Face quality too low. Please improve lighting and try again.");
+        toast.error(
+          "Face quality too low. Please improve lighting and try again."
+        );
         setIsCapturing(false);
         return;
       }
 
       const descriptor = getFaceDescriptor(detection);
-      
+
       if (descriptor) {
         const newDescriptors = [...capturedDescriptors, descriptor];
         setCapturedDescriptors(newDescriptors);
         setCurrentStep(newDescriptors.length + 1);
-        toast.success(`✓ Face captured successfully! (${newDescriptors.length}/3)`);
-        
+        toast.success(
+          `✓ Face captured successfully! (${newDescriptors.length}/3)`
+        );
+
         // If we have 3 captures, we're done
         if (newDescriptors.length >= 3) {
           toast.loading("Processing face data...");
@@ -238,15 +288,15 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 
   const averageDescriptors = (descriptors) => {
     if (descriptors.length === 0) return null;
-    
+
     const avgDescriptor = new Array(descriptors[0].length).fill(0);
-    
+
     descriptors.forEach((descriptor) => {
       descriptor.forEach((value, index) => {
         avgDescriptor[index] += value;
       });
     });
-    
+
     return avgDescriptor.map((value) => value / descriptors.length);
   };
 
@@ -262,7 +312,8 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                 Face Registration Wizard
               </h2>
               <p className="text-purple-100 text-sm mt-1">
-                Step {currentStep} of 3 - Capture your face from different angles
+                Step {currentStep} of 3 - Capture your face from different
+                angles
               </p>
             </div>
             <button
@@ -275,7 +326,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
               <i className="fas fa-times text-xl"></i>
             </button>
           </div>
-          
+
           {/* Progress Bar */}
           <div className="mt-4 bg-white bg-opacity-30 rounded-full h-2">
             <div
@@ -298,7 +349,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-lg mx-auto">
                 {cameraError}
               </p>
-              
+
               <div className="space-y-4 text-left max-w-lg mx-auto">
                 {/* Chrome Instructions */}
                 <div className="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -347,8 +398,17 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                 </p>
                 <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside">
                   <li>Make sure no other app is using your camera</li>
-                  <li>Try accessing from <code className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">http://localhost:8000</code> instead</li>
-                  <li>Check Windows Settings → Privacy → Camera (allow browser access)</li>
+                  <li>
+                    Try accessing from{" "}
+                    <code className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">
+                      http://localhost:8000
+                    </code>{" "}
+                    instead
+                  </li>
+                  <li>
+                    Check Windows Settings → Privacy → Camera (allow browser
+                    access)
+                  </li>
                   <li>Restart your browser completely</li>
                 </ul>
               </div>
@@ -394,14 +454,19 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
               </div>
 
               {/* Video Container */}
-              <div className="relative bg-black rounded-xl overflow-hidden mb-4 border-4 border-transparent" style={{ borderColor: faceDetected ? '#10b981' : '#6b7280' }}>
+              <div
+                className="relative bg-black rounded-xl overflow-hidden mb-4 border-4 border-transparent"
+                style={{ borderColor: faceDetected ? "#10b981" : "#6b7280" }}
+              >
                 {isLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-90 z-10">
                     <i className="fas fa-spinner fa-spin text-white text-4xl mb-3"></i>
-                    <p className="text-white font-semibold">Initializing camera...</p>
+                    <p className="text-white font-semibold">
+                      Initializing camera...
+                    </p>
                   </div>
                 )}
-                
+
                 <video
                   ref={videoRef}
                   autoPlay
@@ -410,17 +475,27 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                   className="w-full h-auto"
                   style={{ maxHeight: "450px" }}
                 />
-                
+
                 {/* Face Detection Overlay */}
                 {!isLoading && (
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <div className={`${faceDetected ? 'bg-green-500' : 'bg-gray-500'} bg-opacity-90 px-4 py-2 rounded-full text-white text-sm font-semibold flex items-center gap-2`}>
-                      <i className={`fas ${faceDetected ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
-                      {faceDetected ? 'Face Detected' : 'No Face Detected'}
+                    <div
+                      className={`${
+                        faceDetected ? "bg-green-500" : "bg-gray-500"
+                      } bg-opacity-90 px-4 py-2 rounded-full text-white text-sm font-semibold flex items-center gap-2`}
+                    >
+                      <i
+                        className={`fas ${
+                          faceDetected ? "fa-check-circle" : "fa-times-circle"
+                        }`}
+                      ></i>
+                      {faceDetected ? "Face Detected" : "No Face Detected"}
                     </div>
-                    
+
                     {faceQuality && (
-                      <div className={`${faceQuality.color} bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold`}>
+                      <div
+                        className={`${faceQuality.color} bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold`}
+                      >
                         <i className="fas fa-star mr-1"></i>
                         {faceQuality.message}
                       </div>
@@ -436,8 +511,8 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                         key={step}
                         className={`w-16 h-16 rounded-lg border-2 flex items-center justify-center ${
                           capturedDescriptors.length >= step
-                            ? 'bg-green-500 border-green-400'
-                            : 'bg-gray-700 border-gray-600'
+                            ? "bg-green-500 border-green-400"
+                            : "bg-gray-700 border-gray-600"
                         }`}
                       >
                         {capturedDescriptors.length >= step ? (
@@ -449,7 +524,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                     ))}
                   </div>
                 )}
-                
+
                 <canvas
                   ref={canvasRef}
                   className="absolute top-0 left-0"
@@ -461,7 +536,9 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
               <div className="flex gap-3">
                 <button
                   onClick={captureFace}
-                  disabled={isLoading || isCapturing || !modelsReady || !faceDetected}
+                  disabled={
+                    isLoading || isCapturing || !modelsReady || !faceDetected
+                  }
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg disabled:shadow-none"
                 >
                   {isCapturing ? (
