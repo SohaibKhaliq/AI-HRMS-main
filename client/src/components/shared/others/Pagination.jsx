@@ -1,5 +1,4 @@
-import { React } from "react";
-
+import PropTypes from "prop-types";
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
   const goToPrevPage = () => {
@@ -44,3 +43,9 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
 }
 
 export default Pagination;
+
+Pagination.propTypes = {
+  currentPage: PropTypes.number.isRequired,
+  totalPages: PropTypes.number.isRequired,
+  onPageChange: PropTypes.func.isRequired,
+};
