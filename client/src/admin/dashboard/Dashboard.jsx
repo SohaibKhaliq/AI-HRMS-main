@@ -7,6 +7,7 @@ import LineChart from "../../components/shared/charts/LineChart";
 import ChatPanel from "../../components/shared/others/ChatPanel";
 import FetchError from "../../components/shared/error/FetchError";
 import ComponentLoader from "../../components/shared/loaders/ComponentLoader";
+import SentimentOverview from "../../components/analysis/SentimentOverview";
 
 const Dashboard = () => {
   const { insights, loading, error } = useSelector((state) => state.insight);
@@ -95,6 +96,11 @@ const Dashboard = () => {
           {infoCardData.map((item) => (
             <InfoCard key={item.id} detail={item} />
           ))}
+        </div>
+
+        {/* Sentiment overview card */}
+        <div className="w-full flex justify-end mt-2">
+          <SentimentOverview insights={insights} />
         </div>
 
         <div className="flex justify-between md:flex-row flex-col h-auto md:h-[400px] md:mb-2 shadow">
