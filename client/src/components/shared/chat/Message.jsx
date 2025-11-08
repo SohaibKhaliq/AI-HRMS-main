@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 const Message = ({ isSender, text, time }) => (
   <div
     className={`flex ${isSender ? "justify-end" : "justify-start"} mb-3 px-2`}
@@ -24,3 +26,9 @@ const Message = ({ isSender, text, time }) => (
 );
 
 export default Message;
+
+Message.propTypes = {
+  isSender: PropTypes.bool,
+  text: PropTypes.string,
+  time: PropTypes.string,
+};
