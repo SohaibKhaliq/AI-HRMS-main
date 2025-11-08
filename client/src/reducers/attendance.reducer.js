@@ -146,7 +146,7 @@ const attendanceSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(registerFaceDescriptor.fulfilled, (state, action) => {
+      .addCase(registerFaceDescriptor.fulfilled, (state) => {
         state.loading = false;
         state.fetch = true;
       })
