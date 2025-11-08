@@ -152,6 +152,95 @@ const getAdminInsights = catchErrors(async (req, res) => {
     departmentAttandancePercent,
   };
 
+  // Sentiment and topic aggregations (Feedback + Complaint)
+  try {
+    const [fbSentimentAgg, compSentimentAgg, fbTopicsAgg, compTopicsAgg] =
+      await Promise.all([
+        // sentiment counts and avg per label for Feedback
+        Feedback.aggregate([
+          { $match: { sentimentLabel: { $exists: true } } },
+          {
+            $group: {
+              _id: "$sentimentLabel",
+              count: { $sum: 1 },
+              avgScore: { $avg: "$sentimentScore" },
+            },
+          },
+        ]),
+        // sentiment counts and avg per label for Complaints
+        Complaint.aggregate([
+          { $match: { sentimentLabel: { $exists: true } } },
+          {
+            $group: {
+              _id: "$sentimentLabel",
+              count: { $sum: 1 },
+              avgScore: { $avg: "$sentimentScore" },
+            },
+          },
+        ]),
+        // topics for Feedback
+        Feedback.aggregate([
+          { $unwind: "$topics" },
+          { $group: { _id: "$topics", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 10 },
+        ]),
+        // topics for Complaint
+        Complaint.aggregate([
+          { $unwind: "$topics" },
+          { $group: { _id: "$topics", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 10 },
+        ]),
+      ]);
+
+    // Merge sentiment counts and compute weighted avg
+    const sentimentCounts = {};
+    let totalSentimentCount = 0;
+    let totalSentimentScoreSum = 0;
+
+    const mergeAgg = (arr) => {
+      for (const r of arr) {
+        if (!r || !r._id) continue;
+        sentimentCounts[r._id] = (sentimentCounts[r._id] || 0) + (r.count || 0);
+        totalSentimentCount += r.count || 0;
+        totalSentimentScoreSum += (r.avgScore || 0) * (r.count || 0);
+      }
+    };
+
+    mergeAgg(fbSentimentAgg || []);
+    mergeAgg(compSentimentAgg || []);
+
+    const overallAvgSentiment =
+      totalSentimentCount > 0
+        ? totalSentimentScoreSum / totalSentimentCount
+        : 0;
+
+    // Merge topics
+    const topicMap = new Map();
+    for (const t of fbTopicsAgg || []) {
+      topicMap.set(t._id, (topicMap.get(t._id) || 0) + (t.count || 0));
+    }
+    for (const t of compTopicsAgg || []) {
+      topicMap.set(t._id, (topicMap.get(t._id) || 0) + (t.count || 0));
+    }
+
+    const topTopics = Array.from(topicMap.entries())
+      .map(([topic, count]) => ({ topic, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    insights.sentiment = {
+      counts: sentimentCounts,
+      avgScore: overallAvgSentiment,
+      totalAnalyzed: totalSentimentCount,
+      topTopics,
+    };
+  } catch (err) {
+    // Non-fatal: if aggregation fails, continue without sentiment fields
+    console.warn("Sentiment/topic aggregation failed:", err && err.message);
+  }
+
   // myCache.set(cacheKey, insights);
   myCache.set(cacheKey, JSON.parse(JSON.stringify(insights)));
 
