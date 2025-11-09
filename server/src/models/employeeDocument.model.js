@@ -10,7 +10,9 @@ const employeeDocumentSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "DocumentCategory",
-      required: true,
+      // category is optional for employee uploads
+      required: false,
+      default: null,
     },
     documentType: {
       type: mongoose.Schema.Types.ObjectId,
@@ -104,6 +106,9 @@ employeeDocumentSchema.pre("save", function (next) {
   next();
 });
 
-const EmployeeDocument = mongoose.model("EmployeeDocument", employeeDocumentSchema);
+const EmployeeDocument = mongoose.model(
+  "EmployeeDocument",
+  employeeDocumentSchema
+);
 
 export default EmployeeDocument;
