@@ -8,6 +8,8 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "predownload:model": "node scripts/predownload_model.js",
+    "analysis:worker": "node src/workers/analysis.worker.js",
+    "analysis:backfill": "node scripts/analysis_backfill.js",
     "setup": "node src/setup/index.js",
     "seed": "node scripts/seedDatabase.js",
     "seed:time": "node src/seeders/timeTracking.seeder.js",
