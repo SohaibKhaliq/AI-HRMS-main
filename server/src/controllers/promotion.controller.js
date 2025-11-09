@@ -33,7 +33,7 @@ const createPromotion = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    finalDocumentUrl = req.file.path;
+    finalDocumentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   }
 
   const data = {
@@ -88,26 +88,22 @@ const createPromotion = catchErrors(async (req, res) => {
 
   myCache.del("promotions");
 
-  return res
-    .status(201)
-    .json({
-      success: true,
-      message: "Promotion created successfully",
-      promotion: populated,
-    });
+  return res.status(201).json({
+    success: true,
+    message: "Promotion created successfully",
+    promotion: populated,
+  });
 });
 
 const getAllPromotions = catchErrors(async (req, res) => {
   const cacheKey = "promotions";
   const cached = myCache.get(cacheKey);
   if (cached) {
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Promotions fetched (cache)",
-        promotions: cached,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Promotions fetched (cache)",
+      promotions: cached,
+    });
   }
 
   const promotions = await Promotion.find()
@@ -117,13 +113,11 @@ const getAllPromotions = catchErrors(async (req, res) => {
     .lean();
   myCache.set(cacheKey, promotions);
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      message: "Promotions fetched successfully",
-      promotions,
-    });
+  return res.status(200).json({
+    success: true,
+    message: "Promotions fetched successfully",
+    promotions,
+  });
 });
 
 const getPromotionById = catchErrors(async (req, res) => {
@@ -179,7 +173,7 @@ const updatePromotion = catchErrors(async (req, res) => {
         console.log("Error deleting old document file:", err.message);
       }
     }
-    updateData.documentUrl = req.file.path;
+    updateData.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   } else if (documentUrl !== undefined) {
     updateData.documentUrl = documentUrl;
   }
