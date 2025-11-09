@@ -1,7 +1,10 @@
 import Announcement from "../models/announcement.model.js";
 import Employee from "../models/employee.model.js";
 import { catchErrors, myCache } from "../utils/index.js";
-import { createBulkNotifications, sendEmailNotification } from "../services/notification.service.js";
+import {
+  createBulkNotifications,
+  sendEmailNotification,
+} from "../services/notification.service.js";
 
 const getAnnouncements = catchErrors(async (req, res) => {
   const { category, priority, page = 1, limit = 12 } = req.query;
@@ -45,14 +48,23 @@ const getAnnouncements = catchErrors(async (req, res) => {
 });
 
 const createAnnouncement = catchErrors(async (req, res) => {
-  const { title, category, description, startDate, endDate, targetDepartments, priority, isActive } = req.body;
+  const {
+    title,
+    category,
+    description,
+    startDate,
+    endDate,
+    targetDepartments,
+    priority,
+    isActive,
+  } = req.body;
 
   if (!title || !category || !description || !startDate || !endDate)
     throw new Error("All required fields are required");
 
   let attachmentUrl = null;
   if (req.file) {
-    attachmentUrl = req.file.path;
+    attachmentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   }
 
   // Parse targetDesignations if it's a JSON string
@@ -61,8 +73,8 @@ const createAnnouncement = catchErrors(async (req, res) => {
     try {
       parsedTargetDesignations = JSON.parse(req.body.targetDesignations);
     } catch (e) {
-      parsedTargetDesignations = Array.isArray(req.body.targetDesignations) 
-        ? req.body.targetDesignations 
+      parsedTargetDesignations = Array.isArray(req.body.targetDesignations)
+        ? req.body.targetDesignations
         : ["All"];
     }
   }
@@ -83,14 +95,16 @@ const createAnnouncement = catchErrors(async (req, res) => {
 
   // Send notification to all employees
   try {
-    const employees = await Employee.find({}).select('_id name email');
-    
+    const employees = await Employee.find({}).select("_id name email");
+
     // Create bulk in-app notifications
     await createBulkNotifications(
-      employees.map(emp => emp._id),
+      employees.map((emp) => emp._id),
       {
         title: `New Announcement: ${title}`,
-        message: description.substring(0, 100) + (description.length > 100 ? '...' : ''),
+        message:
+          description.substring(0, 100) +
+          (description.length > 100 ? "..." : ""),
         type: "announcement",
         priority: priority?.toLowerCase() || "medium",
         link: "/announcements",
@@ -102,18 +116,22 @@ const createAnnouncement = catchErrors(async (req, res) => {
     // - Email queue system (Bull, BeeQueue)
     // - Batch processing with delays
     // - Professional email service (SendGrid, AWS SES) with higher rate limits
-    Promise.all(employees.map(emp => 
-      sendEmailNotification({
-        email: emp.email,
-        subject: `Metro HRMS - ${title}`,
-        templateName: "announcement",
-        templateData: {
-          employeeName: emp.name,
-          title: title,
-          message: description,
-        },
-      }).catch(err => console.error(`Failed to send email to ${emp.email}:`, err))
-    ));
+    Promise.all(
+      employees.map((emp) =>
+        sendEmailNotification({
+          email: emp.email,
+          subject: `Metro HRMS - ${title}`,
+          templateName: "announcement",
+          templateData: {
+            employeeName: emp.name,
+            title: title,
+            message: description,
+          },
+        }).catch((err) =>
+          console.error(`Failed to send email to ${emp.email}:`, err)
+        )
+      )
+    );
   } catch (err) {
     console.error("Error sending announcement notifications:", err);
   }
@@ -132,15 +150,14 @@ const getAnnouncementById = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Announcement ID is required");
 
-  const announcement = await Announcement.findById(id)
-    .populate({
-      path: "createdBy",
-      select: "name employeeId designation",
-      populate: {
-        path: "designation",
-        select: "name",
-      },
-    });
+  const announcement = await Announcement.findById(id).populate({
+    path: "createdBy",
+    select: "name employeeId designation",
+    populate: {
+      path: "designation",
+      select: "name",
+    },
+  });
 
   if (!announcement) throw new Error("Announcement not found");
 
@@ -153,7 +170,16 @@ const getAnnouncementById = catchErrors(async (req, res) => {
 
 const updateAnnouncement = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { title, category, description, startDate, endDate, targetDepartments, priority, isActive } = req.body;
+  const {
+    title,
+    category,
+    description,
+    startDate,
+    endDate,
+    targetDepartments,
+    priority,
+    isActive,
+  } = req.body;
 
   if (!id) throw new Error("Announcement ID is required");
 
@@ -167,21 +193,24 @@ const updateAnnouncement = catchErrors(async (req, res) => {
   if (startDate) announcement.startDate = startDate;
   if (endDate) announcement.endDate = endDate;
   if (targetDepartments) announcement.targetDepartments = targetDepartments;
-  
+
   // Parse targetDesignations if it's a JSON string
   if (req.body.targetDesignations) {
     try {
       announcement.targetDesignations = JSON.parse(req.body.targetDesignations);
     } catch (e) {
-      announcement.targetDesignations = Array.isArray(req.body.targetDesignations) 
-        ? req.body.targetDesignations 
+      announcement.targetDesignations = Array.isArray(
+        req.body.targetDesignations
+      )
+        ? req.body.targetDesignations
         : announcement.targetDesignations;
     }
   }
-  
+
   if (priority) announcement.priority = priority;
   if (isActive !== undefined) announcement.isActive = isActive;
-  if (req.file) announcement.attachmentUrl = req.file.path;
+  if (req.file)
+    announcement.attachmentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
 
   await announcement.save();
 
