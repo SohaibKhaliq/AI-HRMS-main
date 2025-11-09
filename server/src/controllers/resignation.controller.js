@@ -68,7 +68,8 @@ const createResignation = catchErrors(async (req, res) => {
   try {
     const employeeData = await Employee.findById(employee);
     if (employeeData) {
-      await sendFullNotification({
+      // Fire-and-forget
+      sendFullNotification({
         employee: employeeData,
         title: "Resignation Submitted",
         message:
@@ -83,7 +84,12 @@ const createResignation = catchErrors(async (req, res) => {
           lastWorkingDay: formatDate(lastWorkingDay),
           noticePeriod: noticePeriod || 0,
         },
-      });
+      }).catch((e) =>
+        console.warn(
+          "Non-fatal: resignation notification failed:",
+          e && e.message ? e.message : e
+        )
+      );
     }
   } catch (notificationError) {
     console.error("Failed to send notification:", notificationError);
@@ -208,7 +214,8 @@ const updateResignation = catchErrors(async (req, res) => {
     const employeeData = await Employee.findById(resignation.employee._id);
     if (employeeData) {
       if (status === "Approved") {
-        await sendFullNotification({
+        // Fire-and-forget notification
+        sendFullNotification({
           employee: employeeData,
           title: "Resignation Approved",
           message: `Your resignation has been approved. Your last working day is ${formatDate(
@@ -222,7 +229,12 @@ const updateResignation = catchErrors(async (req, res) => {
           emailData: {
             lastWorkingDay: formatDate(resignation.lastWorkingDay),
           },
-        });
+        }).catch((e) =>
+          console.warn(
+            "Non-fatal: resignation approved notification failed:",
+            e && e.message ? e.message : e
+          )
+        );
 
         // If this is a transition to Approved, enqueue a substitute analysis job
         try {
@@ -273,7 +285,7 @@ const updateResignation = catchErrors(async (req, res) => {
           );
         }
       } else if (status === "Rejected") {
-        await sendFullNotification({
+        sendFullNotification({
           employee: employeeData,
           title: "Resignation Update",
           message: `Your resignation has been ${status.toLowerCase()}. ${
@@ -282,7 +294,12 @@ const updateResignation = catchErrors(async (req, res) => {
           type: "resignation",
           priority: "high",
           link: "/resignation",
-        });
+        }).catch((e) =>
+          console.warn(
+            "Non-fatal: resignation rejected notification failed:",
+            e && e.message ? e.message : e
+          )
+        );
       }
     }
   }
