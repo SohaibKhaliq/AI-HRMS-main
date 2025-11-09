@@ -7,7 +7,6 @@ import express from "express";
 import { createServer } from "http";
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
-import cloudinary from "cloudinary";
 import bodyParser from "body-parser";
 import { connectDB } from "./config/index.js";
 import { initializeSocket, getIO } from "./socket/index.js";
@@ -110,12 +109,7 @@ app.use(
   })
 );
 
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+// Cloudinary disabled: using local disk storage for uploads
 
 // ========================================
 // 🌱 RUN SEEDERS (Uncomment what you need)
