@@ -26,6 +26,7 @@ import employeeDocument from "./employeeDocument.routes.js";
 import timeEntry from "./timeEntry.routes.js";
 import leaveBalance from "./leaveBalance.routes.js";
 import documentCategory from "./documentCategory.routes.js";
+import training from "./training.routes.js";
 
 export {
   role,
@@ -56,4 +57,5 @@ export {
   timeEntry,
   leaveBalance,
   documentCategory,
+  training,
 };
