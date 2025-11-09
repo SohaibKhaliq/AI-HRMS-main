@@ -2,19 +2,22 @@ import * as faceapi from "face-api.js";
 
 let modelsLoaded = false;
 
-// Load face-api models
+// Load face-api models (fast local-only loader)
 export const loadModels = async () => {
   if (modelsLoaded) return;
 
   try {
-    // Always use local models placed under /models in the client/public folder.
-    // If models are not available, throw a helpful error instructing how to predownload them.
     const MODEL_URL = "/models";
 
-    // Test if local models are accessible
-    const testResponse = await fetch(
-      `${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`
-    );
+    // Probe model manifest with a short timeout to avoid long hangs
+    const manifestUrl = `${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`;
+    const controller = new AbortController();
+    const probeTimeout = setTimeout(() => controller.abort(), 8000);
+    const testResponse = await fetch(manifestUrl, {
+      signal: controller.signal,
+    });
+    clearTimeout(probeTimeout);
+
     if (!testResponse.ok) {
       throw new Error(
         `Local face-api models not found at ${MODEL_URL}. Please run the predownload script: node server/scripts/predownload_face_models.js and restart the client.`
@@ -26,6 +29,7 @@ export const loadModels = async () => {
       MODEL_URL
     );
 
+    // Load only the nets we need (tiny detector + landmarks + recognition)
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(
         `${MODEL_URL}/tiny_face_detector`
@@ -36,7 +40,6 @@ export const loadModels = async () => {
       faceapi.nets.faceRecognitionNet.loadFromUri(
         `${MODEL_URL}/face_recognition`
       ),
-      faceapi.nets.ssdMobilenetv1.loadFromUri(`${MODEL_URL}/ssd_mobilenetv1`),
     ]);
 
     modelsLoaded = true;
@@ -44,16 +47,21 @@ export const loadModels = async () => {
   } catch (error) {
     console.error("❌ Error loading face recognition models:", error);
     throw new Error(
-      "Failed to load face recognition models. Please check your internet connection."
+      "Failed to load face recognition models. Please check your setup."
     );
   }
 };
 
-// Detect face from video stream
+// Detect face from video stream (fast)
 export const detectFaceFromVideo = async (videoElement) => {
   try {
+    const tinyOptions = new faceapi.TinyFaceDetectorOptions({
+      inputSize: 224,
+      scoreThreshold: 0.5,
+    });
+
     const detection = await faceapi
-      .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
+      .detectSingleFace(videoElement, tinyOptions)
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -74,7 +82,7 @@ export const detectFaceFromImage = async (imageElement) => {
 
     return detection;
   } catch (error) {
-    console.error("Error detecting face:", error);
+    console.error("Error detecting face from image:", error);
     return null;
   }
 };
@@ -83,7 +91,24 @@ export const detectFaceFromImage = async (imageElement) => {
 export const compareFaces = (descriptor1, descriptor2, threshold = 0.6) => {
   if (!descriptor1 || !descriptor2) return false;
 
-  const distance = faceapi.euclideanDistance(descriptor1, descriptor2);
+  const d1 =
+    descriptor1 instanceof Float32Array
+      ? descriptor1
+      : new Float32Array(descriptor1);
+  const d2 =
+    descriptor2 instanceof Float32Array
+      ? descriptor2
+      : new Float32Array(descriptor2);
+
+  const distance = faceapi.euclideanDistance(d1, d2);
+  try {
+    if (import.meta && import.meta.env && import.meta.env.DEV) {
+      console.debug("Face distance:", distance);
+    }
+  } catch {
+    // ignore
+  }
+
   return distance < threshold;
 };
 
