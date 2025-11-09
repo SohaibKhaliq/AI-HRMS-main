@@ -3,9 +3,19 @@ import { catchErrors, myCache } from "../utils/index.js";
 import { enqueueAnalysisJob } from "../services/analysisQueue.service.js";
 
 const getFeedbacks = catchErrors(async (req, res) => {
-  const { review, page = 1, limit = 12 } = req.query;
+  const {
+    review,
+    page = 1,
+    limit = 12,
+    q,
+    dateFrom,
+    dateTo,
+    topic,
+  } = req.query;
 
-  const cacheKey = `feedbacks:${review || "all"}:page${page}:limit${limit}`;
+  const cacheKey = `feedbacks:${review || "all"}:q:${q || ""}:dateFrom:${
+    dateFrom || ""
+  }:dateTo:${dateTo || ""}:topic:${topic || ""}:page${page}:limit${limit}`;
 
   const cachedData = myCache.get(cacheKey);
   if (cachedData) {
@@ -17,10 +27,52 @@ const getFeedbacks = catchErrors(async (req, res) => {
   }
 
   const query = {};
-  if (review) query.review = { $regex: review, $options: "i" };
   // Optional server-side filter: return only a specific employee's feedbacks when requested
   if (req.query.employee) {
     query.employee = req.query.employee;
+  }
+
+  // Build search and sentiment clauses separately so we can combine them correctly.
+  const qClauses = [];
+  const reviewClauses = [];
+
+  // sentiment/review filter: match either the legacy `review` field or the
+  // normalized `sentimentLabel` (worker sets sentimentLabel but not review).
+  if (review) {
+    reviewClauses.push({ review: { $regex: review, $options: "i" } });
+    reviewClauses.push({ sentimentLabel: { $regex: review, $options: "i" } });
+  }
+
+  // text/search query against description/suggestion/review
+  if (q) {
+    qClauses.push({ description: { $regex: q, $options: "i" } });
+    qClauses.push({ suggestion: { $regex: q, $options: "i" } });
+    qClauses.push({ review: { $regex: q, $options: "i" } });
+    qClauses.push({ sentimentLabel: { $regex: q, $options: "i" } });
+  }
+
+  // Combine q and review clauses: when both are present we require both (AND)
+  // otherwise use the single clause as $or.
+  if (qClauses.length > 0 && reviewClauses.length > 0) {
+    query.$and = [{ $or: qClauses }, { $or: reviewClauses }];
+  } else if (qClauses.length > 0) {
+    query.$or = qClauses;
+  } else if (reviewClauses.length > 0) {
+    query.$or = reviewClauses;
+  }
+  // date range
+  if (dateFrom || dateTo) {
+    query.createdAt = {};
+    if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = to;
+    }
+  }
+  // topic filter (topics is an array on feedback)
+  if (topic) {
+    query.topics = { $elemMatch: { $regex: topic, $options: "i" } };
   }
 
   const pageNumber = Math.max(parseInt(page), 1);
