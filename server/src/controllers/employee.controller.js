@@ -157,7 +157,9 @@ const createEmployee = catchErrors(async (req, res) => {
     dob,
     email,
     password: hashedPassword,
-    profilePicture,
+    profilePicture: req.file
+      ? `${process.env.CLIENT_URL}/uploads/images/${req.file.filename}`
+      : profilePicture,
     phoneNumber,
     address,
     department,
@@ -359,7 +361,10 @@ const updateEmployee = catchErrors(async (req, res) => {
       name,
       dob,
       email,
-      profilePicture,
+      // if a file was uploaded, prefer its public URL; otherwise use incoming value
+      profilePicture: req.file
+        ? `${process.env.CLIENT_URL}/uploads/images/${req.file.filename}`
+        : profilePicture,
       phoneNumber,
       address,
       department,
@@ -413,7 +418,8 @@ const updateProfile = catchErrors(async (req, res) => {
 
   if (name) employee.name = name;
   if (email) employee.email = email;
-  if (req.file) employee.profilePicture = req.file.path;
+  if (req.file)
+    employee.profilePicture = `${process.env.CLIENT_URL}/uploads/images/${req.file.filename}`;
 
   await employee.save();
 
