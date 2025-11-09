@@ -116,25 +116,68 @@ const catchErrors = (fn) => {
 };
 
 const sendMail = async (option) => {
-  let transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  try {
+    let transporter;
 
-  let info = await transporter.sendMail({
-    from: process.env.USER,
-    to: option.email,
-    subject: option.subject,
-    text: option.text,
-    html: option.html,
-  });
+    // If SMTP config is provided, use it. Otherwise, in non-production use Ethereal test account.
+    if (process.env.SMTP_HOST) {
+      const port = Number(process.env.SMTP_PORT) || 587;
+      const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
-  return info;
+      transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port,
+        secure,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        tls: {
+          // Allow self-signed certs in development environments if needed
+          rejectUnauthorized: process.env.NODE_ENV === "production",
+        },
+        connectionTimeout: Number(process.env.SMTP_TIMEOUT) || 10000,
+      });
+    } else if (process.env.NODE_ENV !== "production") {
+      // Create a test account for development if no SMTP config is available
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: testAccount.smtp.host,
+        port: testAccount.smtp.port,
+        secure: testAccount.smtp.secure,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+    } else {
+      throw new Error("SMTP configuration is missing in production");
+    }
+
+    const info = await transporter.sendMail({
+      from:
+        process.env.MAIL_FROM || process.env.USER || "no-reply@metrohrms.com",
+      to: option.email,
+      subject: option.subject,
+      text: option.text,
+      html: option.html,
+    });
+
+    // In development with Ethereal, print a preview URL
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        const preview = nodemailer.getTestMessageUrl(info);
+        if (preview) console.debug("Email preview URL:", preview);
+      } catch (e) {
+        /* ignore preview errors */
+      }
+    }
+
+    return info;
+  } catch (err) {
+    console.error("Error sending email notification:", err);
+    throw err;
+  }
 };
 
 function getPublicIdFromUrl(url) {
