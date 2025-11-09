@@ -143,7 +143,7 @@ function Payroll() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-[200px] bg-transparent flex flex-grow sm:flex-grow-0 justify-center items-center gap-2 text-sm font-semibold border py-1 px-5 rounded-3xl transition-all ease-in-out duration-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-[200px] bg-transparent flex flex-grow sm:flex-grow-0 justify-center items-center gap-2 text-sm font-semibold border py-1 px-5 rounded-3xl transition-all ease-in-out duration-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             {months.map((month) => (
               <option key={month.value} value={month.value}>
@@ -157,7 +157,7 @@ function Payroll() {
             max={new Date().getFullYear() + 1}
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="w-[120px] ml-2 bg-transparent text-sm font-semibold border py-1 px-3 rounded-3xl"
+            className="w-[120px] ml-2 bg-transparent text-sm font-semibold border py-1 px-3 rounded-3xl"
           />
           {/* Generate payroll for a specific month/year */}
           <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ function Payroll() {
               {generating ? "Generating..." : "Generate Payrolls"}
             </button>
             {generateResult !== null && (
-                <div className="text-sm ml-3 transition-opacity duration-500 opacity-100">
+              <div className="text-sm ml-3 transition-opacity duration-500 opacity-100">
                 {generateResult === 0 ? (
                   <span className="text-yellow-600">
                     No new payrolls to create for selected month/year
