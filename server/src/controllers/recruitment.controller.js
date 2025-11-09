@@ -1,5 +1,6 @@
 import { catchErrors, sendMail } from "../utils/index.js";
 import Recruitment from "../models/recruitment.model.js";
+import JobType from "../models/jobType.model.js";
 import {
   inviteForInterviewMail,
   thankYouForApplying,
@@ -23,12 +24,29 @@ const createJob = catchErrors(async (req, res) => {
   if (!title || !description || !type)
     throw new Error("Please provide all required fields");
 
+  // Normalize type: accept either JobType _id or name string
+  let typeRef = null;
+  if (type) {
+    // If it looks like an ObjectId, try to use it directly
+    if (typeof type === "string" && /^[0-9a-fA-F]{24}$/.test(type)) {
+      const exists = await JobType.findById(type);
+      if (exists) typeRef = exists._id;
+    }
+    // If still not found, try to find by name (case-insensitive)
+    if (!typeRef && typeof type === "string") {
+      const byName = await JobType.findOne({
+        name: { $regex: `^${type}$`, $options: "i" },
+      });
+      if (byName) typeRef = byName._id;
+    }
+  }
+
   const job = await Recruitment.create({
     title,
     department,
     role,
     location,
-    type,
+    type: typeRef || type,
     description,
     requirements,
     deadline,
@@ -58,6 +76,7 @@ const getAllJobs = catchErrors(async (req, res) => {
     .populate([
       { path: "department", select: "name" },
       { path: "role", select: "name" },
+      { path: "type", select: "name" },
     ])
     .sort({ postedAt: -1 });
 
@@ -103,7 +122,11 @@ const getJobApplications = catchErrors(async (req, res) => {
 const getJobById = catchErrors(async (req, res) => {
   const { id } = req.params;
 
-  const job = await Recruitment.findById(id);
+  const job = await Recruitment.findById(id).populate([
+    { path: "department", select: "name" },
+    { path: "role", select: "name" },
+    { path: "type", select: "name" },
+  ]);
 
   if (!job) throw new Error("Job not found");
 
