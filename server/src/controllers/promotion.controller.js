@@ -58,7 +58,8 @@ const createPromotion = catchErrors(async (req, res) => {
   // Send notification to employee
   const employeeData = await Employee.findById(employee);
   if (employeeData) {
-    await sendFullNotification({
+    // Fire-and-forget notification/email
+    sendFullNotification({
       employee: employeeData,
       title: "Promotion Notification",
       message: `Congratulations! You have been promoted from ${
@@ -83,7 +84,12 @@ const createPromotion = catchErrors(async (req, res) => {
             : ""
         } We wish you continued success in your new role!`,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: promotion notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del("promotions");
