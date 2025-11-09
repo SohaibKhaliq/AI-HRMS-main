@@ -20,9 +20,7 @@ const DocumentTypes = lazy(() => import("../admin/documentType/DocumentType"));
 const Promotion = lazy(() => import("../admin/promotion/Promotion"));
 const Resignation = lazy(() => import("../admin/resignation/Resignation"));
 const Termination = lazy(() => import("../admin/termination/Termination"));
-const Attendance = lazy(() =>
-  import("../admin/attendance/Attendance")
-);
+const Attendance = lazy(() => import("../admin/attendance/Attendance"));
 const CheckAttendance = lazy(() =>
   import("../admin/attendance/CheckAttendance")
 );
@@ -37,7 +35,9 @@ const JobApplications = lazy(() =>
 );
 const JobOpenings = lazy(() => import("../admin/recruitment/JobOpenings"));
 const PostJob = lazy(() => import("../admin/recruitment/PostJob"));
-const JobRequisitions = lazy(() => import("../admin/recruitment/JobRequisitions"));
+const JobRequisitions = lazy(() =>
+  import("../admin/recruitment/JobRequisitions")
+);
 const JobCategories = lazy(() => import("../admin/recruitment/JobCategories"));
 const JobTypes = lazy(() => import("../admin/recruitment/JobTypes"));
 const Performance = lazy(() => import("../admin/performance/Performance"));
@@ -46,9 +46,16 @@ const Payroll = lazy(() => import("../admin/payroll/Payroll"));
 const Shift = lazy(() => import("../admin/shift/Shift"));
 const Meeting = lazy(() => import("../admin/meeting/Meeting"));
 const LeaveType = lazy(() => import("../admin/leaveType/LeaveType"));
-const DocumentCategory = lazy(() => import("../admin/documentCategory/DocumentCategory"));
-const AdminTimeTracking = lazy(() => import("../admin/timeTracking/AdminTimeTracking"));
+const DocumentCategory = lazy(() =>
+  import("../admin/documentCategory/DocumentCategory")
+);
+const AdminTimeTracking = lazy(() =>
+  import("../admin/timeTracking/AdminTimeTracking")
+);
 const CalendarView = lazy(() => import("../pages/calendar/CalendarView"));
+const SubstituteAnalysisPage = lazy(() =>
+  import("../admin/analysis/SubstituteAnalysisPage")
+);
 
 const AdminApp = () => {
   const dispatch = useDispatch();
@@ -78,19 +85,25 @@ const AdminApp = () => {
             <Route path="/employee/create" element={<AddEmployee />} />
             <Route path="/employee/update/:id" element={<EditEmployee />} />
             <Route path="/department" element={<Department />} />
-              <Route path="/designations" element={<Designation />} />
-              <Route path="/document-types" element={<DocumentTypes />} />
-              <Route path="/promotions" element={<Promotion />} />
-              <Route path="/resignations" element={<Resignation />} />
-              <Route path="/terminations" element={<Termination />} />
+            <Route path="/designations" element={<Designation />} />
+            <Route path="/document-types" element={<DocumentTypes />} />
+            <Route path="/promotions" element={<Promotion />} />
+            <Route path="/resignations" element={<Resignation />} />
+            <Route path="/terminations" element={<Termination />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance/check" element={<CheckAttendance />} />
             <Route path="/leaves" element={<LeaveRequest />} />
             <Route path="/leave/active" element={<EmployeeOnLeave />} />
             <Route path="/performances" element={<Performance />} />
             <Route path="/recruitments" element={<JobOpenings />} />
-            <Route path="/recruitment/requisitions" element={<JobRequisitions />} />
-            <Route path="/recruitment/requisitions/add" element={<JobRequisitions />} />
+            <Route
+              path="/recruitment/requisitions"
+              element={<JobRequisitions />}
+            />
+            <Route
+              path="/recruitment/requisitions/add"
+              element={<JobRequisitions />}
+            />
             <Route path="/applications/:id" element={<JobApplications />} />
             <Route path="/recruitment/create" element={<PostJob />} />
             <Route path="/recruitment/categories" element={<JobCategories />} />
@@ -103,6 +116,10 @@ const AdminApp = () => {
             <Route path="/holidays" element={<Holiday />} />
             <Route path="/announcements" element={<Announcement />} />
             <Route path="/reports" element={<Report />} />
+            <Route
+              path="/substitute-analysis"
+              element={<SubstituteAnalysisPage />}
+            />
             <Route path="/shifts" element={<Shift />} />
             <Route path="/meetings" element={<Meeting />} />
             <Route path="/leave-types" element={<LeaveType />} />
