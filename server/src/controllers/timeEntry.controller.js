@@ -60,7 +60,13 @@ const clockIn = catchErrors(async (req, res) => {
         })
       );
 
-      await Promise.allSettled(notifyPromises);
+      // Fire-and-forget: don't block response while notifying admins
+      Promise.allSettled(notifyPromises).catch((e) =>
+        console.warn(
+          "Non-fatal: admin notification aggregation failed:",
+          e && e.message ? e.message : e
+        )
+      );
     }
   } catch (notifyErr) {
     console.warn(
@@ -199,10 +205,49 @@ const getMyTimeEntries = catchErrors(async (req, res) => {
 
   const timeEntries = await TimeEntry.find(query).sort({ date: -1 }).lean();
 
+  // Compute dynamic hours for entries where clockOut may be missing (active entries)
+  const now = new Date();
+  const processed = timeEntries.map((entry) => {
+    try {
+      const clockIn = entry.clockIn ? new Date(entry.clockIn) : null;
+      const clockOut = entry.clockOut ? new Date(entry.clockOut) : null;
+      const endTime = clockOut || now;
+
+      if (clockIn) {
+        const totalMs = endTime - clockIn;
+        entry.totalHours = totalMs / (1000 * 60 * 60);
+      } else {
+        entry.totalHours = entry.totalHours || 0;
+      }
+
+      // Breaks
+      let breakMs = 0;
+      if (entry.breaks && entry.breaks.length > 0) {
+        entry.breaks.forEach((b) => {
+          const bStart = b.startTime ? new Date(b.startTime) : null;
+          const bEnd = b.endTime ? new Date(b.endTime) : null;
+          if (bStart) {
+            const be = bEnd || now;
+            if (be > bStart) breakMs += be - bStart;
+          }
+        });
+      }
+      entry.breakHours = breakMs / (1000 * 60 * 60);
+
+      entry.workHours = Math.max(
+        0,
+        (entry.totalHours || 0) - (entry.breakHours || 0)
+      );
+      return entry;
+    } catch (e) {
+      return entry;
+    }
+  });
+
   return res.status(200).json({
     success: true,
     message: "Time entries fetched successfully",
-    timeEntries,
+    timeEntries: processed,
   });
 });
 
@@ -229,10 +274,49 @@ const getAllTimeEntries = catchErrors(async (req, res) => {
     .sort({ date: -1 })
     .lean();
 
+  // Post-process entries to ensure work/break/total hours are computed for display (handles active entries)
+  const now = new Date();
+  const processed = timeEntries.map((entry) => {
+    try {
+      const clockIn = entry.clockIn ? new Date(entry.clockIn) : null;
+      const clockOut = entry.clockOut ? new Date(entry.clockOut) : null;
+      const endTime = clockOut || now;
+
+      if (clockIn) {
+        const totalMs = endTime - clockIn;
+        entry.totalHours = totalMs / (1000 * 60 * 60);
+      } else {
+        entry.totalHours = entry.totalHours || 0;
+      }
+
+      // Breaks
+      let breakMs = 0;
+      if (entry.breaks && entry.breaks.length > 0) {
+        entry.breaks.forEach((b) => {
+          const bStart = b.startTime ? new Date(b.startTime) : null;
+          const bEnd = b.endTime ? new Date(b.endTime) : null;
+          if (bStart) {
+            const be = bEnd || now;
+            if (be > bStart) breakMs += be - bStart;
+          }
+        });
+      }
+      entry.breakHours = breakMs / (1000 * 60 * 60);
+
+      entry.workHours = Math.max(
+        0,
+        (entry.totalHours || 0) - (entry.breakHours || 0)
+      );
+      return entry;
+    } catch (e) {
+      return entry;
+    }
+  });
+
   return res.status(200).json({
     success: true,
     message: "Time entries fetched successfully",
-    timeEntries,
+    timeEntries: processed,
   });
 });
 
