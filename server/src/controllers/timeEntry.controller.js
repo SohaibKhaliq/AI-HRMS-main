@@ -441,6 +441,22 @@ const updateTimeEntry = catchErrors(async (req, res) => {
 const approveTimeEntry = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+  // Developer-mode diagnostics: capture shapes that have caused intermittent undefined._id errors
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      console.debug("approveTimeEntry debug - req.user.id:", req.user?.id);
+      console.debug(
+        "approveTimeEntry debug - req.employee keys:",
+        req.employee ? Object.keys(req.employee) : req.employee
+      );
+      console.debug(
+        "approveTimeEntry debug - body keys:",
+        Object.keys(req.body || {})
+      );
+    } catch (d) {
+      /* ignore diagnostics errors */
+    }
+  }
   // approvedBy: prefer full employee object _id, fall back to req.user.id for safety
   const approvedBy = (req.employee && req.employee._id) || req.user?.id;
 
