@@ -7,6 +7,7 @@ import {
   getFaceDescriptor,
   compareFaces,
 } from "../../utils/faceRecognition";
+import { drawFaceDetection, faceDistance } from "../../utils/faceRecognition";
 
 const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   const videoRef = useRef(null);
@@ -19,6 +20,19 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [modelsReady, setModelsReady] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
+  const [detectionScore, setDetectionScore] = useState(null);
+  const [verifyDistance, setVerifyDistance] = useState(null);
+
+  // Keep canvas size in sync with video element
+  const syncCanvasSize = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.style.width = `${video.clientWidth}px`;
+    canvas.style.height = `${video.clientHeight}px`;
+  }, []);
 
   const startContinuousDetection = useCallback(() => {
     // Check for face every 500ms
@@ -27,9 +41,28 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
         const detection = await detectFaceFromVideo(videoRef.current);
         lastDetectionRef.current = detection || null;
         setFaceDetected(!!detection);
+        if (detection) {
+          setDetectionScore(detection.detection.score ?? null);
+          if (canvasRef.current) {
+            syncCanvasSize();
+            drawFaceDetection(canvasRef.current, detection, videoRef.current);
+          }
+        } else {
+          setDetectionScore(null);
+          if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext("2d");
+            ctx &&
+              ctx.clearRect(
+                0,
+                0,
+                canvasRef.current.width,
+                canvasRef.current.height
+              );
+          }
+        }
       }
     }, 500);
-  }, [modelsReady, isVerifying]);
+  }, [modelsReady, isVerifying, syncCanvasSize]);
 
   const initializeCamera = useCallback(async () => {
     try {
@@ -48,6 +81,8 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
         videoRef.current.onloadedmetadata = () => {
           setIsLoading(false);
           // startContinuousDetection will be triggered once modelsReady becomes true
+          syncCanvasSize();
+          window.addEventListener("resize", syncCanvasSize);
         };
       }
 
@@ -69,7 +104,11 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
       toast.error("Could not access camera. Please grant camera permissions.");
       setIsLoading(false);
     }
-  }, [startContinuousDetection]);
+  }, [startContinuousDetection, syncCanvasSize]);
+
+  useEffect(() => {
+    return () => window.removeEventListener("resize", syncCanvasSize);
+  }, [syncCanvasSize]);
 
   useEffect(() => {
     initializeCamera();
@@ -148,6 +187,14 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
         throw new Error("no-descriptor");
       }
 
+      // compute distance for debug and UI
+      try {
+        const dist = faceDistance(storedDescriptor, currentDescriptor);
+        setVerifyDistance(dist);
+      } catch {
+        setVerifyDistance(null);
+      }
+
       const isMatch = compareFaces(storedDescriptor, currentDescriptor, 0.6);
       return isMatch;
     })();
@@ -215,15 +262,32 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
             attendance.
           </p>
           {faceDetected && (
-            <div className="mt-2 flex items-center text-green-600 dark:text-green-400">
-              <i className="fas fa-check-circle mr-2"></i>
-              <span className="text-sm font-semibold">Face detected</span>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="flex items-center text-green-600 dark:text-green-400">
+                <i className="fas fa-check-circle mr-2"></i>
+                <span className="text-sm font-semibold">Face detected</span>
+              </div>
+              {detectionScore !== null && (
+                <div className="text-sm bg-black bg-opacity-60 text-white px-3 py-1 rounded-full">
+                  Score: {detectionScore.toFixed(3)}
+                </div>
+              )}
             </div>
           )}
           {!faceDetected && !isLoading && (
             <div className="mt-2 flex items-center text-yellow-600 dark:text-yellow-400">
               <i className="fas fa-exclamation-triangle mr-2"></i>
               <span className="text-sm">No face detected</span>
+            </div>
+          )}
+
+          {/* Show verification distance when available */}
+          {verifyDistance !== null && (
+            <div className="mt-2 text-sm">
+              <span className="font-semibold">Descriptor distance:</span>{" "}
+              <span className="ml-1 bg-black bg-opacity-60 text-white px-2 py-1 rounded">
+                {verifyDistance.toFixed(3)} (threshold 0.6)
+              </span>
             </div>
           )}
         </div>
