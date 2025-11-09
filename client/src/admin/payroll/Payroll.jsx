@@ -31,7 +31,10 @@ function Payroll() {
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [togglePayrollModal, setTogglePayrollModal] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedMonth, setSelectedMonth] = useState(
+    String(new Date().getMonth() + 1)
+  );
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [generateMonth, setGenerateMonth] = useState(new Date().getMonth() + 1);
   const [generateYear, setGenerateYear] = useState(new Date().getFullYear());
   const [generating, setGenerating] = useState(false);
@@ -66,11 +69,19 @@ function Payroll() {
           currentPage,
           isPaid:
             payrollFilter === "Paid" ? true : payrollFilter === "" ? "" : false,
-          month: selectedMonth,
+          month: Number(selectedMonth),
+          year: Number(selectedYear),
         })
       );
     }
-  }, [currentPage, payrollFilter, selectedMonth, fetch, dispatch]);
+  }, [
+    currentPage,
+    payrollFilter,
+    selectedMonth,
+    selectedYear,
+    fetch,
+    dispatch,
+  ]);
 
   const handleGenerate = async () => {
     try {
@@ -133,6 +144,14 @@ function Payroll() {
               </option>
             ))}
           </select>
+          <input
+            type="number"
+            min={2024}
+            max={new Date().getFullYear() + 1}
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="hidden sm:flex w-[120px] ml-2 bg-transparent text-sm font-semibold border py-1 px-3 rounded-3xl"
+          />
           {/* Generate payroll for a specific month/year */}
           <div className="flex items-center gap-2">
             <select
