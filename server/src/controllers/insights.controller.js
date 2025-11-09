@@ -15,8 +15,14 @@ import Performance from "../models/performance.model.js";
 const getAdminInsights = catchErrors(async (req, res) => {
   const cacheKey = "insights";
 
+  // Allow clients to bypass the cache when they explicitly request fresh data.
+  // Supports query params: ?nocache=1 or ?noCache=1 or ?force=1
+  const qs = req && req.query ? req.query : {};
+  const bypassCache =
+    qs.nocache === "1" || qs.noCache === "1" || qs.force === "1";
+
   const cachedInsights = myCache.get(cacheKey);
-  if (cachedInsights) {
+  if (cachedInsights && !bypassCache) {
     return res.status(200).json({
       success: true,
       message: "Insights fetched successfully (from cache)",
@@ -199,10 +205,22 @@ const getAdminInsights = catchErrors(async (req, res) => {
     let totalSentimentCount = 0;
     let totalSentimentScoreSum = 0;
 
+    // Normalize label keys to canonical casing so the API is stable.
+    const canonicalLabel = (lab) => {
+      if (!lab) return "Neutral";
+      const s = String(lab).toLowerCase();
+      if (s.includes("pos")) return "Positive";
+      if (s.includes("neg")) return "Negative";
+      if (s.includes("neu") || s.includes("neutral")) return "Neutral";
+      // fallback: Title Case
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    };
+
     const mergeAgg = (arr) => {
       for (const r of arr) {
         if (!r || !r._id) continue;
-        sentimentCounts[r._id] = (sentimentCounts[r._id] || 0) + (r.count || 0);
+        const key = canonicalLabel(r._id);
+        sentimentCounts[key] = (sentimentCounts[key] || 0) + (r.count || 0);
         totalSentimentCount += r.count || 0;
         totalSentimentScoreSum += (r.avgScore || 0) * (r.count || 0);
       }
@@ -229,6 +247,11 @@ const getAdminInsights = catchErrors(async (req, res) => {
       .map(([topic, count]) => ({ topic, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
+    // Ensure canonical keys exist so clients can rely on them.
+    const ensureKey = (k) => (sentimentCounts[k] = sentimentCounts[k] || 0);
+    ensureKey("Positive");
+    ensureKey("Neutral");
+    ensureKey("Negative");
 
     insights.sentiment = {
       counts: sentimentCounts,
