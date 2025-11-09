@@ -76,7 +76,8 @@ function rewriteFileUrl(original) {
 
       if (d.thumbnailUrl) {
         const newThumb = rewriteFileUrl(d.thumbnailUrl);
-        if (newThumb && newThumb !== d.thumbnailUrl) updates.thumbnailUrl = newThumb;
+        if (newThumb && newThumb !== d.thumbnailUrl)
+          updates.thumbnailUrl = newThumb;
       }
 
       if (Object.keys(updates).length > 0) {
@@ -101,14 +102,20 @@ function rewriteFileUrl(original) {
       if (!e.profilePicture) continue;
       const newPic = rewriteFileUrl(e.profilePicture);
       if (newPic && newPic !== e.profilePicture) {
-        await Employee.updateOne({ _id: e._id }, { $set: { profilePicture: newPic } });
+        await Employee.updateOne(
+          { _id: e._id },
+          { $set: { profilePicture: newPic } }
+        );
         empUpdated += 1;
         console.log(`Updated employee ${e._id} profilePicture -> ${newPic}`);
       }
     }
     console.log(`Employee profile pictures updated: ${empUpdated}`);
   } catch (err) {
-    console.error("Employee update failed:", err && err.message ? err.message : err);
+    console.error(
+      "Employee update failed:",
+      err && err.message ? err.message : err
+    );
   }
 
   // --- Recruitment applicants: update resume fields ---
@@ -128,7 +135,9 @@ function rewriteFileUrl(original) {
           // Prepare a positional update for this applicant index
           const setPath = {};
           setPath[`applicants.${i}.resume`] = newResume;
-          bulkOps.push({ updateOne: { filter: { _id: job._id }, update: { $set: setPath } } });
+          bulkOps.push({
+            updateOne: { filter: { _id: job._id }, update: { $set: setPath } },
+          });
           updatedApplicants.push({ index: i, newResume });
         }
       }
@@ -143,7 +152,10 @@ function rewriteFileUrl(original) {
     }
     console.log(`Recruitment resumes updated: ${resumesUpdated}`);
   } catch (err) {
-    console.error("Recruitment update failed:", err && err.message ? err.message : err);
+    console.error(
+      "Recruitment update failed:",
+      err && err.message ? err.message : err
+    );
   } finally {
     await disConnectDB();
     console.log("Disconnected from DB. Exiting.");
