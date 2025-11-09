@@ -59,32 +59,34 @@ const createMeeting = catchErrors(async (req, res) => {
     });
 
     for (const emp of participantEmployees) {
-      try {
-        await sendFullNotification({
-          employee: emp,
-          title: "New Meeting Invitation",
-          message: `You have been invited to "${title}" on ${new Date(
-            startTime
-          ).toLocaleDateString()}`,
-          type: "meeting",
-          priority: "medium",
-          link: "/meetings",
-          metadata: { meetingId: meeting._id },
-          emailSubject: `Meeting Invitation: ${title}`,
-          emailTemplate: "meetingInvite",
-          emailData: {
-            meetingTitle: title,
-            meetingDate: new Date(startTime).toLocaleDateString(),
-            meetingTime: new Date(startTime).toLocaleTimeString(),
-            location: location || "TBA",
-            meetingLink: meetingLink || "",
-            organizer: populated.organizer.name,
-            agenda: agenda || "",
-          },
-        });
-      } catch (error) {
-        console.error(`Error sending notification to ${emp.email}:`, error);
-      }
+      // fire-and-forget per participant
+      sendFullNotification({
+        employee: emp,
+        title: "New Meeting Invitation",
+        message: `You have been invited to "${title}" on ${new Date(
+          startTime
+        ).toLocaleDateString()}`,
+        type: "meeting",
+        priority: "medium",
+        link: "/meetings",
+        metadata: { meetingId: meeting._id },
+        emailSubject: `Meeting Invitation: ${title}`,
+        emailTemplate: "meetingInvite",
+        emailData: {
+          meetingTitle: title,
+          meetingDate: new Date(startTime).toLocaleDateString(),
+          meetingTime: new Date(startTime).toLocaleTimeString(),
+          location: location || "TBA",
+          meetingLink: meetingLink || "",
+          organizer: populated.organizer.name,
+          agenda: agenda || "",
+        },
+      }).catch((error) =>
+        console.warn(
+          `Non-fatal: meeting notification failed for ${emp.email}:`,
+          error && error.message ? error.message : error
+        )
+      );
     }
   }
 
@@ -177,7 +179,8 @@ const updateMeeting = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Meeting ID is required");
 
-  if (updateData.startTime) updateData.startTime = new Date(updateData.startTime);
+  if (updateData.startTime)
+    updateData.startTime = new Date(updateData.startTime);
   if (updateData.endTime) updateData.endTime = new Date(updateData.endTime);
   if (updateData.recurrenceEndDate)
     updateData.recurrenceEndDate = new Date(updateData.recurrenceEndDate);
