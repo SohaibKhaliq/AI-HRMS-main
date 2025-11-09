@@ -24,9 +24,7 @@ const sidebarLinks = [
   {
     name: "Departments & Roles",
     iconClass: "far fa-building",
-    childrens: [
-  { name: "Departments", link: "/department" },
-    ],
+    childrens: [{ name: "Departments", link: "/department" }],
   },
   {
     name: "Attendance Tracking",
@@ -310,13 +308,7 @@ const colors = [
   { bg: "bg-green-500", darkBg: "dark:bg-green-600" },
 ];
 
-const checkAttendanceHead = [
-  "EMP ID",
-  "Name",
-  "Department",
-  "Date",
-  "Status",
-];
+const checkAttendanceHead = ["EMP ID", "Name", "Department", "Date", "Status"];
 
 const complaintHead = [
   "Emp ID",
@@ -431,7 +423,7 @@ const updateHead = [
   "Type",
   "Status",
   "Remarks",
-  "Date"
+  "Date",
 ];
 
 const complaintTypes = [
