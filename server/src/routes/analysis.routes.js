@@ -7,8 +7,43 @@ import AnalysisJob from "../models/analysisJob.model.js";
 import Feedback from "../models/feedback.model.js";
 import Complaint from "../models/complaint.model.js";
 import { verifyAdminToken } from "../middlewares/index.js";
-
+import { enqueueAnalysisJob } from "../services/analysisQueue.service.js";
 const router = express.Router();
+
+/**
+ * POST /api/analysis/substitute
+ * Body: { targetEmployeeId?, topK?, scope?: { department }, weights?: { ... } }
+ */
+router.post("/substitute", verifyAdminToken, async (req, res, next) => {
+  try {
+    const payload = req.body || {};
+    // Use the enqueue helper and create a 'substitute' analysis job
+    const job = await enqueueAnalysisJob(
+      "substitute",
+      payload.targetEmployeeId || null,
+      payload
+    );
+    return res.json({ success: true, jobId: job._id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/analysis/substitute/:jobId
+ * returns job status/result
+ */
+router.get("/substitute/:id", verifyAdminToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const job = await AnalysisJob.findById(id).lean();
+    if (!job)
+      return res.status(404).json({ success: false, message: "job not found" });
+    return res.json({ success: true, job });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * POST /api/analysis/sentiment
