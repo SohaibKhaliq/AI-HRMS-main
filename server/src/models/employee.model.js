@@ -105,6 +105,11 @@ const employeeSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Skill tags for the employee (used by substitute analysis)
+    skills: {
+      type: [String],
+      default: [],
+    },
     admin: {
       type: Boolean,
       default: false,
@@ -142,37 +147,40 @@ employeeSchema.pre("save", async function (next) {
 });
 
 // Pre-update middleware to convert string shift values to ObjectId
-employeeSchema.pre(["findOneAndUpdate", "updateOne", "updateMany"], async function (next) {
-  const update = this.getUpdate();
-  
-  // Handle both direct update and $set operator
-  const shiftValue = update.$set?.shift || update.shift;
-  
-  if (shiftValue && typeof shiftValue === "string") {
-    const Shift = mongoose.model("Shift");
-    // Try both formats: "Morning" and "Morning Shift"
-    let shiftDoc = await Shift.findOne({ name: shiftValue });
-    if (!shiftDoc) {
-      shiftDoc = await Shift.findOne({ name: `${shiftValue} Shift` });
-    }
-    
-    if (shiftDoc) {
-      if (update.$set) {
-        update.$set.shift = shiftDoc._id;
-      } else {
-        update.shift = shiftDoc._id;
+employeeSchema.pre(
+  ["findOneAndUpdate", "updateOne", "updateMany"],
+  async function (next) {
+    const update = this.getUpdate();
+
+    // Handle both direct update and $set operator
+    const shiftValue = update.$set?.shift || update.shift;
+
+    if (shiftValue && typeof shiftValue === "string") {
+      const Shift = mongoose.model("Shift");
+      // Try both formats: "Morning" and "Morning Shift"
+      let shiftDoc = await Shift.findOne({ name: shiftValue });
+      if (!shiftDoc) {
+        shiftDoc = await Shift.findOne({ name: `${shiftValue} Shift` });
       }
-    } else {
-      if (update.$set) {
-        update.$set.shift = null;
+
+      if (shiftDoc) {
+        if (update.$set) {
+          update.$set.shift = shiftDoc._id;
+        } else {
+          update.shift = shiftDoc._id;
+        }
       } else {
-        update.shift = null;
+        if (update.$set) {
+          update.$set.shift = null;
+        } else {
+          update.shift = null;
+        }
       }
     }
+
+    next();
   }
-  
-  next();
-});
+);
 
 const Employee = mongoose.model("Employee", employeeSchema);
 
