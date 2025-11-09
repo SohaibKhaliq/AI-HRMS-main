@@ -8,6 +8,7 @@ import {
   compareFaces,
 } from "../../utils/faceRecognition";
 import { drawFaceDetection, faceDistance } from "../../utils/faceRecognition";
+import axiosInstance from "../../axios/axiosInstance";
 
 const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   const videoRef = useRef(null);
@@ -22,6 +23,7 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   const [faceDetected, setFaceDetected] = useState(false);
   const [detectionScore, setDetectionScore] = useState(null);
   const [verifyDistance, setVerifyDistance] = useState(null);
+  const [fetchedDescriptor, setFetchedDescriptor] = useState(null);
 
   // Keep canvas size in sync with video element
   const syncCanvasSize = useCallback(() => {
@@ -121,6 +123,31 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
     };
   }, [initializeCamera]);
 
+  // If no descriptor was passed via props, try fetching from server when modal opens
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDescriptor = async () => {
+      // If prop is present use it; otherwise fetch
+      if (storedDescriptor && Array.isArray(storedDescriptor)) return;
+      try {
+        const resp = await axiosInstance.get("/attendance/face/descriptor");
+        if (!mounted) return;
+        const desc = resp.data?.faceDescriptor;
+        if (desc && Array.isArray(desc)) setFetchedDescriptor(desc);
+        else setFetchedDescriptor(null);
+      } catch (err) {
+        // ignore and keep fetchedDescriptor null
+        setFetchedDescriptor(null);
+      }
+    };
+
+    loadDescriptor();
+    return () => {
+      mounted = false;
+    };
+  }, [storedDescriptor]);
+
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -133,7 +160,8 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
       return;
     }
 
-    if (!storedDescriptor) {
+    const descriptorToUse = storedDescriptor || fetchedDescriptor;
+    if (!descriptorToUse) {
       toast.error("No face registered. Please register your face first.");
       return;
     }
@@ -189,13 +217,13 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
 
       // compute distance for debug and UI
       try {
-        const dist = faceDistance(storedDescriptor, currentDescriptor);
+        const dist = faceDistance(descriptorToUse, currentDescriptor);
         setVerifyDistance(dist);
       } catch {
         setVerifyDistance(null);
       }
 
-      const isMatch = compareFaces(storedDescriptor, currentDescriptor, 0.6);
+      const isMatch = compareFaces(descriptorToUse, currentDescriptor, 0.6);
       return isMatch;
     })();
 
