@@ -289,6 +289,7 @@ const getEmployeeById = catchErrors(async (req, res) => {
   const employee = await Employee.findById(id)
     .populate("department", "name")
     .populate("role", "name")
+    .populate("shift", "name startTime endTime graceTime")
     .select("-password");
 
   return res.status(200).json({
@@ -379,6 +380,7 @@ const updateEmployee = catchErrors(async (req, res) => {
   )
     .populate("department", "name")
     .populate("role", "name")
+    .populate("shift", "name startTime endTime graceTime")
     .select("-password");
 
   myCache.del("insights");
@@ -415,18 +417,26 @@ const updateProfile = catchErrors(async (req, res) => {
 
   await employee.save();
 
+  // re-fetch with populated fields for a richer response
+  const refreshed = await Employee.findById(id)
+    .populate("department", "name")
+    .populate("role", "name")
+    .populate("shift", "name startTime endTime graceTime")
+    .select("-password");
+
   return res.status(200).json({
     success: true,
     message: "Profile updated successfully",
     updatedProfile: {
-      _id: employee._id,
-      name: employee.name,
-      email: employee.email,
-      position: employee.role,
-      department: employee.department,
-      employeeId: employee.employeeId,
-      profilePicture: employee.profilePicture,
-      authority: employee.admin ? "admin" : "employee",
+      _id: refreshed._id,
+      name: refreshed.name,
+      email: refreshed.email,
+      position: refreshed.role,
+      department: refreshed.department,
+      shift: refreshed.shift,
+      employeeId: refreshed.employeeId,
+      profilePicture: refreshed.profilePicture,
+      authority: refreshed.admin ? "admin" : "employee",
     },
   });
 });
