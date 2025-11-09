@@ -17,21 +17,22 @@ const login = catchErrors(async (req, res) => {
 
   const employee = await Employee.findOne({ employeeId })
     .populate("department", "name")
-    .populate("role", "name");
+    .populate("role", "name")
+    .populate("shift", "name startTime endTime graceTime");
 
   if (!employee)
     throw new Error(
       "Invalid credentials, try again with the correct credentials"
     );
 
- if (authority.toLowerCase() === "admin" && !employee.admin)
+  if (authority.toLowerCase() === "admin" && !employee.admin)
     throw new Error("Unauthorize access");
 
   const comparePassword = await bcrypt.compare(password, employee.password);
 
   if (!comparePassword)
     throw new Error(
-     "Invalid credentials, try again with the correct credentials"
+      "Invalid credentials, try again with the correct credentials"
     );
 
   const token = jwt.sign(
@@ -60,6 +61,7 @@ const login = catchErrors(async (req, res) => {
       email: employee.email,
       department: employee.department,
       position: employee.role,
+      shift: employee.shift,
       profilePicture: employee.profilePicture,
       authority: authority.toLowerCase(),
     },
