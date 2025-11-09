@@ -1,5 +1,6 @@
 import { useDispatch } from "react-redux";
 import Sidebar from "../components/ui/Sidebar";
+import Topbar from "../components/ui/Topbar";
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { getRoles } from "../services/role.service";
@@ -17,6 +18,7 @@ const ViewEmployee = lazy(() => import("../admin/employee/ViewEmployee"));
 const Department = lazy(() => import("../admin/department/Department"));
 const Designation = lazy(() => import("../admin/designation/Designation"));
 const DocumentTypes = lazy(() => import("../admin/documentType/DocumentType"));
+const AdminDocuments = lazy(() => import("../admin/document/AdminDocuments"));
 const Promotion = lazy(() => import("../admin/promotion/Promotion"));
 const Resignation = lazy(() => import("../admin/resignation/Resignation"));
 const Termination = lazy(() => import("../admin/termination/Termination"));
@@ -59,6 +61,9 @@ const SubstituteAnalysisPage = lazy(() =>
 const Trainings = lazy(() => import("../admin/training/Trainings"));
 const ViewTraining = lazy(() => import("../admin/training/ViewTraining"));
 const CreateTraining = lazy(() => import("../admin/training/CreateTraining"));
+const Notifications = lazy(() =>
+  import("../pages/notifications/Notifications")
+);
 
 const AdminApp = () => {
   const dispatch = useDispatch();
@@ -76,10 +81,11 @@ const AdminApp = () => {
       className="text-gray-800 bg-gray-200 dark:text-gray-200 dark:bg-primary flex justify-between relative"
     >
       <Sidebar />
+      <Topbar />
       <Suspense fallback={<Loader />}>
         <main
           id="overflow"
-          className="w-full lg:w-[85%] lg:ml-[255px] py-1 sm:px-2 mt-[69px] lg:mt-0"
+          className="w-full lg:w-[85%] lg:ml-[255px] py-1 sm:px-2 mt-[69px] lg:mt-[70px]"
         >
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -90,6 +96,8 @@ const AdminApp = () => {
             <Route path="/department" element={<Department />} />
             <Route path="/designations" element={<Designation />} />
             <Route path="/document-types" element={<DocumentTypes />} />
+            <Route path="/employee-documents" element={<AdminDocuments />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/promotions" element={<Promotion />} />
             <Route path="/resignations" element={<Resignation />} />
             <Route path="/terminations" element={<Termination />} />
