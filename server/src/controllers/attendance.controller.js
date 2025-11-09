@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import cloudinary from "cloudinary";
 import { catchErrors } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
 import Attendance from "../models/attendance.model.js";
@@ -93,13 +92,12 @@ const markAttendanceByQrCode = catchErrors(async (req, res) => {
     date: today,
   });
 
-  const publicId = getPublicIdFromUrl(qrcode);
-
-  if (publicId) {
-    const res = await cloudinary.v2.uploader.destroy(`qrcodes/${publicId}`);
-
-    if (res.result !== "ok") throw new Error("Id" + res.result);
-  } else throw new Error("Invalid Cloudinary id");
+  try {
+    const { deleteUploadedFile } = await import("../utils/index.js");
+    await deleteUploadedFile(qrcode);
+  } catch (err) {
+    console.log("Error deleting QR file:", err.message);
+  }
 
   return res.status(201).json({
     success: true,
@@ -550,7 +548,7 @@ const registerFaceDescriptor = catchErrors(async (req, res) => {
   }
 
   const employee = await Employee.findById(employeeId);
-  
+
   if (!employee) {
     throw new Error("Employee not found");
   }
@@ -569,7 +567,7 @@ const getFaceDescriptor = catchErrors(async (req, res) => {
   const employeeId = req.user.id;
 
   const employee = await Employee.findById(employeeId).select("faceDescriptor");
-  
+
   if (!employee) {
     throw new Error("Employee not found");
   }
@@ -601,7 +599,7 @@ const markAttendanceByFace = catchErrors(async (req, res) => {
   // Validate location if provided
   if (latitude && longitude) {
     const distance = getLocation(latitude, longitude);
-    
+
     if (distance > 1000) {
       throw new Error(
         "You are not within the allowed location radius to mark attendance."
