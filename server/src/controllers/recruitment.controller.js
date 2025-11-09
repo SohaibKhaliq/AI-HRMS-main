@@ -193,8 +193,10 @@ const createApplicant = catchErrors(async (req, res) => {
   if (job.deadline && job.deadline < Date.now())
     throw new Error("Job expired, deadline reached");
 
-  // Handle local storage path for resume URL (multer.diskStorage writes to server/public/uploads/resumes)
-  const resumePath = req.file.path || `/uploads/resumes/${req.file.filename}`;
+  // Use public URL for the resume so client loads over HTTP
+  const resumePath = req.file
+    ? `${process.env.CLIENT_URL}/uploads/resumes/${req.file.filename}`
+    : null;
 
   job.applicants.push({
     name,
