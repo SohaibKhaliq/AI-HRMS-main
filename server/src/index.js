@@ -40,6 +40,7 @@ import {
   leaveBalance,
   documentCategory,
   analysis,
+  training,
 } from "./routes/index.routes.js";
 import { warmup as analysisWarmup } from "./services/analysisService.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
@@ -173,6 +174,7 @@ app.use("/api/employee-documents", employeeDocument);
 app.use("/api/time-entries", timeEntry);
 app.use("/api/leave-balances", leaveBalance);
 app.use("/api/document-categories", documentCategory);
+app.use("/api/trainings", training);
 app.use("/api/analysis", analysis);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
