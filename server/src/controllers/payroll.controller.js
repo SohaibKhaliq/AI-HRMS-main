@@ -24,7 +24,8 @@ const createPayroll = catchErrors(async (req, res) => {
   // Get employee details for notification
   const employeeData = await Employee.findById(employee);
   if (employeeData) {
-    await sendFullNotification({
+    // Fire-and-forget notification
+    sendFullNotification({
       employee: employeeData,
       title: "Payroll Generated",
       message: `Your payroll for ${getMonthName(
@@ -41,7 +42,12 @@ const createPayroll = catchErrors(async (req, res) => {
         netSalary: payroll.netSalary.toFixed(2),
         isPaid: payroll.isPaid,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: payroll generated notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   return res.status(201).json({
@@ -176,7 +182,8 @@ const markAsPaid = catchErrors(async (req, res) => {
   if (payroll.isPaid && wasUnpaid) {
     const employeeData = await Employee.findById(payroll.employee._id);
     if (employeeData) {
-      await sendFullNotification({
+      // Fire-and-forget
+      sendFullNotification({
         employee: employeeData,
         title: "Salary Paid",
         message: `Your salary for ${getMonthName(payroll.month)} ${
@@ -193,7 +200,12 @@ const markAsPaid = catchErrors(async (req, res) => {
           netSalary: payroll.netSalary.toFixed(2),
           isPaid: true,
         },
-      });
+      }).catch((e) =>
+        console.warn(
+          "Non-fatal: salary paid notification failed:",
+          e && e.message ? e.message : e
+        )
+      );
     }
   }
 
@@ -373,7 +385,8 @@ const generatePayrollForMonth = catchErrors(async (req, res) => {
         );
         if (!employeeData) continue;
 
-        await sendFullNotification({
+        // Fire-and-forget
+        sendFullNotification({
           employee: employeeData,
           title: "Payroll Generated",
           message: `Your payroll for ${getMonthName(
@@ -390,7 +403,12 @@ const generatePayrollForMonth = catchErrors(async (req, res) => {
             netSalary: (employeeData.salary || 0).toFixed(2),
             isPaid: false,
           },
-        });
+        }).catch((notifyErr) =>
+          console.warn(
+            `Non-fatal: failed to notify employee ${empId}:`,
+            notifyErr && notifyErr.message ? notifyErr.message : notifyErr
+          )
+        );
       } catch (notifyErr) {
         // Log and continue - do not fail the whole generation because of notification error
         console.error(
