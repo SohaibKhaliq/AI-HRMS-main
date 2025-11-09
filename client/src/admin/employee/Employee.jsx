@@ -42,6 +42,46 @@ function Employee() {
     roleName: "",
   });
 
+  // small Avatar component for image load animation and initials fallback
+  /* eslint-disable react/prop-types */
+  const Avatar = ({ src, name, size = 48 }) => {
+    const [loaded, setLoaded] = useState(false);
+    const [err, setErr] = useState(false);
+
+    const initials = (name || "")
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+
+    return (
+      <div
+        className={`relative inline-flex flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700 overflow-hidden`}
+        style={{ width: size, height: size }}
+      >
+        {/* initials fallback */}
+        <div
+          className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200`}
+        >
+          <span className="select-none">{initials || "--"}</span>
+        </div>
+
+        {src && !err && (
+          <img
+            src={src}
+            alt={name}
+            onLoad={() => setLoaded(true)}
+            onError={() => setErr(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        )}
+      </div>
+    );
+  };
+
   const goToPage = (page) => {
     dispatch(setFetchFlag(true));
     setUiState((prev) => ({ ...prev, currentPage: page }));
@@ -155,128 +195,126 @@ function Employee() {
           </div>
         </div>
 
-        {/* Employee Table */}
-        <div
-          id="overflow"
-          className="overflow-x-auto min-h-[74vh] sm:min-h-[80vh]"
-        >
-          <table className="min-w-full text-left table-auto border-collapse text-[0.83rem] whitespace-nowrap">
-            <thead>
-              <tr className="bg-headLight dark:bg-head text-primary">
-                <th className="py-3 px-4 border-b border-secondary">Name</th>
-                <th className="py-3 px-4 border-b border-secondary">
-                  Employee ID
-                </th>
-                <th className="py-3 px-4 border-b border-secondary">
-                  Department
-                </th>
-                <th className="py-3 px-4 border-b border-secondary">
-                  Designation
-                </th>
-                <th className="py-3 px-4 border-b border-secondary">Status</th>
-                <th className="py-3 px-4 border-b border-secondary">Joined</th>
-                <th className="py-3 px-4 border-b border-secondary">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.length > 0 &&
-                employees.map((employee) => (
-                  <tr
-                    key={employee._id}
-                    className="dark:even:bg-gray-800 odd:bg-gray-200 dark:odd:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
-                  >
-                    <td className="py-3 px-4 border-b border-secondary">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden">
-                          <img
-                            src={employee.profilePicture || "/unknown.jpeg"}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className="font-medium">{employee.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {employee.email}
-                          </div>
-                        </div>
+        {/* Employee Table (card-list style for improved UI) */}
+        <div id="overflow" className="min-h-[74vh] sm:min-h-[80vh]">
+          {/* header labels for larger screens */}
+          <div className="hidden sm:flex items-center bg-[#274a6b] text-white rounded-t-md px-3 py-3 text-sm">
+            <div className="flex-1 min-w-0 pl-2">Name</div>
+            <div className="w-28 text-center">Employee ID</div>
+            <div className="w-36 text-center">Department</div>
+            <div className="w-36 text-center">Designation</div>
+            <div className="w-24 text-center">Status</div>
+            <div className="w-28 text-center">Joined</div>
+            <div className="w-28 text-right">Actions</div>
+          </div>
+
+          <div className="space-y-3 mt-3">
+            {employees.length > 0 &&
+              employees.map((employee) => (
+                <div
+                  key={employee._id}
+                  tabIndex={0}
+                  className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 p-3 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 active:scale-[0.997] cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className="flex-shrink-0">
+                      <Avatar
+                        src={employee.profilePicture}
+                        name={employee.name}
+                        size={44}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm leading-tight text-gray-800 dark:text-gray-100 truncate">
+                        {employee.name}
                       </div>
-                    </td>
-                    <td className="py-3 px-4 border-b border-secondary">
-                      EMP {employee.employeeId}
-                    </td>
-                    <td className="py-3 px-4 border-b border-secondary">
-                      {employee.department?.name || "--"}
-                    </td>
-                    <td className="py-3 px-4 border-b border-secondary">
-                      {employee.designation?.name || "--"}
-                    </td>
-                    <td className="py-3 px-4 border-b border-secondary">
-                      {employee.status}
-                    </td>
-                    <td className="py-3 px-4 border-b border-secondary">
-                      {employee.dateOfJoining
-                        ? new Date(employee.dateOfJoining).toLocaleDateString()
-                        : "-"}
-                    </td>
-                    <td className="py-3 px-4 border-b border-secondary flex items-center space-x-2">
-                      <Link to={`/employee/${employee._id}`}>
-                        <button
-                          className="text-blue-500 hover:text-blue-400"
-                          title="View"
+                      <div className="text-xs text-gray-500 dark:text-gray-300 truncate mt-0.5">
+                        {employee.email}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="hidden sm:block w-28 text-center text-sm text-gray-700">
+                    EMP {employee.employeeId}
+                  </div>
+                  <div className="hidden sm:block w-36 text-center text-sm text-gray-700 overflow-hidden truncate">
+                    {employee.department?.name || "--"}
+                  </div>
+                  <div className="hidden sm:block w-36 text-center text-sm text-gray-700 overflow-hidden truncate">
+                    {employee.designation?.name || "--"}
+                  </div>
+                  <div className="hidden sm:block w-24 text-center text-sm">
+                    {(() => {
+                      const statusClass =
+                        employee.status === "Active"
+                          ? "bg-green-100 text-green-700"
+                          : employee.status === "On Leave"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-gray-100 text-gray-700";
+                      return (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}
                         >
-                          <i className="fa-solid fa-eye"></i>
-                        </button>
-                      </Link>
+                          {employee.status}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="hidden sm:block w-28 text-center text-sm text-gray-700">
+                    {employee.dateOfJoining
+                      ? new Date(employee.dateOfJoining).toLocaleDateString()
+                      : "-"}
+                  </div>
 
-                      <Link to={`/employee/update/${employee._id}`}>
-                        <button
-                          className="text-green-500 hover:text-green-400"
-                          title="Edit"
-                        >
-                          <i className="fa-solid fa-edit"></i>
-                        </button>
-                      </Link>
-
+                  <div className="w-28 flex items-center justify-end gap-2">
+                    <Link to={`/employee/${employee._id}`}>
                       <button
-                        onClick={() =>
-                          setUiState((prev) => ({
-                            ...prev,
-                            changePasswordEmployee: employee,
-                            toggleChangePassword: true,
-                          }))
-                        }
-                        className="text-yellow-600 hover:text-yellow-500"
-                        title="Change Password"
+                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded"
+                        title="View"
                       >
-                        <i className="fa-solid fa-key"></i>
+                        <i className="fa-solid fa-eye"></i>
                       </button>
+                    </Link>
 
+                    <Link to={`/employee/update/${employee._id}`}>
                       <button
-                        onClick={() =>
-                          setUiState((prev) => ({
-                            ...prev,
-                            deletedEmployee: employee,
-                            toggleModal: true,
-                          }))
-                        }
-                        className="text-red-500 hover:text-red-400"
-                        title="Delete"
+                        className="bg-green-50 text-green-600 hover:bg-green-100 p-2 rounded"
+                        title="Edit"
                       >
-                        <i className="fa-solid fa-trash"></i>
+                        <i className="fa-solid fa-edit"></i>
                       </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+                    </Link>
 
-          {!loading && !error && employees.length === 0 && (
-            <NoDataMessage message={"No employee found"} />
-          )}
+                    <button
+                      onClick={() =>
+                        setUiState((prev) => ({
+                          ...prev,
+                          deletedEmployee: employee,
+                          toggleModal: true,
+                        }))
+                      }
+                      className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded"
+                      title="Delete"
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+            {!loading && !error && employees.length === 0 && (
+              <NoDataMessage message={"No employee found"} />
+            )}
+          </div>
         </div>
 
+        {/* Pagination footer - visible and separated */}
         {!loading && employees.length > 0 && (
-          <Pagination {...pagination} onPageChange={goToPage} />
+          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end">
+              <Pagination {...pagination} onPageChange={goToPage} />
+            </div>
+          </div>
         )}
 
         {uiState.toggleFilterBar && (
