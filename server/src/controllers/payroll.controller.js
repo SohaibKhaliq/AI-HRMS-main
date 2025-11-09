@@ -27,7 +27,9 @@ const createPayroll = catchErrors(async (req, res) => {
     await sendFullNotification({
       employee: employeeData,
       title: "Payroll Generated",
-      message: `Your payroll for ${getMonthName(month)} ${year} has been generated and is ready for review.`,
+      message: `Your payroll for ${getMonthName(
+        month
+      )} ${year} has been generated and is ready for review.`,
       type: "payroll",
       priority: "medium",
       link: "/payroll",
@@ -56,7 +58,7 @@ const getAllPayrolls = catchErrors(async (req, res) => {
 
   // Check if user is admin by checking if they have employee populated with admin field
   const isAdmin = req.user.authority === "admin";
-  
+
   // If not admin or employee query parameter matches user's ID, restrict to own payroll
   if (!isAdmin) {
     query.employee = req.user.id;
@@ -150,7 +152,7 @@ const markAsPaid = catchErrors(async (req, res) => {
 
   // Track previous state to detect status change
   const wasUnpaid = !payroll.isPaid;
-  
+
   payroll.isPaid = !payroll.isPaid;
 
   if (payroll.isPaid) payroll.paymentDate = new Date();
@@ -172,7 +174,9 @@ const markAsPaid = catchErrors(async (req, res) => {
       await sendFullNotification({
         employee: employeeData,
         title: "Salary Paid",
-        message: `Your salary for ${getMonthName(payroll.month)} ${payroll.year} has been paid successfully.`,
+        message: `Your salary for ${getMonthName(payroll.month)} ${
+          payroll.year
+        } has been paid successfully.`,
         type: "payroll",
         priority: "high",
         link: "/payroll",
@@ -306,6 +310,101 @@ const generatePayrollForNextYear = catchErrors(async (req, res) => {
   });
 });
 
+const generatePayrollForMonth = catchErrors(async (req, res) => {
+  const { month, year } = req.body;
+
+  if (!month || !year) throw new Error("Please provide month and year");
+
+  const monthNum = parseInt(month);
+  const yearNum = parseInt(year);
+
+  const currentYear = new Date().getFullYear();
+  if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
+    throw new Error("Invalid month value");
+  if (yearNum < 2024 || yearNum > currentYear + 1)
+    throw new Error(`Year must be between 2024 and ${currentYear + 1}.`);
+
+  const employees = await Employee.find();
+  if (!employees.length) throw new Error("No employees found.");
+
+  const payrollData = [];
+  const createdEmployeeIds = [];
+  let createdCount = 0;
+
+  for (const employee of employees) {
+    // skip if payroll already exists for this employee/month/year
+    const exists = await Payroll.findOne({
+      employee: employee._id,
+      month: monthNum,
+      year: yearNum,
+    });
+    if (exists) continue;
+
+    const baseSalary = employee.salary || 0;
+    payrollData.push({
+      employee: employee._id,
+      month: monthNum,
+      year: yearNum,
+      baseSalary,
+      allowances: 0,
+      deductions: 0,
+      bonuses: 0,
+      netSalary: baseSalary,
+      isPaid: false,
+      paymentDate: null,
+    });
+    createdEmployeeIds.push(employee._id);
+    createdCount++;
+  }
+
+  if (payrollData.length > 0) {
+    await Payroll.insertMany(payrollData);
+
+    // Send per-employee notifications/email for newly created payrolls
+    for (const empId of createdEmployeeIds) {
+      try {
+        const employeeData = await Employee.findById(empId).select(
+          "name email salary"
+        );
+        if (!employeeData) continue;
+
+        await sendFullNotification({
+          employee: employeeData,
+          title: "Payroll Generated",
+          message: `Your payroll for ${getMonthName(
+            monthNum
+          )} ${yearNum} has been generated and is ready for review.`,
+          type: "payroll",
+          priority: "medium",
+          link: "/payroll",
+          emailSubject: "Payroll Generated",
+          emailTemplate: "payrollGenerated",
+          emailData: {
+            month: getMonthName(monthNum),
+            year: yearNum,
+            netSalary: (employeeData.salary || 0).toFixed(2),
+            isPaid: false,
+          },
+        });
+      } catch (notifyErr) {
+        // Log and continue - do not fail the whole generation because of notification error
+        console.error(
+          `Failed to notify employee ${empId}:`,
+          notifyErr.message || notifyErr
+        );
+      }
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Generated payroll data for ${getMonthName(
+      monthNum
+    )} ${yearNum} for ${createdCount} employees (skipped existing records).`,
+    created: createdCount,
+  });
+});
+
 export {
   markAsPaid,
   deletePayroll,
@@ -315,5 +414,6 @@ export {
   getPayrollByEmployee,
   getEmployeePayrollHistory,
   generatePayrollForNextYear,
+  generatePayrollForMonth,
   generateEmployeeYearlyPayroll,
 };
