@@ -125,6 +125,42 @@ export async function getTraining(req, res) {
   }
 }
 
+export async function getTrainingForEmployee(req, res) {
+  try {
+    const { id } = req.params;
+    const employeeId = req.user && req.user.id;
+    if (!employeeId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized: employee id missing" });
+
+    const training = await Training.findById(id).populate(
+      "participants createdBy"
+    );
+    if (!training)
+      return res.status(404).json({ success: false, message: "Not found" });
+
+    const isParticipant = (training.participants || [])
+      .map((p) => String(p._id || p))
+      .includes(String(employeeId));
+    const isCreator =
+      String(training.createdBy?._id || training.createdBy) ===
+      String(employeeId);
+
+    if (!isParticipant && !isCreator) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    return res.json({ success: true, training });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to fetch training",
+    });
+  }
+}
+
 export async function getAllTrainings(req, res) {
   try {
     const { page = 1, limit = 20 } = req.query;
@@ -140,6 +176,51 @@ export async function getAllTrainings(req, res) {
       .lean();
 
     const total = await Training.countDocuments({});
+
+    return res.json({
+      success: true,
+      trainings,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages: Math.ceil(total / limitNumber),
+        total,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to fetch trainings",
+    });
+  }
+}
+
+export async function getMyTrainings(req, res) {
+  try {
+    const employeeId = req.user && req.user.id;
+    if (!employeeId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized: employee id missing" });
+
+    const { page = 1, limit = 20, status } = req.query;
+    const pageNumber = Math.max(parseInt(page), 1);
+    const limitNumber = Math.max(parseInt(limit), 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const query = {
+      $or: [{ participants: employeeId }, { createdBy: employeeId }],
+    };
+    if (status) query.status = status;
+
+    const trainings = await Training.find(query)
+      .sort({ scheduledAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber)
+      .populate("participants createdBy", "_id name email employeeId")
+      .lean();
+
+    const total = await Training.countDocuments(query);
 
     return res.json({
       success: true,
