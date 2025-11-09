@@ -5,9 +5,12 @@ import axiosInstance from "../axios/axiosInstance";
 // Fetch Document Types
 export const getDocumentTypes = createAsyncThunk(
   "documentType/getDocumentTypes",
-  async (_, { rejectWithValue }) => {
+  async (status = null, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.get(`/document-types`);
+      const url = status
+        ? `/document-types?status=${encodeURIComponent(status)}`
+        : `/document-types`;
+      const { data } = await axiosInstance.get(url);
       return data.documentTypes;
     } catch (error) {
       return rejectWithValue(
@@ -39,7 +42,10 @@ export const updateDocumentType = createAsyncThunk(
   "documentType/updateDocumentType",
   async ({ id, docType }, { rejectWithValue, dispatch }) => {
     try {
-      const { data } = await axiosInstance.patch(`/document-types/${id}`, docType);
+      const { data } = await axiosInstance.patch(
+        `/document-types/${id}`,
+        docType
+      );
       toast.success(data.message);
       await dispatch(getDocumentTypes());
       return;
