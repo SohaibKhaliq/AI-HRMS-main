@@ -4,10 +4,7 @@ import { createUpdate } from "./update.controller.js";
 import { complaintRespond } from "../templates/index.js";
 import { catchErrors, myCache } from "../utils/index.js";
 import { sendFullNotification } from "../services/notification.service.js";
-import {
-  analyzeSentiment,
-  extractTopics,
-} from "../services/analysisService.js";
+import { enqueueAnalysisJob } from "../services/analysisQueue.service.js";
 
 const getComplaints = catchErrors(async (req, res) => {
   const { status, page = 1, limit = 12 } = req.query;
@@ -105,20 +102,13 @@ const createComplaint = catchErrors(async (req, res) => {
     documentUrl,
     remarks: remarks || null,
   });
-  // Analyze complaint text and persist sentiment/topics (best-effort)
+  // Enqueue analysis job for complaint (best-effort background)
   try {
-    const sentiment = await analyzeSentiment(complaintDetails);
-    const topicResults = extractTopics(complaintDetails, 5);
-    complaint.sentimentScore = sentiment.score;
-    complaint.sentimentLabel = sentiment.label;
-    complaint.topics = topicResults.map((t) => t.tag);
-    complaint.analysisMeta = { provider: "local-transformers" };
-    complaint.lastAnalyzedAt = new Date();
-    await complaint.save();
-  } catch (err) {
+    await enqueueAnalysisJob("complaint", complaint._id);
+  } catch (e) {
     console.warn(
-      "Complaint analysis failed:",
-      err && err.message ? err.message : err
+      "Failed to enqueue complaint analysis job:",
+      e && e.message ? e.message : e
     );
   }
 
@@ -264,25 +254,16 @@ const updateComplaint = catchErrors(async (req, res) => {
 
   await complaint.save();
 
-  // If complaint details changed, re-run analysis asynchronously (best-effort)
+  // If complaint details changed, enqueue re-analysis job
   if (complaintDetails) {
-    (async () => {
-      try {
-        const sentiment = await analyzeSentiment(complaintDetails);
-        const topicResults = extractTopics(complaintDetails, 5);
-        complaint.sentimentScore = sentiment.score;
-        complaint.sentimentLabel = sentiment.label;
-        complaint.topics = topicResults.map((t) => t.tag);
-        complaint.analysisMeta = { provider: "local-transformers" };
-        complaint.lastAnalyzedAt = new Date();
-        await complaint.save();
-      } catch (err) {
-        console.warn(
-          "Complaint re-analysis failed:",
-          err && err.message ? err.message : err
-        );
-      }
-    })();
+    try {
+      await enqueueAnalysisJob("complaint", complaint._id);
+    } catch (e) {
+      console.warn(
+        "Failed to enqueue complaint re-analysis job:",
+        e && e.message ? e.message : e
+      );
+    }
   }
 
   myCache.del("insights");
