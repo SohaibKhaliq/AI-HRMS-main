@@ -330,6 +330,35 @@ const getTimeEntryById = catchErrors(async (req, res) => {
 
   if (!timeEntry) throw new Error("Time entry not found");
 
+  // Extra diagnostics to capture shapes that may lead to `Cannot read properties of undefined (reading '_id')`
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      console.debug("approveTimeEntry debug - timeEntry present:", !!timeEntry);
+      console.debug(
+        "approveTimeEntry debug - timeEntry.employee (type):",
+        typeof timeEntry.employee,
+        "value:",
+        timeEntry.employee
+          ? timeEntry.employee._id ||
+              timeEntry.employee._doc?._id ||
+              timeEntry.employee
+          : timeEntry.employee
+      );
+      console.debug(
+        "approveTimeEntry debug - timeEntry.approvedBy (type):",
+        typeof timeEntry.approvedBy,
+        "value:",
+        timeEntry.approvedBy
+          ? timeEntry.approvedBy._id ||
+              timeEntry.approvedBy._doc?._id ||
+              timeEntry.approvedBy
+          : timeEntry.approvedBy
+      );
+    } catch (d) {
+      /* ignore */
+    }
+  }
+
   // Compute live totals (handles active entries and open breaks)
   try {
     // Diagnostic: log shapes if developer mode enabled
@@ -445,8 +474,15 @@ const approveTimeEntry = catchErrors(async (req, res) => {
   if (process.env.NODE_ENV !== "production") {
     try {
       console.debug("approveTimeEntry debug - req.user.id:", req.user?.id);
+      // Try to resolve a useful employee id candidate from different shapes (Mongoose doc, plain id)
+      const empIdCandidate =
+        req.employee?._id || req.employee?._doc?._id || req.employee;
       console.debug(
-        "approveTimeEntry debug - req.employee keys:",
+        "approveTimeEntry debug - resolved req.employee id:",
+        empIdCandidate
+      );
+      console.debug(
+        "approveTimeEntry debug - req.employee raw keys:",
         req.employee ? Object.keys(req.employee) : req.employee
       );
       console.debug(
@@ -457,8 +493,11 @@ const approveTimeEntry = catchErrors(async (req, res) => {
       /* ignore diagnostics errors */
     }
   }
+
   // approvedBy: prefer full employee object _id, fall back to req.user.id for safety
-  const approvedBy = (req.employee && req.employee._id) || req.user?.id;
+  const approvedBy =
+    (req.employee && (req.employee._id || req.employee?._doc?._id)) ||
+    req.user?.id;
 
   if (!id) throw new Error("Time entry ID is required");
   if (!status || !["approved", "rejected"].includes(status)) {
@@ -483,8 +522,11 @@ const approveTimeEntry = catchErrors(async (req, res) => {
 
   if (!timeEntry) throw new Error("Time entry not found");
 
-  // Send notification to employee — handle both populated employee object and id string
-  const empId = timeEntry.employee?._id || timeEntry.employee;
+  // Send notification to employee — handle populated Mongoose doc (_doc) or plain id string
+  const empId =
+    timeEntry.employee?._id ||
+    timeEntry.employee?._doc?._id ||
+    timeEntry.employee;
   const emp = empId ? await Employee.findById(empId) : null;
   if (emp) {
     const adminNotes = timeEntry.adminNotes || null;
@@ -519,7 +561,10 @@ const approveTimeEntry = catchErrors(async (req, res) => {
 
   // Clear cache using whichever form employee is stored in (populated doc or id)
   try {
-    const cacheEmployeeId = timeEntry.employee?._id || timeEntry.employee;
+    const cacheEmployeeId =
+      timeEntry.employee?._id ||
+      timeEntry.employee?._doc?._id ||
+      timeEntry.employee;
     if (cacheEmployeeId) myCache.del(`timeEntries-${cacheEmployeeId}`);
   } catch (err) {
     console.warn(
