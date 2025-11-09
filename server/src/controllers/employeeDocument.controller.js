@@ -2,6 +2,16 @@ import { catchErrors, myCache } from "../utils/index.js";
 import EmployeeDocument from "../models/employeeDocument.model.js";
 import Employee from "../models/employee.model.js";
 import { sendFullNotification } from "../services/notification.service.js";
+import fs from "fs";
+import path from "path";
+import * as Jimp from "jimp";
+// jimp may be published as CommonJS; support both default and namespace imports
+const JimpLib = Jimp && (Jimp.default || Jimp);
+import { fileURLToPath } from "url";
+
+// Use SERVER_URL for serving uploaded files. Fall back to CLIENT_URL if SERVER_URL
+// isn't provided (keeps backward compatibility for some dev setups).
+const PUBLIC_BASE = process.env.SERVER_URL || process.env.CLIENT_URL || "";
 
 const uploadDocument = catchErrors(async (req, res) => {
   const {
@@ -55,8 +65,9 @@ const uploadDocument = catchErrors(async (req, res) => {
     documentType: documentType || null,
     title,
     description: description || "",
-    // Store public URL so client can fetch over HTTP
-    fileUrl: `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`,
+    // Store public URL so client can fetch over HTTP. Prefer the server URL so
+    // assets are requested from the backend that actually serves the files.
+    fileUrl: `${PUBLIC_BASE}/uploads/documents/${req.file.filename}`,
     fileName: req.file.originalname,
     fileSize: req.file.size,
     fileType: req.file.mimetype,
@@ -66,6 +77,53 @@ const uploadDocument = catchErrors(async (req, res) => {
     expiryDate: expiryDate ? new Date(expiryDate) : null,
     tags: tags ? JSON.parse(tags) : [],
   });
+  // Attempt to generate a thumbnail (non-blocking but best-effort)
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const uploadsDir = path.join(
+      __dirname,
+      "..",
+      "public",
+      "uploads",
+      "documents"
+    );
+    const thumbsDir = path.join(
+      __dirname,
+      "..",
+      "public",
+      "uploads",
+      "thumbnails"
+    );
+    if (!fs.existsSync(thumbsDir)) fs.mkdirSync(thumbsDir, { recursive: true });
+
+    const srcPath = path.join(uploadsDir, req.file.filename);
+    const thumbName = `${path.parse(req.file.filename).name}_thumb.png`;
+    const thumbPath = path.join(thumbsDir, thumbName);
+
+    if (req.file.mimetype && req.file.mimetype.startsWith("image/")) {
+      const img = await JimpLib.read(srcPath);
+      await img.resize(800, JimpLib.AUTO).quality(80).writeAsync(thumbPath);
+    } else {
+      // For PDFs or unsupported types, create a simple placeholder thumbnail
+      const img = new JimpLib(800, 1100, 0xffffffff);
+      const font = await JimpLib.loadFont(JimpLib.FONT_SANS_32_BLACK);
+      img.print(font, 20, 20, {
+        text: "PDF",
+      });
+      await img.quality(80).writeAsync(thumbPath);
+    }
+
+    // Persist thumbnail URL to the document record
+    await EmployeeDocument.findByIdAndUpdate(document._id, {
+      thumbnailUrl: `${PUBLIC_BASE}/uploads/thumbnails/${thumbName}`,
+    });
+  } catch (thumbErr) {
+    console.warn(
+      "Thumbnail generation failed:",
+      thumbErr && thumbErr.message ? thumbErr.message : thumbErr
+    );
+  }
 
   const populated = await EmployeeDocument.findById(document._id)
     .populate("employee", "name email")
@@ -204,7 +262,7 @@ const updateDocument = catchErrors(async (req, res) => {
 
   // If file is being updated
   if (req.file) {
-    updateData.fileUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    updateData.fileUrl = `${PUBLIC_BASE}/uploads/documents/${req.file.filename}`;
     updateData.fileName = req.file.originalname;
     updateData.fileSize = req.file.size;
     updateData.fileType = req.file.mimetype;
@@ -221,6 +279,68 @@ const updateDocument = catchErrors(async (req, res) => {
     .populate("verifiedBy", "name");
 
   if (!document) throw new Error("Document not found");
+
+  // If a new file was uploaded, attempt to regenerate thumbnail
+  if (req.file) {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const uploadsDir = path.join(
+        __dirname,
+        "..",
+        "public",
+        "uploads",
+        "documents"
+      );
+      const thumbsDir = path.join(
+        __dirname,
+        "..",
+        "public",
+        "uploads",
+        "thumbnails"
+      );
+      if (!fs.existsSync(thumbsDir))
+        fs.mkdirSync(thumbsDir, { recursive: true });
+
+      const srcPath = path.join(uploadsDir, req.file.filename);
+      const thumbName = `${path.parse(req.file.filename).name}_thumb.png`;
+      const thumbPath = path.join(thumbsDir, thumbName);
+
+      if (req.file.mimetype && req.file.mimetype.startsWith("image/")) {
+        const img = await JimpLib.read(srcPath);
+        await img.resize(800, JimpLib.AUTO).quality(80).writeAsync(thumbPath);
+      } else {
+        const img = new JimpLib(800, 1100, 0xffffffff);
+        const font = await JimpLib.loadFont(JimpLib.FONT_SANS_32_BLACK);
+        img.print(font, 20, 20, { text: "PDF" });
+        await img.quality(80).writeAsync(thumbPath);
+      }
+
+      await EmployeeDocument.findByIdAndUpdate(document._id, {
+        thumbnailUrl: `${PUBLIC_BASE}/uploads/thumbnails/${thumbName}`,
+      });
+    } catch (thumbErr) {
+      console.warn(
+        "Thumbnail regeneration failed:",
+        thumbErr && thumbErr.message ? thumbErr.message : thumbErr
+      );
+    }
+
+    // refetch populated record after thumbnail update
+    const updatedPopulated = await EmployeeDocument.findById(document._id)
+      .populate("employee", "name email")
+      .populate("category", "name")
+      .populate("documentType", "name")
+      .populate("uploadedBy", "name");
+
+    myCache.del(`employeeDocuments-${document.employee._id}`);
+
+    return res.status(200).json({
+      success: true,
+      message: "Document updated successfully",
+      document: updatedPopulated,
+    });
+  }
 
   myCache.del(`employeeDocuments-${document.employee._id}`);
 
@@ -351,3 +471,57 @@ export {
   deleteDocument,
   getExpiringDocuments,
 };
+
+const getAllDocuments = catchErrors(async (req, res) => {
+  // Admin-facing: list all documents with filters, search and pagination
+  const {
+    employee,
+    category,
+    status,
+    search,
+    page = 1,
+    limit = 10,
+  } = req.query;
+
+  const query = {};
+  if (employee) query.employee = employee;
+  if (category) query.category = category;
+  if (status) query.status = status;
+
+  if (search) {
+    const s = String(search).trim();
+    query.$or = [
+      { title: { $regex: s, $options: "i" } },
+      { fileName: { $regex: s, $options: "i" } },
+    ];
+  }
+
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const perPage = Math.max(1, parseInt(limit, 10) || 10);
+
+  const total = await EmployeeDocument.countDocuments(query);
+  const totalPages = Math.ceil(total / perPage) || 1;
+
+  const documents = await EmployeeDocument.find(query)
+    .populate("employee", "name email")
+    .populate("category", "name")
+    .populate("documentType", "name")
+    .populate("uploadedBy", "name")
+    .populate("verifiedBy", "name")
+    .sort({ createdAt: -1 })
+    .skip((pageNum - 1) * perPage)
+    .limit(perPage)
+    .lean();
+
+  return res.status(200).json({
+    success: true,
+    message: "Documents fetched successfully",
+    documents,
+    total,
+    totalPages,
+    currentPage: pageNum,
+  });
+});
+
+// export added function
+export { getAllDocuments };
