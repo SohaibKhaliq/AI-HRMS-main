@@ -156,6 +156,11 @@ const navbarLinks = [
     link: "/documents",
   },
   {
+    name: "Trainings",
+    iconClass: "fa-solid fa-chalkboard-teacher",
+    link: "/trainings",
+  },
+  {
     name: "My Payroll",
     iconClass: "fa-solid fa-file-invoice-dollar",
     link: "/payroll",
