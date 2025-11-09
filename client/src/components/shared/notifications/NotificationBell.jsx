@@ -1,18 +1,26 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaBell } from "react-icons/fa";
-import { getMyNotifications, getUnreadCount, markAsRead } from "../../../services/notification.service";
+import {
+  getMyNotifications,
+  getUnreadCount,
+  markAsRead,
+} from "../../../services/notification.service";
 import { formatDistanceToNow } from "../../../utils/dateUtils";
+import { useNavigate } from "react-router-dom";
 
 const NotificationBell = () => {
   const dispatch = useDispatch();
-  const { notifications, unreadCount, loading } = useSelector((state) => state.notification || {});
+  const { notifications, unreadCount, loading } = useSelector(
+    (state) => state.notification || {}
+  );
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch unread count on mount
     dispatch(getUnreadCount());
-    
+
     // Poll for new notifications every 30 seconds
     const interval = setInterval(() => {
       dispatch(getUnreadCount());
@@ -97,8 +105,8 @@ const NotificationBell = () => {
             onClick={() => setIsOpen(false)}
           ></div>
 
-          {/* Notification Panel */}
-          <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 max-h-[500px] flex flex-col">
+          {/* Notification Panel - use fixed positioning so it's not clipped by sidebar overflow */}
+          <div className="fixed right-4 top-[70px] mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 max-h-[500px] flex flex-col">
             {/* Header */}
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -128,7 +136,9 @@ const NotificationBell = () => {
                     <div
                       key={notification._id}
                       className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                        !notification.read ? "bg-blue-50 dark:bg-gray-700/50" : ""
+                        !notification.read
+                          ? "bg-blue-50 dark:bg-gray-700/50"
+                          : ""
                       }`}
                       onClick={(e) => {
                         if (!notification.read) {
@@ -148,10 +158,20 @@ const NotificationBell = () => {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className={`font-semibold text-sm ${!notification.read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
+                            <h4
+                              className={`font-semibold text-sm ${
+                                !notification.read
+                                  ? "text-gray-900 dark:text-white"
+                                  : "text-gray-700 dark:text-gray-300"
+                              }`}
+                            >
                               {notification.title}
                             </h4>
-                            <span className={`text-xs ${getPriorityColor(notification.priority)} flex-shrink-0`}>
+                            <span
+                              className={`text-xs ${getPriorityColor(
+                                notification.priority
+                              )} flex-shrink-0`}
+                            >
                               {notification.priority}
                             </span>
                           </div>
@@ -180,7 +200,7 @@ const NotificationBell = () => {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    // Navigate to all notifications page (to be implemented)
+                    navigate("/notifications");
                   }}
                   className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
