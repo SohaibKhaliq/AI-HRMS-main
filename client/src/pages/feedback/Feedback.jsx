@@ -54,9 +54,10 @@ const Feedback = () => {
         review: reviewFilter || undefined,
         page: currentPage,
         limit: pageSize,
+        employee: user?._id,
       })
     );
-  }, [dispatch, currentPage, pageSize, reviewFilter]);
+  }, [dispatch, currentPage, pageSize, reviewFilter, user?._id]);
 
   // Refetch when fetch flag changes
   useEffect(() => {
@@ -66,16 +67,14 @@ const Feedback = () => {
           review: reviewFilter || undefined,
           page: currentPage,
           limit: pageSize,
+          employee: user?._id,
         })
       );
     }
-  }, [fetch, dispatch, reviewFilter, currentPage, pageSize]);
+  }, [fetch, dispatch, reviewFilter, currentPage, pageSize, user?._id]);
 
-  // Filter feedbacks to show only current user's feedbacks
+  // Filter feedbacks by search and optional topic (server returns only current user's feedbacks)
   const filteredFeedbacks = feedbacks.filter((feedback) => {
-    // Only show current user's feedbacks
-    if (feedback.employee?._id !== user?._id) return false;
-
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       searchQuery === "" ||
