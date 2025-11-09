@@ -11,7 +11,12 @@ import { months, payrollButtons, payrollHead } from "../../constants";
 import PayrollModal from "../../components/shared/modals/PayrollModal";
 import NoDataMessage from "../../components/shared/error/NoDataMessage";
 import FilterButton from "../../components/shared/buttons/FilterButton";
-import { getAllPayrolls, markAsPaid } from "../../services/payroll.service";
+import {
+  getAllPayrolls,
+  markAsPaid,
+  generatePayrollForMonth,
+} from "../../services/payroll.service";
+import toast from "react-hot-toast";
 
 function Payroll() {
   const dispatch = useDispatch();
@@ -27,6 +32,11 @@ function Payroll() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [togglePayrollModal, setTogglePayrollModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [generateMonth, setGenerateMonth] = useState(new Date().getMonth() + 1);
+  const [generateYear, setGenerateYear] = useState(new Date().getFullYear());
+  const [generating, setGenerating] = useState(false);
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
+  const [generateResult, setGenerateResult] = useState(null);
 
   const handleMarkAsPaid = () => {
     dispatch(markAsPaid(selectedId));
@@ -62,6 +72,36 @@ function Payroll() {
     }
   }, [currentPage, payrollFilter, selectedMonth, fetch, dispatch]);
 
+  const handleGenerate = async () => {
+    try {
+      setGenerating(true);
+      const res = await dispatch(
+        generatePayrollForMonth({ month: generateMonth, year: generateYear })
+      ).unwrap();
+      // show different messages based on created count
+      if (res && typeof res.created === "number") {
+        setGenerateResult(res.created);
+        if (res.created === 0) {
+          toast("No new payrolls to create for selected month/year", {
+            icon: "ℹ️",
+          });
+        } else {
+          toast.success(res.message || `Created ${res.created} payrolls`);
+        }
+      } else {
+        toast.success(res.message || "Payrolls generated");
+        setGenerateResult(null);
+      }
+      // refresh list
+      dispatch(setFetchFlag(true));
+      setGenerating(false);
+    } catch (err) {
+      setGenerating(false);
+      toast.error(err || "Failed to generate payrolls");
+      setGenerateResult(null);
+    }
+  };
+
   if (error) return <FetchError error={error} />;
 
   return (
@@ -93,6 +133,46 @@ function Payroll() {
               </option>
             ))}
           </select>
+          {/* Generate payroll for a specific month/year */}
+          <div className="flex items-center gap-2">
+            <select
+              value={generateMonth}
+              onChange={(e) => setGenerateMonth(Number(e.target.value))}
+              className="w-[160px] bg-white dark:bg-[#4b5563] text-sm rounded-lg p-2 border"
+            >
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              value={generateYear}
+              onChange={(e) => setGenerateYear(Number(e.target.value))}
+              className="w-[100px] p-2 rounded-lg border bg-white dark:bg-[#4b5563] text-sm"
+            />
+            <button
+              onClick={() => setShowGenerateConfirm(true)}
+              disabled={generating}
+              className="px-4 py-2 rounded-3xl text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {generating ? "Generating..." : "Generate Payrolls"}
+            </button>
+            {generateResult !== null && (
+              <div className="text-sm ml-3">
+                {generateResult === 0 ? (
+                  <span className="text-yellow-600">
+                    No new payrolls to create for selected month/year
+                  </span>
+                ) : (
+                  <span className="text-green-600">
+                    Created {generateResult} payroll(s)
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Payroll Table */}
@@ -201,6 +281,19 @@ function Payroll() {
             onClose={() => setShowConfirmModal(false)}
             action="mark as paid"
             isConfirm={confirmMarkAsPaid}
+          />
+        )}
+
+        {showGenerateConfirm && (
+          <Modal
+            onClose={() => setShowGenerateConfirm(false)}
+            action={`generate payrolls for ${
+              months[generateMonth - 1].name
+            } ${generateYear}`}
+            isConfirm={() => {
+              handleGenerate();
+              setShowGenerateConfirm(false);
+            }}
           />
         )}
 
