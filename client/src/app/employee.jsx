@@ -28,6 +28,8 @@ const CalendarView = lazy(() => import("../pages/calendar/CalendarView"));
 const Notifications = lazy(() =>
   import("../pages/notifications/Notifications")
 );
+const Trainings = lazy(() => import("../pages/trainings/Trainings"));
+const TrainingDetail = lazy(() => import("../pages/trainings/TrainingDetail"));
 
 const EmployeeApp = () => {
   const dispatch = useDispatch();
@@ -60,6 +62,8 @@ const EmployeeApp = () => {
             <Route path="/leave-balance" element={<LeaveBalance />} />
             <Route path="/meetings" element={<EmployeeMeetings />} />
             <Route path="/documents" element={<EmployeeDocuments />} />
+            <Route path="/trainings" element={<Trainings />} />
+            <Route path="/trainings/:id" element={<TrainingDetail />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/payroll" element={<Payroll />} />
             <Route path="/calendar" element={<CalendarView />} />
