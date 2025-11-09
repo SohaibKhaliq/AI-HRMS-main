@@ -1,14 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import toast from "react-hot-toast";
-import { loadModels, detectFaceFromVideo, getFaceDescriptor, compareFaces } from "../../utils/faceRecognition";
+import {
+  loadModels,
+  detectFaceFromVideo,
+  getFaceDescriptor,
+  compareFaces,
+} from "../../utils/faceRecognition";
 
 const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const detectionIntervalRef = useRef(null);
-  
+  const lastDetectionRef = useRef(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [modelsReady, setModelsReady] = useState(false);
@@ -19,6 +25,7 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
     detectionIntervalRef.current = setInterval(async () => {
       if (videoRef.current && modelsReady && !isVerifying) {
         const detection = await detectFaceFromVideo(videoRef.current);
+        lastDetectionRef.current = detection || null;
         setFaceDetected(!!detection);
       }
     }, 500);
@@ -26,27 +33,37 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
 
   const initializeCamera = useCallback(async () => {
     try {
-      // Load models first
-      await loadModels();
-      setModelsReady(true);
-
-      // Start camera
+      // Start camera immediately so user can position their face while models load
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: 640, 
+        video: {
+          width: 640,
           height: 480,
-          facingMode: "user" 
+          facingMode: "user",
         },
       });
-      
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           setIsLoading(false);
-          startContinuousDetection();
+          // startContinuousDetection will be triggered once modelsReady becomes true
         };
       }
+
+      // Load models in background but don't block camera display
+      loadModels()
+        .then(() => {
+          setModelsReady(true);
+          // start detection once models are ready
+          startContinuousDetection();
+        })
+        .catch((err) => {
+          console.error("Model load error:", err);
+          toast.error(
+            "Failed to load face models. Please check console for details."
+          );
+        });
     } catch (error) {
       console.error("Error accessing camera:", error);
       toast.error("Could not access camera. Please grant camera permissions.");
@@ -56,7 +73,7 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
 
   useEffect(() => {
     initializeCamera();
-    
+
     return () => {
       stopCamera();
       if (detectionIntervalRef.current) {
@@ -72,7 +89,7 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
   };
 
   const verifyFace = async () => {
-    if (!videoRef.current || !modelsReady) {
+    if (!videoRef.current) {
       toast.error("Camera not ready");
       return;
     }
@@ -82,39 +99,96 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
       return;
     }
 
-    setIsVerifying(true);
-
-    try {
-      const detection = await detectFaceFromVideo(videoRef.current);
-      
-      if (!detection) {
-        toast.error("No face detected. Please position your face in the frame.");
+    // If models are not ready, wait a short time for them to finish loading
+    if (!modelsReady) {
+      setIsVerifying(true);
+      try {
+        await Promise.race([
+          loadModels(),
+          new Promise((_, rej) =>
+            setTimeout(() => rej(new Error("models-timeout")), 5000)
+          ),
+        ]);
+        setModelsReady(true);
+      } catch {
+        toast.error(
+          "Models still loading. Please wait a few seconds and try again."
+        );
         setIsVerifying(false);
         return;
       }
-
-      const currentDescriptor = getFaceDescriptor(detection);
-      
-      if (currentDescriptor) {
-        // Compare with stored descriptor
-        const isMatch = compareFaces(storedDescriptor, currentDescriptor, 0.6);
-        
-        if (isMatch) {
-          toast.success("Face verified successfully!");
-          stopCamera();
-          onAttendanceMarked();
-        } else {
-          toast.error("Face does not match. Please try again.");
-        }
-      } else {
-        toast.error("Could not extract face data. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error verifying face:", error);
-      toast.error("Error verifying face. Please try again.");
     }
 
-    setIsVerifying(false);
+    setIsVerifying(true);
+
+    const verificationTimeoutMs = 8000; // fail fast if verification takes too long
+
+    const verifyWork = (async () => {
+      // Use last continuous detection if available to avoid race conditions
+      let detection = lastDetectionRef.current;
+
+      // If no cached detection, sample a few frames quickly (up to ~6 attempts)
+      if (!detection) {
+        const attempts = 6;
+        for (let i = 0; i < attempts && !detection; i++) {
+          detection = await detectFaceFromVideo(videoRef.current);
+          if (detection) break;
+          // small delay between attempts
+          await new Promise((r) => setTimeout(r, 250));
+        }
+      }
+
+      if (!detection) {
+        throw new Error("no-face-detected");
+      }
+
+      const currentDescriptor = getFaceDescriptor(detection);
+
+      if (!currentDescriptor) {
+        throw new Error("no-descriptor");
+      }
+
+      const isMatch = compareFaces(storedDescriptor, currentDescriptor, 0.6);
+      return isMatch;
+    })();
+
+    try {
+      const isMatch = await Promise.race([
+        verifyWork,
+        new Promise((_, rej) =>
+          setTimeout(
+            () => rej(new Error("verification-timeout")),
+            verificationTimeoutMs
+          )
+        ),
+      ]);
+
+      if (isMatch) {
+        toast.success("Face verified successfully!");
+        stopCamera();
+        onAttendanceMarked();
+      } else {
+        toast.error("Face does not match. Please try again.");
+      }
+    } catch (err) {
+      if (err.message === "no-face-detected") {
+        toast.error(
+          "No face detected. Please position your face in the frame."
+        );
+      } else if (err.message === "no-descriptor") {
+        toast.error("Could not extract face data. Please try again.");
+      } else if (err.message === "verification-timeout") {
+        console.warn("Verification timed out");
+        toast.error(
+          "Verification timed out. Try again with better lighting or move closer to the camera."
+        );
+      } else {
+        console.error("Error verifying face:", err);
+        toast.error("Error verifying face. Please try again.");
+      }
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -137,7 +211,8 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
 
         <div className="mb-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Position your face in the frame and click verify to mark your attendance.
+            Position your face in the frame and click verify to mark your
+            attendance.
           </p>
           {faceDetected && (
             <div className="mt-2 flex items-center text-green-600 dark:text-green-400">
@@ -162,7 +237,7 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
               </div>
             </div>
           )}
-          
+
           <video
             ref={videoRef}
             autoPlay
@@ -171,7 +246,7 @@ const FaceAttendance = ({ storedDescriptor, onAttendanceMarked, onClose }) => {
             className="w-full h-auto"
             style={{ maxHeight: "400px" }}
           />
-          
+
           <canvas
             ref={canvasRef}
             className="absolute top-0 left-0"
