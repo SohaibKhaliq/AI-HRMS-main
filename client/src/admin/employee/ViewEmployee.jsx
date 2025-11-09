@@ -95,7 +95,11 @@ const ViewEmployee = () => {
               <p>
                 <strong>Work Shift:</strong>{" "}
                 {employee?.shift
-                  ? `${employee.shift.name}${employee.shift.startTime ? ` — ${employee.shift.startTime} - ${employee.shift.endTime}` : ""}`
+                  ? `${employee.shift.name}${
+                      employee.shift.startTime
+                        ? ` — ${employee.shift.startTime} - ${employee.shift.endTime}`
+                        : ""
+                    }`
                   : "-"}
               </p>
               <p>
