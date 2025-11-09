@@ -47,7 +47,11 @@ function Feedback() {
   useEffect(() => {
     if (fetch) {
       dispatch(
-        getFeedbacks({ review: reviewFilter.toLowerCase(), currentPage })
+        // pass page using the expected key 'page' and include review filter
+        getFeedbacks({
+          review: reviewFilter ? reviewFilter.toLowerCase() : undefined,
+          page: currentPage,
+        })
       );
     }
   }, [reviewFilter, currentPage, fetch, dispatch]);
@@ -256,20 +260,13 @@ function Feedback() {
                       />
                     </td>
 
-                    <td className="py-3 px-4 border-b border-secondary">
-                      <TopicChips
-                        topics={feedback.topics || []}
-                        onClick={(t) => setTopicFilter(t)}
-                      />
-                    </td>
-
-                    {/* Description with Tooltip */}
+                    {/* Description with Tooltip - placed to match header order */}
                     <td
                       className="py-3 px-4 border-b border-secondary relative cursor-pointer"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                     >
-                      {(feedback.description || "").slice(0, 10) + "...."}
+                      {(feedback.description || "").slice(0, 40) + "...."}
 
                       {hoveredIndex === index && (
                         <div className="absolute left-0 top-full mt-1 max-w-[300px] h-auto bg-gray-900 dark:bg-gray-200 dark:text-black text-white text-xs p-2 rounded shadow-lg z-10 break-words whitespace-normal">
@@ -282,9 +279,16 @@ function Feedback() {
                     <td className="py-3 px-4 border-b border-secondary">
                       {formatDate(feedback.createdAt)}
                     </td>
-                    <td className="py-3 px-4 border-b border-secondary flex items-center gap-2">
-                      {feedback.rating} <FaStar color="gold" />
+
+                    <td className="py-3 px-4 border-b border-secondary">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {feedback.rating}
+                        </span>
+                        <FaStar className="text-yellow-400" size={14} />
+                      </div>
                     </td>
+
                     <td className="py-3 px-4 border-b border-secondary">
                       <button
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
@@ -292,6 +296,14 @@ function Feedback() {
                       >
                         <FiEye /> View
                       </button>
+                    </td>
+
+                    {/* Topics column moved to the end to match header */}
+                    <td className="py-3 px-4 border-b border-secondary">
+                      <TopicChips
+                        topics={feedback.topics || []}
+                        onClick={(t) => setTopicFilter(t)}
+                      />
                     </td>
                   </tr>
                 ))}
