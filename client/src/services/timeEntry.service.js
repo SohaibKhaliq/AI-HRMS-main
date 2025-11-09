@@ -21,7 +21,10 @@ export const clockOut = createAsyncThunk(
   "timeEntry/clockOut",
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/time-entries/clock-out", data);
+      const response = await axiosInstance.post(
+        "/time-entries/clock-out",
+        data
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -84,8 +87,10 @@ export const getMyTimeEntries = createAsyncThunk(
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-      
-      const response = await axiosInstance.get(`/time-entries/my?${params.toString()}`);
+
+      const response = await axiosInstance.get(
+        `/time-entries/my?${params.toString()}`
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -105,8 +110,10 @@ export const getAllTimeEntries = createAsyncThunk(
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
       if (status) params.append("status", status);
-      
-      const response = await axiosInstance.get(`/time-entries?${params.toString()}`);
+
+      const response = await axiosInstance.get(
+        `/time-entries?${params.toString()}`
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -119,9 +126,15 @@ export const getAllTimeEntries = createAsyncThunk(
 // Approve time entry (admin)
 export const approveTimeEntry = createAsyncThunk(
   "timeEntry/approve",
-  async ({ id, notes }, { rejectWithValue }) => {
+  async ({ id, adminNotes }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/time-entries/${id}/approve`, { notes });
+      // server expects a `status` field (approved/rejected) in body
+      const body = { status: "approved" };
+      if (adminNotes) body.notes = adminNotes;
+      const response = await axiosInstance.patch(
+        `/time-entries/${id}/approve`,
+        body
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -136,7 +149,14 @@ export const rejectTimeEntry = createAsyncThunk(
   "timeEntry/reject",
   async ({ id, reason, adminNotes }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/time-entries/${id}/reject`, { reason, adminNotes });
+      // server uses the same approve endpoint but expects status field
+      const body = { status: "rejected" };
+      if (reason) body.reason = reason;
+      if (adminNotes) body.notes = adminNotes;
+      const response = await axiosInstance.patch(
+        `/time-entries/${id}/approve`,
+        body
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
