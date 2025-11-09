@@ -8,7 +8,9 @@ import { Jimp } from "jimp";
 import axios from "axios";
 import NodeCache from "node-cache";
 import nodemailer from "nodemailer";
-import cloudinary from "cloudinary";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 import streamifier from "streamifier";
 
 const myCache = new NodeCache();
@@ -27,24 +29,34 @@ function getLocation(latitude, longitude) {
   return distance;
 }
 
-const uploadToCloudinary = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.v2.uploader.upload_stream(
-      {
-        folder: "qrcodes",
-        resource_type: "image",
-      },
-      (error, result) => {
-        if (error) {
-          return reject(
-            new Error(`Cloudinary upload failed: ${error.message}`)
-          );
-        }
-        resolve(result);
-      }
+// Save buffer to local uploads folder and return a public path
+const saveBufferToUploads = async (
+  buffer,
+  subfolder = "qrcodes",
+  ext = "png"
+) => {
+  try {
+    const uploadsDir = path.join(
+      process.cwd(),
+      "server",
+      "public",
+      "uploads",
+      subfolder
     );
-    streamifier.createReadStream(buffer).pipe(uploadStream);
-  });
+    if (!fs.existsSync(uploadsDir))
+      fs.mkdirSync(uploadsDir, { recursive: true });
+
+    const filename = `${uuidv4().slice(0, 8)}.${ext}`;
+    const filePath = path.join(uploadsDir, filename);
+
+    await fs.promises.writeFile(filePath, buffer);
+
+    // Build a URL path relative to server static folder
+    const publicUrl = `/uploads/${subfolder}/${filename}`;
+    return publicUrl;
+  } catch (err) {
+    throw new Error(`Failed to save file: ${err.message}`);
+  }
 };
 
 async function generateQrCode(employeeId) {
@@ -53,20 +65,45 @@ async function generateQrCode(employeeId) {
     return;
   }
 
-  const qrData = JSON.stringify({
-    employeeId,
-  });
+  const qrData = JSON.stringify({ employeeId });
 
   try {
     const qrCodeBuffer = await QRCode.toBuffer(qrData);
-
-    const uploadResult = await uploadToCloudinary(qrCodeBuffer);
-
-    return uploadResult.secure_url;
+    // Save PNG locally and return public path
+    const publicUrl = await saveBufferToUploads(qrCodeBuffer, "qrcodes", "png");
+    return publicUrl;
   } catch (err) {
-    console.error("Error generating or uploading QR code:", err);
+    console.error("Error generating or saving QR code:", err);
   }
 }
+
+const deleteUploadedFile = async (urlOrPath) => {
+  if (!urlOrPath) return false;
+  try {
+    // If it's already a local uploads path like /uploads/... or contains 'uploads/', derive file path
+    let idx = urlOrPath.indexOf("/uploads/");
+    if (idx === -1 && urlOrPath.includes("uploads")) {
+      idx = urlOrPath.indexOf("uploads");
+    }
+    if (idx !== -1) {
+      const relative = urlOrPath.slice(idx + 1); // remove leading /
+      const fullPath = path.join(
+        process.cwd(),
+        "server",
+        "public",
+        relative.replace(/\//g, path.sep)
+      );
+      if (fs.existsSync(fullPath)) {
+        await fs.promises.unlink(fullPath);
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    console.error("Failed to delete uploaded file:", err.message);
+    return false;
+  }
+};
 
 const catchErrors = (fn) => {
   return (req, res, next) => {
@@ -180,4 +217,6 @@ export {
   getMonthName,
   generateQrCode,
   getPublicIdFromUrl,
+  saveBufferToUploads,
+  deleteUploadedFile,
 };
