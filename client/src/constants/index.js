@@ -56,6 +56,7 @@ const sidebarLinks = [
     iconClass: "far fa-calendar-check",
     childrens: [
       { name: "Meetings", link: "/meetings" },
+      { name: "Employee Documents", link: "/employee-documents" },
       { name: "Document Categories", link: "/document-categories" },
     ],
   },
