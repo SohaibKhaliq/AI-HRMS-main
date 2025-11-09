@@ -7,8 +7,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 // Fetch all employees
 export const getAllEmployees = createAsyncThunk(
   "employee/getAllEmployees",
-  async ({ currentPage, filters }, { rejectWithValue }) => {
-    const { department, role, status, name } = filters;
+  async (payload = {}, { rejectWithValue }) => {
+    // payload may be undefined when called without arguments; support { currentPage, filters }
+    const { currentPage = 1, filters = {} } = payload || {};
+    const { department, role, status, name } = filters || {};
 
     try {
       const queryParams = new URLSearchParams({
