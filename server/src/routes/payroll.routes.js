@@ -7,8 +7,14 @@ import {
   getPayrollByEmployee,
   getEmployeePayrollHistory,
   generatePayrollForNextYear,
+  // generate for specific month
+  generatePayrollForMonth,
 } from "../controllers/payroll.controller.js";
-import { verifyAdminToken, verifyEmployeeToken, verifyCornJob } from "../middlewares/index.js";
+import {
+  verifyAdminToken,
+  verifyEmployeeToken,
+  verifyCornJob,
+} from "../middlewares/index.js";
 
 const router = express.Router();
 
@@ -18,6 +24,7 @@ router.patch("/:payrollId", verifyAdminToken, updatePayroll);
 router.patch("/:payrollId/pay", verifyAdminToken, markAsPaid);
 router.get("/employee", verifyAdminToken, getPayrollByEmployee);
 router.post("/generate", verifyCornJob, generatePayrollForNextYear);
+router.post("/generate-month", verifyAdminToken, generatePayrollForMonth);
 router.get("/history/:employee", verifyAdminToken, getEmployeePayrollHistory);
 
 export default router;
