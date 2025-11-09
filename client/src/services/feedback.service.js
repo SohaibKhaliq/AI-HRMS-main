@@ -6,7 +6,7 @@ import axiosInstance from "../axios/axiosInstance";
 export const getFeedbacks = createAsyncThunk(
   "feedbacks/getFeedbacks",
   async (
-    { review, page = 1, limit = 10, employee } = {},
+    { review, page = 1, limit = 10, employee, q, dateFrom, dateTo, topic } = {},
     { rejectWithValue }
   ) => {
     try {
@@ -14,6 +14,10 @@ export const getFeedbacks = createAsyncThunk(
       if (page) queryParams.append("page", page);
       if (limit) queryParams.append("limit", limit);
       if (review) queryParams.append("review", review);
+      if (q) queryParams.append("q", q);
+      if (dateFrom) queryParams.append("dateFrom", dateFrom);
+      if (dateTo) queryParams.append("dateTo", dateTo);
+      if (topic) queryParams.append("topic", topic);
       if (employee) queryParams.append("employee", employee);
 
       const { data } = await axiosInstance.get(
