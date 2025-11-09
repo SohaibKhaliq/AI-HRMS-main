@@ -7,6 +7,7 @@ import { createEmployeeSchema } from "../../validations";
 import Loader from "../../components/shared/loaders/Loader";
 import { addEmployee } from "../../services/employee.service";
 import { getDesignations } from "../../services/designation.service";
+import { getShifts } from "../../services/shift.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 
 const AddEmployee = () => {
@@ -15,6 +16,7 @@ const AddEmployee = () => {
   const roles = useSelector((state) => state.role.roles);
   const departments = useSelector((state) => state.department.departments);
   const designations = useSelector((state) => state.designation.designations || []);
+  const shifts = useSelector((state) => state.shift?.shifts || []);
   const { loading, formLoading } = useSelector((state) => state.employee);
 
   const {
@@ -36,6 +38,8 @@ const AddEmployee = () => {
   useEffect(() => {
     // load designations for the designation selector
     dispatch(getDesignations());
+    // load shifts dynamically for the shift selector
+    dispatch(getShifts());
   }, [dispatch]);
 
   return (
@@ -575,9 +579,12 @@ const AddEmployee = () => {
                       } text-gray-800 dark:text-gray-200`}
                     >
                       <option value="">--Shift--</option>
-                      <option value="Morning">Morning</option>
-                      <option value="Evening">Evening</option>
-                      <option value="Night">Night</option>
+                      {shifts.map((s) => (
+                        <option key={s._id} value={s._id}>
+                          {s.name}
+                          {s.startTime ? ` — ${s.startTime} - ${s.endTime}` : ""}
+                        </option>
+                      ))}
                     </select>
                     {errors.shift && (
                       <p className="text-red-500 text-[0.8rem] mt-1">
