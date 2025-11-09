@@ -109,12 +109,14 @@ const applyLeave = catchErrors(async (req, res) => {
   const employee = await Employee.findById(employeeId);
   const leaveTypeDoc = await LeaveType.findById(leaveType);
 
-  // Send notification with email
+  // Send notification with email (fire-and-forget)
   if (employee) {
-    await sendFullNotification({
+    sendFullNotification({
       employee,
       title: "Leave Application Submitted",
-      message: `Your ${leaveTypeDoc?.name || 'leave'} application has been submitted successfully and is pending approval.`,
+      message: `Your ${
+        leaveTypeDoc?.name || "leave"
+      } application has been submitted successfully and is pending approval.`,
       type: "leave",
       priority: "medium",
       link: "/leave",
@@ -126,7 +128,12 @@ const applyLeave = catchErrors(async (req, res) => {
         toDate: formatDate(toDate),
         duration: duration,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: leave apply notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del("insights");
@@ -153,10 +160,12 @@ const rejectLeave = async (leave, remarks) => {
   // Send notification with email using new service
   const employee = await Employee.findById(leave.employee._id);
   if (employee) {
-    await sendFullNotification({
+    sendFullNotification({
       employee,
       title: "Leave Application Rejected",
-      message: `Your ${leave.leaveType?.name || 'leave'} application has been rejected. ${remarks || ''}`,
+      message: `Your ${
+        leave.leaveType?.name || "leave"
+      } application has been rejected. ${remarks || ""}`,
       type: "leave",
       priority: "high",
       link: "/leave",
@@ -168,7 +177,12 @@ const rejectLeave = async (leave, remarks) => {
         toDate: formatDate(leave.toDate),
         reason: remarks || "No specific reason provided",
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: leave rejection notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   return {
@@ -277,11 +291,11 @@ const approveLeave = async (leave, employee) => {
   }
 
   await leave.save();
-  
+
   // Save only the leaveBalance field without the populated shift
-  if (employee.isModified('leaveBalance')) {
+  if (employee.isModified("leaveBalance")) {
     await Employee.findByIdAndUpdate(employee._id, {
-      leaveBalance: employee.leaveBalance
+      leaveBalance: employee.leaveBalance,
     });
   }
 
@@ -295,10 +309,12 @@ const approveLeave = async (leave, employee) => {
   // Send notification with email using new service
   const empData = await Employee.findById(leave.employee._id);
   if (empData) {
-    await sendFullNotification({
+    sendFullNotification({
       employee: empData,
       title: "Leave Application Approved",
-      message: `Your ${leave.leaveType?.name || 'leave'} application has been approved. ${subsMsg}.`,
+      message: `Your ${
+        leave.leaveType?.name || "leave"
+      } application has been approved. ${subsMsg}.`,
       type: "leave",
       priority: "high",
       link: "/leave",
@@ -311,7 +327,12 @@ const approveLeave = async (leave, employee) => {
         duration: leave.duration,
         approverName: "HR Department",
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: leave approval notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del("insights");
@@ -340,7 +361,7 @@ const respondLeave = catchErrors(async (req, res) => {
   const employee = await Employee.findById(leave.employee)
     .populate("department")
     .populate("shift");
-  
+
   if (!employee) throw new Error("Employee not found");
 
   // Manually set employee data on leave for response functions
