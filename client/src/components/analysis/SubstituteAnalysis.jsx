@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../../axios/axiosInstance";
 import { useSocket } from "../../context/SocketContext";
@@ -12,15 +12,20 @@ export default function SubstituteAnalysis() {
   const [jobId, setJobId] = useState(null);
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(false);
-  const pollRef = useRef(null);
   const { socket } = useSocket();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Training modal state
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalDescription, setModalDescription] = useState("");
   const [modalDate, setModalDate] = useState("");
-  const [modalParticipant, setModalParticipant] = useState(null);
+  // modalParticipants stores objects { id, label }
+  const [modalParticipants, setModalParticipants] = useState([]);
+  const [participantInput, setParticipantInput] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const startJob = async (e) => {
     e.preventDefault();
@@ -44,7 +49,6 @@ export default function SubstituteAnalysis() {
       const res = await axios.post("/analysis/substitute", payload);
       const id = res.data.jobId;
       setJobId(id);
-      // fetch initial job state (socket will deliver updates)
       fetchJob(id);
     } catch (err) {
       console.error(err);
@@ -71,28 +75,20 @@ export default function SubstituteAnalysis() {
   };
 
   useEffect(() => {
-    // subscribe to socket progress events for this job
     if (!socket || !jobId) return;
-
     const handler = (evt) => {
       try {
         const incomingJobId =
           evt?.job?.id || evt?.jobId || (evt?.job?._id && String(evt.job._id));
         if (!incomingJobId) return;
-        if (String(incomingJobId) === String(jobId)) {
-          fetchJob(jobId);
-        }
+        if (String(incomingJobId) === String(jobId)) fetchJob(jobId);
       } catch {
         // ignore
       }
     };
-
     socket.on("analysis:progress", handler);
-
-    const cur = pollRef.current;
     return () => {
       if (socket) socket.off("analysis:progress", handler);
-      if (cur) clearInterval(cur);
     };
   }, [socket, jobId]);
 
@@ -109,22 +105,25 @@ export default function SubstituteAnalysis() {
         if (emp) {
           setTargetEmployeeId(emp._id || emp.employeeId || "");
           setTargetEmployeeName(emp.name || emp.employeeId || "");
-          // department may be populated object or id
           const dep = emp.department?._id || emp.department || "";
           setDepartment(dep);
           setRequiredSkills(
             Array.isArray(emp.skills) ? emp.skills.join(", ") : ""
           );
-          setModalParticipant(emp._id || emp.employeeId || null);
+          setModalParticipants([
+            {
+              id: emp._id || emp.employeeId || "",
+              label: emp.name || emp.employeeId || "",
+            },
+          ]);
         }
       } catch (e) {
         console.error("Failed to prefill employee data", e);
       }
     };
 
-    if (qpEmp) {
-      fetchEmployeeForPrefill(qpEmp);
-    } else if (qpRes) {
+    if (qpEmp) fetchEmployeeForPrefill(qpEmp);
+    else if (qpRes) {
       (async () => {
         try {
           const r = await axios.get(`/resignations/${qpRes}`);
@@ -138,7 +137,7 @@ export default function SubstituteAnalysis() {
     }
   }, [location.search]);
 
-  // When targetEmployeeId changes (typed or prefilled) fetch/read its display name
+  // When targetEmployeeId changes fetch its display name
   useEffect(() => {
     let cancelled = false;
     const fetchName = async (id) => {
@@ -153,15 +152,94 @@ export default function SubstituteAnalysis() {
           setTargetEmployeeName(emp.name || emp.employeeId || "");
       } catch (err) {
         if (!cancelled) setTargetEmployeeName("");
-        console.debug && console.debug("Failed to fetch employee name", err);
+        alert(
+          "Failed to fetch employee name: " +
+            (err?.response?.data?.message || err.message)
+        );
       }
     };
-
     fetchName(targetEmployeeId);
+    return () => (cancelled = true);
+  }, [targetEmployeeId]);
+
+  // suggestions for participant autocomplete
+  useEffect(() => {
+    let cancelled = false;
+    const q = participantInput?.trim();
+    if (!q || q.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await axios.get(
+          `/employees?name=${encodeURIComponent(q)}&limit=6`
+        );
+        const items = res.data?.employees || res.data || [];
+        if (!cancelled)
+          setSuggestions(
+            items.map((it) => ({ id: it._id, label: it.name || it.employeeId }))
+          );
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      }
+    }, 250);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [targetEmployeeId]);
+  }, [participantInput]);
+
+  const openTrainingModal = (candidate) => {
+    setModalParticipants([
+      {
+        id: candidate.employeeId,
+        label: candidate.name || candidate.employeeId,
+      },
+    ]);
+    setModalTitle(`Training for ${candidate.name}`);
+    setModalDescription(
+      `Auto-generated training for ${candidate.name} (from substitute analysis).`
+    );
+    setModalDate("");
+    setShowTrainingModal(true);
+  };
+
+  const submitTraining = async () => {
+    try {
+      const payload = {
+        title: modalTitle,
+        description: modalDescription,
+        participants: Array.isArray(modalParticipants)
+          ? modalParticipants.map((p) => p.id || p)
+          : [],
+        scheduledAt: modalDate ? new Date(modalDate).toISOString() : undefined,
+      };
+      const res = await axios.post("/trainings", payload);
+      alert(
+        "Training created: " +
+          (res.data?.training?._id ||
+            res.data?.trainingId ||
+            res.data?.training)
+      );
+      setShowTrainingModal(false);
+      setModalParticipants([]);
+      setParticipantInput("");
+      try {
+        const id =
+          res.data?.training?._id || res.data?.trainingId || res.data?.training;
+        if (id) navigate(`/trainings/${id}`);
+      } catch {
+        // ignore
+      }
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Failed to create training: " +
+          (err?.response?.data?.message || err.message)
+      );
+    }
+  };
 
   // CSV helper
   const downloadCSV = (filename, headers, rows) => {
@@ -214,36 +292,6 @@ export default function SubstituteAnalysis() {
     );
   };
 
-  const openTrainingModal = (candidate) => {
-    setModalParticipant(candidate.employeeId);
-    setModalTitle(`Training for ${candidate.name}`);
-    setModalDescription(
-      `Auto-generated training for ${candidate.name} (from substitute analysis).`
-    );
-    setModalDate("");
-    setShowTrainingModal(true);
-  };
-
-  const submitTraining = async () => {
-    try {
-      const payload = {
-        title: modalTitle,
-        description: modalDescription,
-        participants: modalParticipant ? [modalParticipant] : [],
-        scheduledAt: modalDate ? new Date(modalDate).toISOString() : undefined,
-      };
-      const res = await axios.post("/trainings", payload);
-      alert("Training created: " + res.data.training._id);
-      setShowTrainingModal(false);
-    } catch (err) {
-      console.error(err);
-      alert(
-        "Failed to create training: " +
-          (err?.response?.data?.message || err.message)
-      );
-    }
-  };
-
   return (
     <div className="relative w-full rounded-lg dark:text-gray-200 text-gray-700 bg-gray-100 dark:bg-secondary border border-gray-300 dark:border-primary p-4 shadow">
       <h3 className="text-[0.93rem] font-semibold mb-3">
@@ -278,6 +326,7 @@ export default function SubstituteAnalysis() {
             />
           )}
         </div>
+
         <div>
           <label className="block text-xs text-gray-500">
             Department ID (optional)
@@ -289,6 +338,7 @@ export default function SubstituteAnalysis() {
             placeholder="department id"
           />
         </div>
+
         <div>
           <label className="block text-xs text-gray-500">Top K</label>
           <input
@@ -298,6 +348,7 @@ export default function SubstituteAnalysis() {
             onChange={(e) => setTopK(e.target.value)}
           />
         </div>
+
         <div>
           <label className="block text-xs text-gray-500">
             Required skills (comma separated, optional)
@@ -309,6 +360,7 @@ export default function SubstituteAnalysis() {
             placeholder="e.g. leadership, payroll"
           />
         </div>
+
         <div>
           <button
             type="submit"
@@ -344,10 +396,12 @@ export default function SubstituteAnalysis() {
               </button>
             </div>
           </div>
+
           <div>
             Total candidates evaluated:{" "}
             {job.result.meta?.totalCandidates ?? "N/A"}
           </div>
+
           <table className="w-full mt-2 table-fixed text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-600">
@@ -446,6 +500,7 @@ export default function SubstituteAnalysis() {
                   onChange={(e) => setModalTitle(e.target.value)}
                 />
               </div>
+
               <div>
                 <label className="block text-xs text-gray-500">
                   Description
@@ -457,6 +512,7 @@ export default function SubstituteAnalysis() {
                   onChange={(e) => setModalDescription(e.target.value)}
                 />
               </div>
+
               <div>
                 <label className="block text-xs text-gray-500">
                   Scheduled date
@@ -468,6 +524,128 @@ export default function SubstituteAnalysis() {
                   onChange={(e) => setModalDate(e.target.value)}
                 />
               </div>
+
+              <div>
+                <label className="block text-xs text-gray-500">
+                  Participants
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    className="flex-1 border rounded px-2 py-1"
+                    placeholder="search employees by name or paste id"
+                    value={participantInput}
+                    onChange={(e) => setParticipantInput(e.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 150)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const match = suggestions.find(
+                          (s) =>
+                            (s.label || "").toLowerCase() ===
+                            participantInput.trim().toLowerCase()
+                        );
+                        if (match) {
+                          setModalParticipants((prev) =>
+                            prev.some((p) => p.id === match.id)
+                              ? prev
+                              : [...prev, { id: match.id, label: match.label }]
+                          );
+                          setParticipantInput("");
+                          return;
+                        }
+                        const raw = participantInput.trim();
+                        if (raw) {
+                          setModalParticipants((prev) =>
+                            prev.some((p) => p.id === raw)
+                              ? prev
+                              : [...prev, { id: raw, label: raw }]
+                          );
+                          setParticipantInput("");
+                        }
+                      }
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="px-3 py-1 rounded bg-primary text-white text-sm"
+                    onClick={() => {
+                      const raw = participantInput.trim();
+                      if (!raw) return;
+                      const match = suggestions.find(
+                        (s) =>
+                          (s.label || "").toLowerCase() === raw.toLowerCase()
+                      );
+                      if (match) {
+                        setModalParticipants((prev) =>
+                          prev.some((p) => p.id === match.id)
+                            ? prev
+                            : [...prev, { id: match.id, label: match.label }]
+                        );
+                        setParticipantInput("");
+                        return;
+                      }
+                      setModalParticipants((prev) =>
+                        prev.some((p) => p.id === raw)
+                          ? prev
+                          : [...prev, { id: raw, label: raw }]
+                      );
+                      setParticipantInput("");
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="bg-white border rounded mt-1 max-h-40 overflow-auto z-50">
+                    {suggestions.map((s) => (
+                      <div
+                        key={s.id}
+                        className="px-2 py-1 hover:bg-gray-100 cursor-pointer text-sm"
+                        onMouseDown={() => {
+                          setModalParticipants((prev) =>
+                            prev.some((p) => p.id === s.id)
+                              ? prev
+                              : [...prev, { id: s.id, label: s.label }]
+                          );
+                          setParticipantInput("");
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        {s.label}{" "}
+                        <span className="text-xs text-gray-400">{s.id}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {modalParticipants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded flex items-center gap-2 text-xs"
+                    >
+                      <span>{p.label || p.id}</span>
+                      <button
+                        type="button"
+                        className="text-red-600"
+                        onClick={() =>
+                          setModalParticipants((prev) =>
+                            prev.filter((x) => x.id !== p.id)
+                          )
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 mt-3">
                 <button
                   className="px-3 py-1 text-sm rounded border"
