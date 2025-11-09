@@ -292,11 +292,15 @@ const approveTimeEntry = catchErrors(async (req, res) => {
 
   const timeEntry = await TimeEntry.findByIdAndUpdate(
     id,
-    {
-      status,
-      approvedBy,
-      approvedAt: new Date(),
-    },
+    // include optional admin notes/reason if provided
+    (() => {
+      const body = { status, approvedBy, approvedAt: new Date() };
+      // support either `notes` or `adminNotes` from client
+      if (req.body?.notes) body.adminNotes = req.body.notes;
+      if (req.body?.adminNotes) body.adminNotes = req.body.adminNotes;
+      if (req.body?.reason) body.reason = req.body.reason;
+      return body;
+    })(),
     { new: true }
   )
     .populate("employee", "name email")
