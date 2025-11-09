@@ -12,7 +12,9 @@ export const getMyDocuments = createAsyncThunk(
       if (page) params.append("page", page);
       if (limit) params.append("limit", limit);
 
-      const response = await axiosInstance.get(`/employee-documents/my?${params.toString()}`);
+      const response = await axiosInstance.get(
+        `/employee-documents/my?${params.toString()}`
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -32,7 +34,9 @@ export const getAllEmployeeDocuments = createAsyncThunk(
       if (page) params.append("page", page);
       if (limit) params.append("limit", limit);
 
-      const response = await axiosInstance.get(`/employee-documents?${params.toString()}`);
+      const response = await axiosInstance.get(
+        `/employee-documents?${params.toString()}`
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -45,11 +49,15 @@ export const uploadEmployeeDocument = createAsyncThunk(
   "employeeDocument/uploadEmployeeDocument",
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/employee-documents", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axiosInstance.post(
+        "/employee-documents",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -60,11 +68,15 @@ export const uploadEmployeeDocument = createAsyncThunk(
 // Verify document (admin)
 export const verifyDocument = createAsyncThunk(
   "employeeDocument/verifyDocument",
-  async ({ documentId, remarks }, { rejectWithValue }) => {
+  async ({ documentId, remarks, status = "verified" }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/employee-documents/${documentId}/verify`, {
-        remarks,
-      });
+      const payload = { status };
+      if (status === "rejected") payload.rejectionReason = remarks || "";
+      // allow optional remarks to be sent as rejectionReason when rejecting
+      const response = await axiosInstance.patch(
+        `/employee-documents/${documentId}/verify`,
+        payload
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -77,9 +89,14 @@ export const rejectDocument = createAsyncThunk(
   "employeeDocument/rejectDocument",
   async ({ documentId, remarks }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/employee-documents/${documentId}/reject`, {
-        remarks,
-      });
+      // Server has a single verify endpoint that expects status and optional rejectionReason
+      const response = await axiosInstance.patch(
+        `/employee-documents/${documentId}/verify`,
+        {
+          status: "rejected",
+          rejectionReason: remarks || "",
+        }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -92,7 +109,9 @@ export const deleteEmployeeDocument = createAsyncThunk(
   "employeeDocument/deleteEmployeeDocument",
   async (documentId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/employee-documents/${documentId}`);
+      const response = await axiosInstance.delete(
+        `/employee-documents/${documentId}`
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
