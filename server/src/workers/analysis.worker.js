@@ -14,6 +14,7 @@ import {
   extractTopics,
   warmup as analysisWarmup,
 } from "../services/analysisService.js";
+import { computeSubstituteCandidates } from "../services/substituteAnalysis.service.js";
 import Feedback from "../models/feedback.model.js";
 import Complaint from "../models/complaint.model.js";
 import AnalysisJob from "../models/analysisJob.model.js";
@@ -68,6 +69,16 @@ const processSingle = async (job) => {
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, 160);
+    } else if (type === "substitute") {
+      // Run substitute/succession analysis job
+      // payload should contain necessary options (topK, scope, weights)
+      const result = await computeSubstituteCandidates(job.payload || {});
+      // persist result into the job document
+      await AnalysisJob.findByIdAndUpdate(job._id, {
+        result,
+        analysisMeta: { provider: "internal" },
+      });
+      var snippet = `Substitute analysis computed: ${result.candidates.length} candidates`;
     }
 
     // Invalidate insights cache after each successful update
