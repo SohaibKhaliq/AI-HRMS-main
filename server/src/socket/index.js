@@ -10,7 +10,7 @@ export const initializeSocket = (server) => {
         "http://localhost:5173",
         "http://localhost:8000",
         "http://127.0.0.1:5173",
-        "http://127.0.0.1:8000"
+        "http://127.0.0.1:8000",
       ].filter(Boolean),
       methods: ["GET", "POST"],
       credentials: true,
@@ -18,17 +18,17 @@ export const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log(`User connected: \${socket.id}`);
+    console.log(`User connected: ${socket.id}`);
 
     // Join user to their personal room
     const userId = socket.handshake.auth.userId;
     if (userId) {
-      socket.join(`user:\${userId}`);
-      console.log(`User \${userId} joined their room`);
+      socket.join(`user:${userId}`);
+      console.log(`User ${userId} joined their room`);
     }
 
     socket.on("disconnect", () => {
-      console.log(`User disconnected: \${socket.id}`);
+      console.log(`User disconnected: ${socket.id}`);
     });
   });
 
