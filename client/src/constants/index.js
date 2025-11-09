@@ -103,7 +103,7 @@ const sidebarLinks = [
     name: "HR Analytics & Reports",
     iconClass: "far fa-chart-bar",
     link: "/reports",
-    childrens: [],
+    childrens: [{ name: "Substitute Analysis", link: "/substitute-analysis" }],
   },
   {
     name: "Calendar View",
