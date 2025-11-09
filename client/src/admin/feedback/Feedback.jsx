@@ -1,11 +1,10 @@
 import { Helmet } from "react-helmet";
 import { FaStar } from "react-icons/fa";
 import { formatDate } from "../../utils";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import { getFeedbacks } from "../../services/feedback.service";
-import { setFetchFlag } from "../../reducers/feedback.reducer";
 import { feedbackButtons, feedbackHead } from "../../constants";
 import FetchError from "../../components/shared/error/FetchError";
 import Pagination from "../../components/shared/others/Pagination";
@@ -19,12 +18,10 @@ import TopicChips from "../../components/analysis/TopicChips";
 function Feedback() {
   const dispatch = useDispatch();
 
-  const { feedbacks, loading, pagination, error, fetch } = useSelector(
+  const { feedbacks, loading, pagination, error } = useSelector(
     (state) => state.feedback
   );
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [reviewFilter, setReviewFilter] = useState("");
   const [sentimentFilter, setSentimentFilter] = useState("");
   const [topicFilter, setTopicFilter] = useState("");
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -34,75 +31,40 @@ function Feedback() {
   const [viewItem, setViewItem] = useState(null);
 
   const handleReviewFilter = (filter) => {
-    dispatch(setFetchFlag(true));
-    setReviewFilter(filter);
+    // Map quick filter buttons to the sentiment filter sent to server
+    setSentimentFilter(filter);
     setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
-    dispatch(setFetchFlag(true));
     setCurrentPage(page);
   };
 
+  // Fetch feedbacks whenever filters or pagination change. We send all
+  // relevant filter params to the server so pagination remains consistent.
   useEffect(() => {
-    if (fetch) {
-      dispatch(
-        // pass page using the expected key 'page' and include review filter
-        getFeedbacks({
-          review: reviewFilter ? reviewFilter.toLowerCase() : undefined,
-          page: currentPage,
-        })
-      );
-    }
-  }, [reviewFilter, currentPage, fetch, dispatch]);
+    const params = { page: currentPage, limit: 12 };
 
-  const filteredFeedbacks = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    let list = feedbacks || [];
-    if (q) {
-      list = list.filter((f) => {
-        const fields = [
-          f.employee?.employeeId,
-          f.employee?.name,
-          f.employee?.department?.name,
-          f.employee?.role?.name,
-          f.suggestion,
-          f.description,
-          f.review,
-        ]
-          .filter(Boolean)
-          .map((x) => String(x).toLowerCase())
-          .join(" ");
-        return fields.includes(q);
-      });
-    }
-    if (dateFrom) {
-      const from = new Date(dateFrom).getTime();
-      list = list.filter((f) => new Date(f.createdAt).getTime() >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      list = list.filter((f) => new Date(f.createdAt) <= to);
-    }
-    // sentiment filter (client-side)
-    if (sentimentFilter) {
-      list = list.filter(
-        (f) =>
-          (f.sentimentLabel || f.review || "").toLowerCase() ===
-          sentimentFilter.toLowerCase()
-      );
-    }
-    // topic filter (client-side, partial match)
-    if (topicFilter) {
-      const t = topicFilter.trim().toLowerCase();
-      list = list.filter((f) =>
-        (f.topics || []).some((x) => String(x).toLowerCase().includes(t))
-      );
-    }
-    return list;
-  }, [feedbacks, searchQuery, dateFrom, dateTo, sentimentFilter, topicFilter]);
-  // include sentiment/topic filters in memo dependencies
+    if (sentimentFilter) params.review = sentimentFilter.toLowerCase();
+    if (searchQuery) params.q = searchQuery.trim();
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
+    if (topicFilter) params.topic = topicFilter;
+
+    dispatch(getFeedbacks(params));
+  }, [
+    dispatch,
+    currentPage,
+    sentimentFilter,
+    searchQuery,
+    dateFrom,
+    dateTo,
+    topicFilter,
+  ]);
+
+  // Use server-provided, already-filtered feedbacks for display to keep
+  // pagination and filters consistent.
+  const filteredFeedbacks = feedbacks || [];
 
   const handleExportCSV = () => {
     const rows = filteredFeedbacks.length ? filteredFeedbacks : feedbacks;
@@ -138,7 +100,10 @@ function Feedback() {
   return (
     <>
       <Helmet>
-        <title>{reviewFilter} Feedbacks - Metro HR</title>
+        <title>
+          {sentimentFilter ? `${sentimentFilter} Feedbacks` : "Feedbacks"} -
+          Metro HR
+        </title>
       </Helmet>
 
       {loading && <Loader />}
@@ -149,7 +114,7 @@ function Feedback() {
             <FilterButton
               key={i}
               setState={handleReviewFilter}
-              state={reviewFilter}
+              state={sentimentFilter}
               filter={filter}
             />
           ))}
@@ -182,7 +147,7 @@ function Feedback() {
               value={sentimentFilter}
               onChange={(e) => {
                 setSentimentFilter(e.target.value);
-                dispatch(setFetchFlag(true));
+                setCurrentPage(1);
               }}
               className="px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm"
               title="Filter by sentiment"
@@ -199,7 +164,7 @@ function Feedback() {
               value={topicFilter}
               onChange={(e) => {
                 setTopicFilter(e.target.value);
-                dispatch(setFetchFlag(true));
+                setCurrentPage(1);
               }}
               className="px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm"
               title="Filter by topic"
@@ -231,12 +196,10 @@ function Feedback() {
               </tr>
             </thead>
             <tbody>
-              {(filteredFeedbacks.length > 0 ? filteredFeedbacks : feedbacks)
-                .length > 0 &&
-                (filteredFeedbacks.length > 0
-                  ? filteredFeedbacks
-                  : feedbacks
-                ).map((feedback, index) => (
+              {/* Always render the filtered list. Previously we fell back to full `feedbacks` when filters returned 0,
+                  which made filters (e.g., Neutral) appear to not work. */}
+              {filteredFeedbacks.length > 0 &&
+                filteredFeedbacks.map((feedback, index) => (
                   <tr
                     key={feedback._id || index}
                     className="dark:even:bg-gray-800 odd:bg-gray-200 dark:odd:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -310,12 +273,10 @@ function Feedback() {
             </tbody>
           </table>
 
-          {!loading &&
-            !error &&
-            filteredFeedbacks.length === 0 &&
-            feedbacks.length === 0 && (
-              <NoDataMessage message={"No feedback found"} />
-            )}
+          {/* Show no-data when filters produce zero results. */}
+          {!loading && !error && filteredFeedbacks.length === 0 && (
+            <NoDataMessage message={"No feedback found"} />
+          )}
         </div>
 
         {!loading && feedbacks.length > 0 && (
