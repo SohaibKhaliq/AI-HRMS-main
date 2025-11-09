@@ -6,6 +6,7 @@ import {
 import AnalysisJob from "../models/analysisJob.model.js";
 import Feedback from "../models/feedback.model.js";
 import Complaint from "../models/complaint.model.js";
+import { verifyAdminToken } from "../middlewares/index.js";
 
 const router = express.Router();
 
@@ -52,7 +53,7 @@ router.post("/topics", (req, res, next) => {
 export default router;
 
 // Additional admin helper: fetch a single analysis job and include the referenced document
-router.get("/jobs/:id", async (req, res, next) => {
+router.get("/jobs/:id", verifyAdminToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     if (!id)
