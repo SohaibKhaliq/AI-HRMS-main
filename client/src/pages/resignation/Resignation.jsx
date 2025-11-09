@@ -4,18 +4,25 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/shared/loaders/Loader";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
-import { createResignation, getResignations } from "../../services/resignation.service";
+import {
+  createResignation,
+  getResignations,
+} from "../../services/resignation.service";
 import { employeeResignationSchema } from "../../validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { FaCheck, FaEye, FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 
 const Resignation = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.authentication);
-  const { resignations = [], loading } = useSelector((state) => state.resignation || {});
-  
+  const { resignations = [], loading } = useSelector(
+    (state) => state.resignation || {}
+  );
+  const navigate = useNavigate();
+
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedResignation, setSelectedResignation] = useState(null);
@@ -61,7 +68,7 @@ const Resignation = () => {
     console.log("Total resignations from DB:", resignations.length);
     console.log("Current user ID:", user?._id);
     console.log("All resignations:", resignations);
-    const userResignations = resignations.filter(r => {
+    const userResignations = resignations.filter((r) => {
       console.log("Comparing:", r.employee?._id, "with", user?._id);
       return r.employee?._id === user?._id;
     });
@@ -82,7 +89,8 @@ const Resignation = () => {
       resignation.remarks?.toLowerCase().includes(searchLower) ||
       resignation.status?.toLowerCase().includes(searchLower);
 
-    const matchesStatus = statusFilter === "" || resignation.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "" || resignation.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -106,10 +114,19 @@ const Resignation = () => {
   };
 
   const statusOptions = ["Pending", "Approved", "Rejected"];
-  const totalPages = Math.max(1, Math.ceil(filteredResignations.length / pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredResignations.length / pageSize)
+  );
   const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, filteredResignations.length);
-  const paginatedResignations = filteredResignations.slice(startIndex - 1, endIndex);
+  const endIndex = Math.min(
+    currentPage * pageSize,
+    filteredResignations.length
+  );
+  const paginatedResignations = filteredResignations.slice(
+    startIndex - 1,
+    endIndex
+  );
 
   // Check if current user has already submitted a resignation
   const userHasResignation = resignations?.some(
@@ -171,18 +188,18 @@ const Resignation = () => {
         employee: user._id,
         resignationDate: data.resignationDate,
         reason: data.reason,
-        noticePeriod: data.noticePeriod
+        noticePeriod: data.noticePeriod,
       });
-      
+
       const result = await dispatch(createResignation(formData)).unwrap();
       console.log("Resignation created successfully:", result);
-      
+
       setShowSuccessPopup(true);
       setShowModal(false);
       reset();
       setDocumentFile(null);
       setDocumentPreview(null);
-      
+
       // Small delay to ensure backend cache is cleared
       setTimeout(async () => {
         console.log("Refetching resignations after submission...");
@@ -225,8 +242,13 @@ const Resignation = () => {
               </div>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Success!</h2>
-            <p className="text-gray-600 mb-2">Resignation submitted successfully!</p>
-            <p className="text-sm text-gray-500 mb-6">Your resignation request has been submitted to HR. You will receive an update on your status.</p>
+            <p className="text-gray-600 mb-2">
+              Resignation submitted successfully!
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Your resignation request has been submitted to HR. You will
+              receive an update on your status.
+            </p>
             <button
               onClick={() => setShowSuccessPopup(false)}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
@@ -264,7 +286,10 @@ const Resignation = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Search Bar */}
             <div className="relative">
-              <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+              <FiSearch
+                className="absolute left-3 top-3 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search by reason, remarks, status..."
@@ -330,10 +355,14 @@ const Resignation = () => {
                         {startIndex + index}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
-                        {new Date(resignation.resignationDate).toLocaleDateString()}
+                        {new Date(
+                          resignation.resignationDate
+                        ).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
-                        {new Date(resignation.lastWorkingDay).toLocaleDateString()}
+                        {new Date(
+                          resignation.lastWorkingDay
+                        ).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                         <div className="max-w-xs truncate">
@@ -341,7 +370,11 @@ const Resignation = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(resignation.status)}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            resignation.status
+                          )}`}
+                        >
                           {resignation.status}
                         </span>
                       </td>
@@ -371,9 +404,11 @@ const Resignation = () => {
                             No resignations found
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {resignations.length > 0 
+                            {resignations.length > 0
                               ? "No resignations match your current filters."
-                              : userHasResignation ? "You have submitted a resignation." : "You haven't submitted any resignation yet."}
+                              : userHasResignation
+                              ? "You have submitted a resignation."
+                              : "You haven't submitted any resignation yet."}
                           </p>
                         </div>
                       </div>
@@ -421,7 +456,9 @@ const Resignation = () => {
                 {currentPage}
               </span>
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               >
@@ -456,136 +493,142 @@ const Resignation = () => {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   {/* Resignation Date */}
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Resignation Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    {...register("resignationDate", {
-                      required: "Resignation date is required",
-                    })}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
-                  {errors.resignationDate && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.resignationDate.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Notice Period */}
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Notice Period (Days) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    {...register("noticePeriod", {
-                      required: "Notice period is required",
-                      min: { value: 1, message: "Notice period must be at least 1 day" },
-                    })}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Standard notice period is 30 days
-                  </p>
-                  {errors.noticePeriod && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.noticePeriod.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Reason */}
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Reason for Resignation{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    {...register("reason", {
-                      required: "Please select a reason",
-                    })}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  >
-                    <option value="">Select a reason</option>
-                    <option value="Career change">Career change</option>
-                    <option value="Better opportunities">
-                      Better opportunities
-                    </option>
-                    <option value="Relocation">Relocation</option>
-                    <option value="Further education">Further education</option>
-                    <option value="Personal reasons">Personal reasons</option>
-                    <option value="Health reasons">Health reasons</option>
-                    <option value="Family matters">Family matters</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  {errors.reason && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.reason.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Remarks */}
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Additional Remarks
-                  </label>
-                  <textarea
-                    {...register("remarks")}
-                    rows="3"
-                    placeholder="Add any additional information or remarks..."
-                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
-                </div>
-
-                {/* Document Upload */}
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Supporting Document (Optional)
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Resignation Date <span className="text-red-500">*</span>
+                    </label>
                     <input
-                      type="file"
-                      onChange={handleDocumentChange}
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      className="hidden"
-                      id="document-upload"
+                      type="date"
+                      {...register("resignationDate", {
+                        required: "Resignation date is required",
+                      })}
+                      className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     />
-                    {documentPreview ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <i className="fa-solid fa-file text-red-500 text-lg"></i>
-                          <span className="text-sm font-medium text-gray-700">
-                            {documentPreview}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleRemoveDocument}
-                          className="text-red-600 hover:text-red-700 text-sm font-medium"
-                        >
-                          <i className="fa-solid fa-trash"></i> Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <label
-                        htmlFor="document-upload"
-                        className="cursor-pointer flex flex-col items-center justify-center py-6"
-                      >
-                        <i className="fa-solid fa-cloud-arrow-up text-gray-400 text-3xl mb-2"></i>
-                        <p className="text-sm font-medium text-gray-700">
-                          Drop your document here or click to browse
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Supported: PDF, DOC, DOCX, JPG, PNG (Max 5MB)
-                        </p>
-                      </label>
+                    {errors.resignationDate && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.resignationDate.message}
+                      </p>
                     )}
                   </div>
-                </div>
+
+                  {/* Notice Period */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Notice Period (Days){" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      {...register("noticePeriod", {
+                        required: "Notice period is required",
+                        min: {
+                          value: 1,
+                          message: "Notice period must be at least 1 day",
+                        },
+                      })}
+                      className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Standard notice period is 30 days
+                    </p>
+                    {errors.noticePeriod && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.noticePeriod.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Reason */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Reason for Resignation{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("reason", {
+                        required: "Please select a reason",
+                      })}
+                      className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <option value="">Select a reason</option>
+                      <option value="Career change">Career change</option>
+                      <option value="Better opportunities">
+                        Better opportunities
+                      </option>
+                      <option value="Relocation">Relocation</option>
+                      <option value="Further education">
+                        Further education
+                      </option>
+                      <option value="Personal reasons">Personal reasons</option>
+                      <option value="Health reasons">Health reasons</option>
+                      <option value="Family matters">Family matters</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {errors.reason && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.reason.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Remarks */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Additional Remarks
+                    </label>
+                    <textarea
+                      {...register("remarks")}
+                      rows="3"
+                      placeholder="Add any additional information or remarks..."
+                      className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+
+                  {/* Document Upload */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Supporting Document (Optional)
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <input
+                        type="file"
+                        onChange={handleDocumentChange}
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        className="hidden"
+                        id="document-upload"
+                      />
+                      {documentPreview ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <i className="fa-solid fa-file text-red-500 text-lg"></i>
+                            <span className="text-sm font-medium text-gray-700">
+                              {documentPreview}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveDocument}
+                            className="text-red-600 hover:text-red-700 text-sm font-medium"
+                          >
+                            <i className="fa-solid fa-trash"></i> Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor="document-upload"
+                          className="cursor-pointer flex flex-col items-center justify-center py-6"
+                        >
+                          <i className="fa-solid fa-cloud-arrow-up text-gray-400 text-3xl mb-2"></i>
+                          <p className="text-sm font-medium text-gray-700">
+                            Drop your document here or click to browse
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Supported: PDF, DOC, DOCX, JPG, PNG (Max 5MB)
+                          </p>
+                        </label>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Submit Button */}
                   <div className="flex gap-3 mt-6">
@@ -642,13 +685,21 @@ const Resignation = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedResignation.status)}`}>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Status
+                      </p>
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          selectedResignation.status
+                        )}`}
+                      >
                         {selectedResignation.status}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Notice Period</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Notice Period
+                      </p>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
                         {selectedResignation.noticePeriod} days
                       </p>
@@ -656,21 +707,31 @@ const Resignation = () => {
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Resignation Date</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Resignation Date
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {new Date(selectedResignation.resignationDate).toLocaleDateString()}
+                      {new Date(
+                        selectedResignation.resignationDate
+                      ).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Last Working Day</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Last Working Day
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {new Date(selectedResignation.lastWorkingDay).toLocaleDateString()}
+                      {new Date(
+                        selectedResignation.lastWorkingDay
+                      ).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Reason</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Reason
+                    </p>
                     <p className="text-gray-900 dark:text-gray-100">
                       {selectedResignation.reason}
                     </p>
@@ -678,7 +739,9 @@ const Resignation = () => {
 
                   {selectedResignation.remarks && (
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Additional Remarks</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Additional Remarks
+                      </p>
                       <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
                         {selectedResignation.remarks}
                       </p>
@@ -687,7 +750,9 @@ const Resignation = () => {
 
                   {selectedResignation.document && (
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Supporting Document</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        Supporting Document
+                      </p>
                       <a
                         href={selectedResignation.document}
                         target="_blank"
@@ -706,8 +771,13 @@ const Resignation = () => {
                       Notice Period Information
                     </p>
                     <p className="text-gray-900 dark:text-gray-100 text-sm">
-                      Your resignation will be effective after {selectedResignation.noticePeriod} days notice period. 
-                      Your last working day is {new Date(selectedResignation.lastWorkingDay).toLocaleDateString()}.
+                      Your resignation will be effective after{" "}
+                      {selectedResignation.noticePeriod} days notice period.
+                      Your last working day is{" "}
+                      {new Date(
+                        selectedResignation.lastWorkingDay
+                      ).toLocaleDateString()}
+                      .
                     </p>
                   </div>
                 </div>
@@ -715,9 +785,30 @@ const Resignation = () => {
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setShowViewModal(false)}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-lg"
+                    className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-lg"
                   >
                     Close
+                  </button>
+                  {/* Open Substitute Analysis with resigning employee prefilled */}
+                  <button
+                    onClick={() => {
+                      try {
+                        const empId = selectedResignation?.employee?._id;
+                        if (empId) {
+                          // navigate to substitute analysis and prefill employee
+                          navigate(`/substitute-analysis?employeeId=${empId}`);
+                        } else {
+                          toast.error(
+                            "No employee associated with this resignation"
+                          );
+                        }
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }}
+                    className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    Open Substitute Analysis
                   </button>
                 </div>
               </div>
