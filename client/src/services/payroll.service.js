@@ -23,13 +23,18 @@ export const generatePayrollForMonth = createAsyncThunk(
 // Fetch Payroll
 export const getAllPayrolls = createAsyncThunk(
   "payroll/getAllPayrolls",
-  async ({ currentPage, month, isPaid }, { rejectWithValue }) => {
+  async ({ currentPage, month, year, isPaid }, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams({
-        month: month,
-        isPaid: isPaid,
-        page: currentPage,
-      }).toString();
+      const params = {};
+      if (month !== undefined && month !== null && month !== "")
+        params.month = month;
+      if (year !== undefined && year !== null && year !== "")
+        params.year = year;
+      // only include isPaid when explicitly provided ('' means all)
+      if (isPaid !== undefined && isPaid !== "") params.isPaid = isPaid;
+      params.page = currentPage;
+
+      const queryParams = new URLSearchParams(params).toString();
 
       const { data } = await axiosInstance.get(`/payrolls?${queryParams}`);
       return data;
