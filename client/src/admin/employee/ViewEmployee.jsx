@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Error from "../../components/shared/error/Error";
 import { getEmployeeById } from "../../services/employee.service";
+import { unregisterFaceDescriptorForAdmin } from "../../services/attendance.service";
 import ComponentLoader from "../../components/shared/loaders/ComponentLoader";
 
 const ViewEmployee = () => {
@@ -37,6 +38,28 @@ const ViewEmployee = () => {
           />
           <h2 className="text-xl font-bold">{employee?.name || "-"}</h2>
           <p className="text-gray-500">{employee?.role?.name || "-"}</p>
+          {/* Unregister button for admins */}
+          <div className="mt-3">
+            <button
+              onClick={async () => {
+                if (!window.confirm("Unregister face for this employee?"))
+                  return;
+                try {
+                  await dispatch(
+                    unregisterFaceDescriptorForAdmin(employee._id)
+                  ).unwrap();
+                  // refresh employee details
+                  dispatch(getEmployeeById(employee._id));
+                } catch (err) {
+                  console.error("Failed to unregister employee face:", err);
+                }
+              }}
+              className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 shadow"
+            >
+              <i className="fas fa-user-slash mr-2"></i>
+              Unregister Face
+            </button>
+          </div>
         </div>
 
         <main className="bg-gray-100 dark:bg-secondary p-4 sm:p-6 rounded-lg space-y-6 text-[0.88rem] shadow">
