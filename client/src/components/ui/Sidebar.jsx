@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import SettingModal from "../shared/modals/SettingModal";
+import { unregisterFaceDescriptor } from "../../services/attendance.service";
 import { logout, logoutAll } from "../../services/authentication.service";
 import NotificationBell from "../shared/notifications/NotificationBell";
 
@@ -138,12 +139,16 @@ const Sidebar = () => {
             >
               <div className="flex justify-between items-center">
                 <Link
-                  to={item.link || '#'}
+                  to={item.link || "#"}
                   onClick={() => setShowSidebar(false)}
                   className={`flex items-center ${
-                    (location.pathname.startsWith(item.link || '') || (item.childrens && item.childrens.some(c => location.pathname.startsWith(c.link))))
-                      ? 'text-primary'
-                      : 'hover:text-primary'
+                    location.pathname.startsWith(item.link || "") ||
+                    (item.childrens &&
+                      item.childrens.some((c) =>
+                        location.pathname.startsWith(c.link)
+                      ))
+                      ? "text-primary"
+                      : "hover:text-primary"
                   }`}
                 >
                   <i
@@ -182,7 +187,9 @@ const Sidebar = () => {
                           key={subIndex}
                           onClick={() => setShowSidebar(false)}
                           className={`cursor-pointer flex items-center py-[3px] ${
-                            location.pathname.startsWith(subLink.link) ? 'text-primary font-semibold' : 'hover:text-gray-300'
+                            location.pathname.startsWith(subLink.link)
+                              ? "text-primary font-semibold"
+                              : "hover:text-gray-300"
                           }`}
                         >
                           {subLink.name}
@@ -242,6 +249,22 @@ const Sidebar = () => {
               <div className="text-center text-white">
                 <p className="text-sm font-semibold">{user?.name}</p>
                 <p className="text-xs text-gray-400">{user?.email}</p>
+                <div className="mt-2">
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm("Unregister your face data?")) return;
+                      try {
+                        await dispatch(unregisterFaceDescriptor()).unwrap();
+                      } catch (err) {
+                        console.error("Failed to unregister:", err);
+                      }
+                    }}
+                    className="text-xs bg-red-600 px-3 py-1 rounded-md hover:bg-red-700"
+                  >
+                    <i className="fas fa-user-slash mr-1"></i>
+                    Unregister Face
+                  </button>
+                </div>
               </div>
             </div>
           </div>
