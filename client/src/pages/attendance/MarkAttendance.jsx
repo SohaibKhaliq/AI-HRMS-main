@@ -7,6 +7,7 @@ import {
   registerFaceDescriptor,
   getFaceDescriptor,
   markAttendanceUsingFace,
+  unregisterFaceDescriptor,
 } from "../../services/attendance.service";
 import axiosInstance from "../../axios/axiosInstance";
 import FaceRegistration from "../../components/face/FaceRegistration";
@@ -24,7 +25,7 @@ const MarkAttendance = () => {
   useEffect(() => {
     // Fetch face descriptor on mount
     dispatch(getFaceDescriptor());
-    
+
     async function getDateFromAPI() {
       const { data } = await axiosInstance.get("/insights/date");
       setCurrentDate(data.datetime);
@@ -59,7 +60,9 @@ const MarkAttendance = () => {
       async (error) => {
         console.warn("Location not available:", error.message);
         // Mark attendance without location
-        await dispatch(markAttendanceUsingFace({ latitude: null, longitude: null }));
+        await dispatch(
+          markAttendanceUsingFace({ latitude: null, longitude: null })
+        );
         setShowFaceAttendance(false);
       }
     );
@@ -92,6 +95,26 @@ const MarkAttendance = () => {
               Mark with Face Recognition
             </button>
 
+            {faceDescriptor && (
+              <button
+                disabled={loading}
+                onClick={async () => {
+                  if (!window.confirm("Unregister your face data?")) return;
+                  try {
+                    await dispatch(unregisterFaceDescriptor()).unwrap();
+                    // refresh descriptor
+                    dispatch(getFaceDescriptor());
+                  } catch (err) {
+                    console.error("Failed to unregister:", err);
+                  }
+                }}
+                className="text-sm py-3 w-full bg-red-600 rounded-xl font-bold hover:bg-red-700 text-gray-200 shadow-lg transition-all mt-2"
+              >
+                <i className="fas fa-user-slash mr-2"></i>
+                Unregister Face
+              </button>
+            )}
+
             {!faceDescriptor && (
               <button
                 disabled={loading}
@@ -110,6 +133,14 @@ const MarkAttendance = () => {
         <FaceRegistration
           onFaceRegistered={handleFaceRegistered}
           onClose={() => setShowFaceRegistration(false)}
+          onUnregister={async () => {
+            try {
+              await dispatch(unregisterFaceDescriptor()).unwrap();
+              dispatch(getFaceDescriptor());
+            } catch (err) {
+              console.error("Failed to unregister from modal:", err);
+            }
+          }}
         />
       )}
 
