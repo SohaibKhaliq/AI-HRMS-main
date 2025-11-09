@@ -57,7 +57,8 @@ export const updatePerformance = catchErrors(async (req, res) => {
   // Send notification to employee about performance review
   const employeeData = await Employee.findById(performance.employee._id);
   if (employeeData) {
-    await sendFullNotification({
+    // Fire-and-forget notification
+    sendFullNotification({
       employee: employeeData,
       title: "Performance Review Available",
       message: `Your performance review has been updated. Overall rating: ${rating}/5. Check your dashboard for details.`,
@@ -67,10 +68,18 @@ export const updatePerformance = catchErrors(async (req, res) => {
       emailSubject: "Performance Review Available",
       emailTemplate: "performanceReview",
       emailData: {
-        period: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        period: new Date().toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        }),
         rating: rating || 0,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: performance notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   return res.status(200).json({
