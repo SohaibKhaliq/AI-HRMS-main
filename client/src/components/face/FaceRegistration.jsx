@@ -33,6 +33,35 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
     };
   }, []);
 
+  // Start continuous face detection function (declared before effect to avoid TDZ)
+  const startContinuousDetection = useCallback(() => {
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+    }
+
+    detectionIntervalRef.current = setInterval(async () => {
+      if (videoRef.current && modelsReady && !isCapturing) {
+        try {
+          const detection = await detectFaceFromVideo(videoRef.current);
+
+          if (detection) {
+            setFaceDetected(true);
+
+            // Analyze face quality
+            const quality = analyzeFaceQuality(detection);
+            setFaceQuality(quality);
+          } else {
+            setFaceDetected(false);
+            setFaceQuality(null);
+          }
+        } catch (error) {
+          // Silently handle detection errors
+          console.debug("Detection error:", error);
+        }
+      }
+    }, 500); // Check every 500ms
+  }, [modelsReady, isCapturing]);
+
   useEffect(() => {
     // Start continuous face detection when models are ready
     if (modelsReady && videoRef.current && !isCapturing) {
@@ -157,34 +186,6 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
       setIsLoading(false);
     }
   };
-
-  const startContinuousDetection = useCallback(() => {
-    if (detectionIntervalRef.current) {
-      clearInterval(detectionIntervalRef.current);
-    }
-
-    detectionIntervalRef.current = setInterval(async () => {
-      if (videoRef.current && modelsReady && !isCapturing) {
-        try {
-          const detection = await detectFaceFromVideo(videoRef.current);
-
-          if (detection) {
-            setFaceDetected(true);
-
-            // Analyze face quality
-            const quality = analyzeFaceQuality(detection);
-            setFaceQuality(quality);
-          } else {
-            setFaceDetected(false);
-            setFaceQuality(null);
-          }
-        } catch (error) {
-          // Silently handle detection errors
-          console.debug("Detection error:", error);
-        }
-      }
-    }, 500); // Check every 500ms
-  }, [modelsReady, isCapturing]);
 
   const analyzeFaceQuality = (detection) => {
     // Analyze detection quality
