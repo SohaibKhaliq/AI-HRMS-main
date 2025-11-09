@@ -68,7 +68,12 @@ const getAllPayrolls = catchErrors(async (req, res) => {
 
   if (year) query.year = year;
   if (month) query.month = month;
-  if (isPaid) query.isPaid = isPaid;
+  // handle isPaid explicitly so false is respected (query param may come as string)
+  if (typeof isPaid !== "undefined" && isPaid !== "") {
+    if (isPaid === "true" || isPaid === true) query.isPaid = true;
+    else if (isPaid === "false" || isPaid === false) query.isPaid = false;
+    else query.isPaid = isPaid;
+  }
 
   const pageNumber = Math.max(parseInt(page), 1);
   const limitNumber = Math.max(parseInt(limit), 1);
