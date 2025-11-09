@@ -2,10 +2,9 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import mongoose from "mongoose";
-import cloudinary from "cloudinary";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+// multer-storage-cloudinary removed: using local disk storage
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,118 +35,56 @@ const disConnectDB = async () => {
 
 // File Upload Configurations
 const createImageStorage = () => {
-  return new CloudinaryStorage({
-    cloudinary: cloudinary.v2,
-    params: {
-      folder: "uploads",
-      allowed_formats: ["jpg", "png", "jpeg", "svg"],
-      transformation: [{ quality: "auto", fetch_format: "auto" }],
-      max_file_size: 2097152,
+  // Use local disk storage for images
+  const uploadDir = path.join(__dirname, "../public/uploads/images");
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  return multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
+      const parsed = path.parse(file.originalname);
+      const sanitized = parsed.name
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "");
+      const filename = `${sanitized}_${uuidv4().substring(0, 8)}${parsed.ext}`;
+      cb(null, filename);
     },
   });
 };
 
 const createResumeStorage = () => {
-  // Use local storage fallback if Cloudinary is not configured
-  const useLocalStorage = !process.env.CLOUDINARY_CLOUD_NAME || 
-                          !process.env.CLOUDINARY_API_KEY || 
-                          !process.env.CLOUDINARY_API_SECRET;
-
-  if (useLocalStorage) {
-    console.log("⚠️  Cloudinary not configured. Using local file storage for resumes.");
-    const uploadDir = path.join(__dirname, "../public/uploads/resumes");
-    
-    // Ensure upload directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    return multer.diskStorage({
-      destination: (req, file, cb) => {
-        cb(null, uploadDir);
-      },
-      filename: (req, file, cb) => {
-        const parsedName = path.parse(file.originalname);
-        const sanitizedName = parsedName.name
-          .replace(/\s+/g, "_")
-          .replace(/[^a-zA-Z0-9_-]/g, "");
-        const uniqueName = `${sanitizedName}_${uuidv4().substring(0, 8)}${parsedName.ext}`;
-        cb(null, uniqueName);
-      },
-    });
-  }
-
-  return new CloudinaryStorage({
-    cloudinary: cloudinary.v2,
-    params: (req, file) => {
-      const allowedExtensions = [".pdf", ".doc", ".docx"];
-      const fileExt = path.extname(file.originalname).toLowerCase();
-
-      if (!allowedExtensions.includes(fileExt)) {
-        throw new Error("Invalid file type");
-      }
-
+  // Use local disk storage for resumes
+  const uploadDir = path.join(__dirname, "../public/uploads/resumes");
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  return multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
       const parsedName = path.parse(file.originalname);
       const sanitizedName = parsedName.name
         .replace(/\s+/g, "_")
         .replace(/[^a-zA-Z0-9_-]/g, "");
-
-      return {
-        folder: "resumes",
-        resource_type: "raw",
-        allowed_formats: ["pdf", "doc", "docx"],
-        public_id: `${sanitizedName}_${uuidv4().substring(0, 6)}`,
-        format: fileExt.substring(1),
-        transformation: [
-          {
-            flags: "attachment:inline",
-            quality: "auto:best",
-            fetch_format: "auto",
-          },
-        ],
-        max_file_size: 5242880,
-        invalidate: true,
-        type: "authenticated",
-        disposition: "inline",
-      };
+      const uniqueName = `${sanitizedName}_${uuidv4().substring(0, 8)}${
+        parsedName.ext
+      }`;
+      cb(null, uniqueName);
     },
   });
 };
 
 const createDocumentStorage = () => {
-  return new CloudinaryStorage({
-    cloudinary: cloudinary.v2,
-    params: (req, file) => {
-      const allowedExtensions = [".pdf"];
-      const fileExt = path.extname(file.originalname).toLowerCase();
-
-      if (!allowedExtensions.includes(fileExt)) {
-        throw new Error("Only PDF files are allowed");
-      }
-
+  // Use local disk storage for documents (promotion documents etc.)
+  const uploadDir = path.join(__dirname, "../public/uploads/documents");
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  return multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
       const parsedName = path.parse(file.originalname);
       const sanitizedName = parsedName.name
         .replace(/\s+/g, "_")
         .replace(/[^a-zA-Z0-9_-]/g, "");
-
-      return {
-        folder: "promotion-documents",
-        resource_type: "raw",
-        allowed_formats: ["pdf"],
-        public_id: `${sanitizedName}_${uuidv4().substring(0, 6)}`,
-        format: "pdf",
-        transformation: [
-          {
-            flags: "attachment:inline",
-            quality: "auto:best",
-            fetch_format: "auto",
-          },
-        ],
-        max_file_size: 5242880,
-        invalidate: true,
-        type: "authenticated",
-        disposition: "inline",
-      };
+      const filename = `${sanitizedName}_${uuidv4().substring(0, 8)}${
+        parsedName.ext
+      }`;
+      cb(null, filename);
     },
   });
 };
