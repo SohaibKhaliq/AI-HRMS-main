@@ -55,7 +55,7 @@ const uploadDocument = catchErrors(async (req, res) => {
     documentType: documentType || null,
     title,
     description: description || "",
-    fileUrl: req.file.path, // From cloudinary/multer
+    fileUrl: req.file.path, // Local multer file path (server/public/uploads/documents)
     fileName: req.file.originalname,
     fileSize: req.file.size,
     fileType: req.file.mimetype,
