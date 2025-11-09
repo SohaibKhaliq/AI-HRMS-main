@@ -1,9 +1,6 @@
 import Feedback from "../models/feedback.model.js";
 import { catchErrors, myCache } from "../utils/index.js";
-import {
-  analyzeSentiment,
-  extractTopics,
-} from "../services/analysisService.js";
+import { enqueueAnalysisJob } from "../services/analysisQueue.service.js";
 
 const getFeedbacks = catchErrors(async (req, res) => {
   const { review, page = 1, limit = 12 } = req.query;
@@ -75,32 +72,29 @@ const createFeedback = catchErrors(async (req, res) => {
   if (!employee || !description || !rating)
     throw new Error("All fields are required");
 
-  // Run local analysis (sentiment + topics) synchronously for now. This can be moved to a background job.
-  let sentiment = { score: 0, label: "neutral", raw: null };
-  let topics = [];
-  try {
-    sentiment = await analyzeSentiment(description);
-    const topicResults = extractTopics(description, 5);
-    topics = topicResults.map((t) => t.tag);
-  } catch (err) {
-    console.warn(
-      "Local analysis failed, falling back to basic review logic:",
-      err && err.message ? err.message : err
-    );
-  }
-
+  // Create feedback quickly, analysis will run in background worker
   const feedback = await Feedback.create({
     employee,
     description,
     rating: parseInt(rating),
-    review: sentiment.label || "neutral",
+    review: "neutral",
     suggestion,
-    sentimentScore: sentiment.score,
-    sentimentLabel: sentiment.label,
-    topics,
-    analysisMeta: { provider: "local-transformers" },
-    lastAnalyzedAt: new Date(),
+    sentimentScore: null,
+    sentimentLabel: null,
+    topics: [],
+    analysisMeta: { provider: null },
+    lastAnalyzedAt: null,
   });
+
+  // enqueue background job to analyze this feedback
+  try {
+    await enqueueAnalysisJob("feedback", feedback._id);
+  } catch (e) {
+    console.warn(
+      "Failed to enqueue analysis job:",
+      e && e.message ? e.message : e
+    );
+  }
 
   myCache.del("insights");
   const cacheKeys = myCache.keys();
