@@ -108,7 +108,6 @@ export const compareFaces = (descriptor1, descriptor2, threshold = 0.6) => {
   } catch {
     // ignore
   }
-
   return distance < threshold;
 };
 
@@ -134,4 +133,20 @@ export const drawFaceDetection = (canvas, detection, videoElement) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   faceapi.draw.drawDetections(canvas, resizedDetection);
   faceapi.draw.drawFaceLandmarks(canvas, resizedDetection);
+};
+
+// Return numeric Euclidean distance between two descriptors
+export const faceDistance = (descriptor1, descriptor2) => {
+  if (!descriptor1 || !descriptor2) return Number.POSITIVE_INFINITY;
+
+  const d1 =
+    descriptor1 instanceof Float32Array
+      ? descriptor1
+      : new Float32Array(descriptor1);
+  const d2 =
+    descriptor2 instanceof Float32Array
+      ? descriptor2
+      : new Float32Array(descriptor2);
+
+  return faceapi.euclideanDistance(d1, d2);
 };
