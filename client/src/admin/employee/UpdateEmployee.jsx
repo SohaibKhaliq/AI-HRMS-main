@@ -9,6 +9,7 @@ import { updateEmployeeSchema } from "../../validations";
 import { useNavigate, useParams } from "react-router-dom";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 import { editEmployee, getEmployeeById } from "../../services/employee.service";
+import { getShifts } from "../../services/shift.service";
 import ComponentLoader from "../../components/shared/loaders/ComponentLoader";
 
 const EditEmployee = () => {
@@ -18,6 +19,7 @@ const EditEmployee = () => {
 
   const roles = useSelector((state) => state.role.roles);
   const departments = useSelector((state) => state.department.departments);
+  const shifts = useSelector((state) => state.shift?.shifts || []);
   const { loading, employee, formLoading } = useSelector(
     (state) => state.employee
   );
@@ -41,6 +43,8 @@ const EditEmployee = () => {
   useEffect(() => {
     if (id) {
       dispatch(getEmployeeById(id));
+      // load shifts for the shift selector
+      dispatch(getShifts());
     }
   }, [id, dispatch]);
 
@@ -62,7 +66,7 @@ const EditEmployee = () => {
       setValue("gender", employee.gender || "");
       setValue("martialStatus", employee.martialStatus || "");
       setValue("employmentType", employee.employmentType || "");
-      setValue("shift", employee.shift || "");
+  setValue("shift", employee.shift?._id || employee.shift || "");
       setValue("status", employee.status || "Active");
       setValue("salary", employee.salary || "");
       setValue(
@@ -548,9 +552,12 @@ const EditEmployee = () => {
                       } text-gray-800 dark:text-gray-200`}
                     >
                       <option value="">--Shift--</option>
-                      <option value="Morning">Morning</option>
-                      <option value="Evening">Evening</option>
-                      <option value="Night">Night</option>
+                      {shifts.map((s) => (
+                        <option key={s._id} value={s._id}>
+                          {s.name}
+                          {s.startTime ? ` — ${s.startTime} - ${s.endTime}` : ""}
+                        </option>
+                      ))}
                     </select>
                     {errors.shift && (
                       <p className="text-red-500 text-[0.8rem] mt-1">
