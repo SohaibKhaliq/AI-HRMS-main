@@ -47,7 +47,7 @@ const createTermination = catchErrors(async (req, res) => {
   // Send notification to employee
   const employeeData = await Employee.findById(employee);
   if (employeeData) {
-    await sendFullNotification({
+    sendFullNotification({
       employee: employeeData,
       title: "Termination Notice",
       message: `This is to inform you about your employment termination. Type: ${type}. Termination date: ${formatDate(
@@ -68,7 +68,12 @@ const createTermination = catchErrors(async (req, res) => {
           remarks ? `Additional remarks: ${remarks}` : ""
         } Please contact HR for further details.`,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: termination notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del("terminations");
