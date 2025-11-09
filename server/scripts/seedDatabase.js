@@ -5,6 +5,7 @@ import { connectDB } from "../src/config/index.js";
 import {
   startHrmsApplication,
   seedAllHCMData,
+  seedEmployeeSkills,
   generateHolidayData,
   generateAnnouncementData,
   generateComplaintData,
@@ -17,10 +18,10 @@ import {
 
 /**
  * Complete HRMS Database Seeding Script
- * 
+ *
  * This script populates the database with comprehensive sample data
  * across all modules for testing and development purposes.
- * 
+ *
  * Usage: node server/scripts/seedDatabase.js
  */
 
@@ -57,6 +58,16 @@ const seedDatabase = async () => {
     console.log("🎯 Step 3: Seeding all HCM modules");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     await seedAllHCMData();
+    // Seed employee skills after HCM modules (assigns sample skills to employees)
+    try {
+      await seedEmployeeSkills();
+      console.log("✅ Employee skills seeded\n");
+    } catch (e) {
+      console.warn(
+        "Could not seed employee skills:",
+        e && e.message ? e.message : e
+      );
+    }
     console.log("✅ All HCM modules seeded\n");
 
     // Step 4: Payroll (optional - can be time-consuming)
@@ -64,7 +75,9 @@ const seedDatabase = async () => {
     console.log("💰 Step 4: Generating payroll data (optional)");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     const currentYear = new Date().getFullYear();
-    console.log(`📊 Generating payroll for previous, current and upcoming year around ${currentYear}...`);
+    console.log(
+      `📊 Generating payroll for previous, current and upcoming year around ${currentYear}...`
+    );
     // Generate payroll for previous year (if supported), current year and next year
     const yearsToGenerate = [];
     if (currentYear - 1 >= 2024) yearsToGenerate.push(currentYear - 1);
@@ -72,7 +85,9 @@ const seedDatabase = async () => {
     yearsToGenerate.push(currentYear + 1);
 
     // Sync employee salaries from designation before generating payroll
-    console.log("🔁 Syncing employee salaries from designation where applicable...");
+    console.log(
+      "🔁 Syncing employee salaries from designation where applicable..."
+    );
     await syncEmployeeSalariesFromDesignation();
 
     for (const y of yearsToGenerate) {
@@ -104,7 +119,9 @@ const seedDatabase = async () => {
     console.log("   ✅ Attendance: 200+ records (30 days)");
     console.log("   ✅ Notifications: 50+ system notifications");
     console.log("   ✅ Feedback: 15+ peer & manager feedback");
-    console.log("   ✅ Recruitment: Job categories, types, locations, postings");
+    console.log(
+      "   ✅ Recruitment: Job categories, types, locations, postings"
+    );
     console.log("   ✅ Performance: 10+ performance reviews");
     console.log("   ✅ Holidays: 12 public holidays for 2025");
     console.log("   ✅ Announcements: 8+ company announcements");
