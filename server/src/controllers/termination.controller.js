@@ -24,7 +24,7 @@ const createTermination = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    finalDocumentUrl = req.file.path;
+    finalDocumentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   }
 
   const data = {
@@ -155,7 +155,7 @@ const updateTermination = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    updateData.documentUrl = req.file.path;
+    updateData.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   }
 
   const termination = await Termination.findByIdAndUpdate(id, updateData, {
