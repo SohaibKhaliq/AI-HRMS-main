@@ -38,7 +38,7 @@ const createResignation = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    finalDocumentUrl = req.file.path;
+    finalDocumentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   }
 
   const data = {
@@ -92,26 +92,22 @@ const createResignation = catchErrors(async (req, res) => {
 
   myCache.del("resignations");
 
-  return res
-    .status(201)
-    .json({
-      success: true,
-      message: "Resignation created successfully",
-      resignation: populated,
-    });
+  return res.status(201).json({
+    success: true,
+    message: "Resignation created successfully",
+    resignation: populated,
+  });
 });
 
 const getAllResignations = catchErrors(async (req, res) => {
   const cacheKey = "resignations";
   const cached = myCache.get(cacheKey);
   if (cached) {
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Resignations fetched (cache)",
-        resignations: cached,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Resignations fetched (cache)",
+      resignations: cached,
+    });
   }
 
   const resignations = await Resignation.find()
@@ -122,13 +118,11 @@ const getAllResignations = catchErrors(async (req, res) => {
     .lean();
   myCache.set(cacheKey, resignations);
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      message: "Resignations fetched successfully",
-      resignations,
-    });
+  return res.status(200).json({
+    success: true,
+    message: "Resignations fetched successfully",
+    resignations,
+  });
 });
 
 const getMyResignation = catchErrors(async (req, res) => {
@@ -147,13 +141,11 @@ const getMyResignation = catchErrors(async (req, res) => {
       .json({ success: false, message: "No resignation found" });
   }
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      message: "Resignation fetched successfully",
-      resignation,
-    });
+  return res.status(200).json({
+    success: true,
+    message: "Resignation fetched successfully",
+    resignation,
+  });
 });
 
 const getResignationById = catchErrors(async (req, res) => {
@@ -199,7 +191,7 @@ const updateResignation = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    updateData.documentUrl = req.file.path;
+    updateData.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   } else if (documentUrl !== undefined) {
     updateData.documentUrl = documentUrl;
   }
