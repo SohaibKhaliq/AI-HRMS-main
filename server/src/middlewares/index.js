@@ -54,6 +54,10 @@ const verifyEmployeeToken = catchErrors(async (req, res, next) => {
     token,
   };
 
+  // Backwards compatibility: some controllers expect req.employee._id
+  // Provide a minimal employee object with _id to avoid undefined errors.
+  req.employee = { _id: decoded.employeeId };
+
   next();
 });
 
@@ -81,6 +85,9 @@ const verifyAdminToken = catchErrors(async (req, res, next) => {
     authority: decoded.authority,
     token,
   };
+
+  // Provide full employee document on req.employee for downstream handlers
+  req.employee = user;
 
   next();
 });
