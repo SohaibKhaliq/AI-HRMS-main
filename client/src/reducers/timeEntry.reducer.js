@@ -36,13 +36,15 @@ const timeEntrySlice = createSlice({
       })
       .addCase(clockIn.fulfilled, (state, action) => {
         state.loading = false;
-        state.activeEntry = action.payload.data;
+        const payload = action.payload || {};
+        // server returns { timeEntry } — fall back to data for older endpoints
+        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
       })
       .addCase(clockIn.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Clock out
       .addCase(clockOut.pending, (state) => {
         state.loading = true;
@@ -50,18 +52,22 @@ const timeEntrySlice = createSlice({
       })
       .addCase(clockOut.fulfilled, (state, action) => {
         state.loading = false;
+        const payload = action.payload || {};
         state.activeEntry = null;
+        const updated = payload.timeEntry ?? payload.data ?? payload;
         // Update in myEntries if exists
-        const index = state.myEntries.findIndex(e => e._id === action.payload.data._id);
-        if (index !== -1) {
-          state.myEntries[index] = action.payload.data;
+        const index = state.myEntries.findIndex(
+          (e) => e._id === (updated && updated._id)
+        );
+        if (index !== -1 && updated) {
+          state.myEntries[index] = updated;
         }
       })
       .addCase(clockOut.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Start break
       .addCase(startBreak.pending, (state) => {
         state.loading = true;
@@ -69,13 +75,14 @@ const timeEntrySlice = createSlice({
       })
       .addCase(startBreak.fulfilled, (state, action) => {
         state.loading = false;
-        state.activeEntry = action.payload.data;
+        const payload = action.payload || {};
+        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
       })
       .addCase(startBreak.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // End break
       .addCase(endBreak.pending, (state) => {
         state.loading = true;
@@ -83,13 +90,14 @@ const timeEntrySlice = createSlice({
       })
       .addCase(endBreak.fulfilled, (state, action) => {
         state.loading = false;
-        state.activeEntry = action.payload.data;
+        const payload = action.payload || {};
+        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
       })
       .addCase(endBreak.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Get active time entry
       .addCase(getActiveTimeEntry.pending, (state) => {
         state.loading = true;
@@ -97,14 +105,15 @@ const timeEntrySlice = createSlice({
       })
       .addCase(getActiveTimeEntry.fulfilled, (state, action) => {
         state.loading = false;
-        state.activeEntry = action.payload.data;
+        const payload = action.payload || {};
+        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
       })
       .addCase(getActiveTimeEntry.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.activeEntry = null;
       })
-      
+
       // Get my time entries
       .addCase(getMyTimeEntries.pending, (state) => {
         state.loading = true;
@@ -112,13 +121,15 @@ const timeEntrySlice = createSlice({
       })
       .addCase(getMyTimeEntries.fulfilled, (state, action) => {
         state.loading = false;
-        state.myEntries = action.payload.data;
+        const payload = action.payload || {};
+        state.myEntries =
+          payload.timeEntries ?? payload.data ?? payload.timeEntries ?? [];
       })
       .addCase(getMyTimeEntries.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Get all time entries (admin)
       .addCase(getAllTimeEntries.pending, (state) => {
         state.loading = true;
@@ -126,24 +137,29 @@ const timeEntrySlice = createSlice({
       })
       .addCase(getAllTimeEntries.fulfilled, (state, action) => {
         state.loading = false;
-        state.allTimeEntries = action.payload.data;
+        const payload = action.payload || {};
+        state.allTimeEntries = payload.timeEntries ?? payload.data ?? payload;
       })
       .addCase(getAllTimeEntries.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Approve time entry
       .addCase(approveTimeEntry.fulfilled, (state, action) => {
-        const index = state.allTimeEntries.findIndex(e => e._id === action.payload.data._id);
+        const index = state.allTimeEntries.findIndex(
+          (e) => e._id === action.payload.data._id
+        );
         if (index !== -1) {
           state.allTimeEntries[index] = action.payload.data;
         }
       })
-      
+
       // Reject time entry
       .addCase(rejectTimeEntry.fulfilled, (state, action) => {
-        const index = state.allTimeEntries.findIndex(e => e._id === action.payload.data._id);
+        const index = state.allTimeEntries.findIndex(
+          (e) => e._id === action.payload.data._id
+        );
         if (index !== -1) {
           state.allTimeEntries[index] = action.payload.data;
         }
