@@ -44,17 +44,33 @@ const wrapEmail = (content) => `
  */
 const complaintUpdateTemplate = (data) => `
   <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Complaint Status Update</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
-    Your complaint regarding <strong>${data.complaintType}</strong> has been updated.
+    Your complaint regarding <strong>${
+      data.complaintType
+    }</strong> has been updated.
   </p>
   <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Status:</strong> ${data.status}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Subject:</strong> ${data.subject}</p>
-    ${data.remarks ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Remarks:</strong> ${data.remarks}</p>` : ''}
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Status:</strong> ${
+      data.status
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Subject:</strong> ${
+      data.subject
+    }</p>
+    ${
+      data.remarks
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Remarks:</strong> ${data.remarks}</p>`
+        : ""
+    }
   </div>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
-    ${data.status === "Resolved" ? "Thank you for bringing this to our attention. The matter has been resolved." : "We are working on resolving this issue. You will be notified of any updates."}
+    ${
+      data.status === "Resolved"
+        ? "Thank you for bringing this to our attention. The matter has been resolved."
+        : "We are working on resolving this issue. You will be notified of any updates."
+    }
   </p>
   <a href="${clientUrl}/complaints" style="display: inline-block; padding: 12px 28px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
     View Complaint
@@ -66,15 +82,25 @@ const complaintUpdateTemplate = (data) => `
  */
 const employeeOnboardingTemplate = (data) => `
   <h2 style="color: #10B981; font-weight: 500; font-size: 22px; margin-bottom: 16px;">🎉 Welcome to Metro HRMS!</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Welcome to the team! We are excited to have you join us.
   </p>
   <div style="background: #1a3a2c; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #10B981;">
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Employee ID:</strong> ${data.employeeId}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Department:</strong> ${data.department}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Designation:</strong> ${data.designation}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Start Date:</strong> ${data.startDate}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Employee ID:</strong> ${
+      data.employeeId
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Department:</strong> ${
+      data.department
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Designation:</strong> ${
+      data.designation
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Start Date:</strong> ${
+      data.startDate
+    }</p>
   </div>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Please login to the HRMS portal to complete your profile and access company resources.
@@ -82,7 +108,9 @@ const employeeOnboardingTemplate = (data) => `
   <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
     <p style="color: #cccccc; margin: 4px 0;"><strong>Login Credentials:</strong></p>
     <p style="color: #cccccc; margin: 4px 0;">Email: ${data.email}</p>
-    <p style="color: #cccccc; margin: 4px 0;">Password: ${data.temporaryPassword || "Please check with HR"}</p>
+    <p style="color: #cccccc; margin: 4px 0;">Password: ${
+      data.temporaryPassword || "Please check with HR"
+    }</p>
     <p style="color: #F59E0B; font-size: 12px; margin-top: 8px;">⚠️ Please change your password after first login</p>
   </div>
   <a href="${clientUrl}/login" style="display: inline-block; padding: 12px 28px; background-color: #10B981; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
@@ -103,6 +131,7 @@ export const getEmailTemplate = (templateName, data) => {
     holidayAnnouncement: holidayAnnouncementTemplate,
     announcement: announcementTemplate,
     payrollGenerated: payrollGeneratedTemplate,
+    timeEntryReview: timeEntryReviewTemplate,
     documentExpiring: documentExpiringTemplate,
     attendanceAlert: attendanceAlertTemplate,
     resignationSubmitted: resignationSubmittedTemplate,
@@ -149,16 +178,30 @@ const leaveAppliedTemplate = (data) => `
  */
 const leaveApprovedTemplate = (data) => `
   <h2 style="color: #10B981; font-weight: 500; font-size: 22px; margin-bottom: 16px;">✓ Leave Application Approved</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Great news! Your leave application has been <strong style="color: #10B981;">approved</strong>.
   </p>
   <div style="background: #1a3a2c; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #10B981;">
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Leave Type:</strong> ${data.leaveType}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>From:</strong> ${data.fromDate}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>To:</strong> ${data.toDate}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Duration:</strong> ${data.duration} days</p>
-    ${data.approverName ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Approved By:</strong> ${data.approverName}</p>` : ''}
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Leave Type:</strong> ${
+      data.leaveType
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>From:</strong> ${
+      data.fromDate
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>To:</strong> ${
+      data.toDate
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Duration:</strong> ${
+      data.duration
+    } days</p>
+    ${
+      data.approverName
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Approved By:</strong> ${data.approverName}</p>`
+        : ""
+    }
   </div>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Enjoy your time off!
@@ -173,15 +216,27 @@ const leaveApprovedTemplate = (data) => `
  */
 const leaveRejectedTemplate = (data) => `
   <h2 style="color: #EF4444; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Leave Application Not Approved</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Unfortunately, your leave application could not be approved at this time.
   </p>
   <div style="background: #3a1a1a; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #EF4444;">
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Leave Type:</strong> ${data.leaveType}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>From:</strong> ${data.fromDate}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>To:</strong> ${data.toDate}</p>
-    ${data.reason ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Reason:</strong> ${data.reason}</p>` : ''}
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Leave Type:</strong> ${
+      data.leaveType
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>From:</strong> ${
+      data.fromDate
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>To:</strong> ${
+      data.toDate
+    }</p>
+    ${
+      data.reason
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Reason:</strong> ${data.reason}</p>`
+        : ""
+    }
   </div>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Please contact HR if you have any questions.
@@ -193,19 +248,37 @@ const leaveRejectedTemplate = (data) => `
  */
 const meetingInviteTemplate = (data) => `
   <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">📅 Meeting Invitation</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     You have been invited to a meeting.
   </p>
   <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
     <h3 style="color: #ffffff; margin: 0 0 12px 0;">${data.meetingTitle}</h3>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${data.meetingDate}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Time:</strong> ${data.meetingTime}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Location:</strong> ${data.location || 'TBA'}</p>
-    ${data.meetingLink ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Link:</strong> <a href="${data.meetingLink}" style="color: #007bff;">${data.meetingLink}</a></p>` : ''}
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Organizer:</strong> ${data.organizer}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${
+      data.meetingDate
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Time:</strong> ${
+      data.meetingTime
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Location:</strong> ${
+      data.location || "TBA"
+    }</p>
+    ${
+      data.meetingLink
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Link:</strong> <a href="${data.meetingLink}" style="color: #007bff;">${data.meetingLink}</a></p>`
+        : ""
+    }
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Organizer:</strong> ${
+      data.organizer
+    }</p>
   </div>
-  ${data.agenda ? `<p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;"><strong>Agenda:</strong><br/>${data.agenda}</p>` : ''}
+  ${
+    data.agenda
+      ? `<p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;"><strong>Agenda:</strong><br/>${data.agenda}</p>`
+      : ""
+  }
   <a href="${clientUrl}/meetings" style="display: inline-block; padding: 12px 28px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
     View Meeting Details
   </a>
@@ -216,15 +289,27 @@ const meetingInviteTemplate = (data) => `
  */
 const meetingReminderTemplate = (data) => `
   <h2 style="color: #F59E0B; font-weight: 500; font-size: 22px; margin-bottom: 16px;">⏰ Meeting Reminder</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
-    This is a reminder that your meeting is starting in ${data.minutesBefore} minutes.
+    This is a reminder that your meeting is starting in ${
+      data.minutesBefore
+    } minutes.
   </p>
   <div style="background: #3a2f1a; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #F59E0B;">
     <h3 style="color: #ffffff; margin: 0 0 12px 0;">${data.meetingTitle}</h3>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Time:</strong> ${data.meetingTime}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Location:</strong> ${data.location || 'TBA'}</p>
-    ${data.meetingLink ? `<p style="color: #cccccc; margin: 4px 0;"><a href="${data.meetingLink}" style="color: #F59E0B; text-decoration: underline;">Join Meeting</a></p>` : ''}
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Time:</strong> ${
+      data.meetingTime
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Location:</strong> ${
+      data.location || "TBA"
+    }</p>
+    ${
+      data.meetingLink
+        ? `<p style="color: #cccccc; margin: 4px 0;"><a href="${data.meetingLink}" style="color: #F59E0B; text-decoration: underline;">Join Meeting</a></p>`
+        : ""
+    }
   </div>
 `;
 
@@ -233,14 +318,22 @@ const meetingReminderTemplate = (data) => `
  */
 const holidayAnnouncementTemplate = (data) => `
   <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">🎉 Holiday Announcement</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     We would like to inform you about an upcoming holiday.
   </p>
   <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
     <h3 style="color: #ffffff; margin: 0 0 12px 0;">${data.holidayName}</h3>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${data.holidayDate}</p>
-    ${data.description ? `<p style="color: #cccccc; margin: 4px 0;">${data.description}</p>` : ''}
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${
+      data.holidayDate
+    }</p>
+    ${
+      data.description
+        ? `<p style="color: #cccccc; margin: 4px 0;">${data.description}</p>`
+        : ""
+    }
   </div>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     The office will be closed on this day.
@@ -266,16 +359,72 @@ const announcementTemplate = (data) => `
  */
 const payrollGeneratedTemplate = (data) => `
   <h2 style="color: #10B981; font-weight: 500; font-size: 22px; margin-bottom: 16px;">💰 Payroll Generated</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     Your payroll for ${data.month} ${data.year} has been processed.
   </p>
   <div style="background: #1a3a2c; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #10B981;">
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Net Salary:</strong> $${data.netSalary}</p>
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Payment Status:</strong> ${data.isPaid ? 'Paid' : 'Pending'}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Net Salary:</strong> $${
+      data.netSalary
+    }</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Payment Status:</strong> ${
+      data.isPaid ? "Paid" : "Pending"
+    }</p>
   </div>
   <a href="${clientUrl}/payroll" style="display: inline-block; padding: 12px 28px; background-color: #10B981; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
     View Payslip
+  </a>
+`;
+
+/**
+ * Time Entry Review Template (approved/rejected)
+ */
+const timeEntryReviewTemplate = (data) => `
+  <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Timesheet ${
+    data.timeEntry?.status === "approved" ? "Approved" : "Updated"
+  }</h2>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
+  <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${new Date(
+      data.timeEntry?.date
+    ).toLocaleDateString()}</p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Clock In:</strong> ${
+      data.timeEntry?.clockIn
+        ? new Date(data.timeEntry.clockIn).toLocaleTimeString()
+        : "-"
+    } </p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Clock Out:</strong> ${
+      data.timeEntry?.clockOut
+        ? new Date(data.timeEntry.clockOut).toLocaleTimeString()
+        : "-"
+    } </p>
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Work Hours:</strong> ${
+      typeof data.timeEntry?.workHours === "number"
+        ? data.timeEntry.workHours.toFixed(2)
+        : data.timeEntry?.workHours || "-"
+    }</p>
+    ${
+      data.reason
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Reason:</strong> ${data.reason}</p>`
+        : ""
+    }
+    ${
+      data.adminNotes
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Admin Notes:</strong> ${data.adminNotes}</p>`
+        : ""
+    }
+  </div>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    Your timesheet has been reviewed and its status updated to <strong style="color: #10B981;">${
+      data.timeEntry?.status || ""
+    }</strong>.
+  </p>
+  <a href="${clientUrl}/time-tracking" style="display: inline-block; padding: 12px 28px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
+    View Timesheet
   </a>
 `;
 
@@ -300,13 +449,21 @@ const documentExpiringTemplate = (data) => `
  */
 const attendanceAlertTemplate = (data) => `
   <h2 style="color: #EF4444; font-weight: 500; font-size: 22px; margin-bottom: 16px;">⚠️ Attendance Alert</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
     ${data.message}
   </p>
   <div style="background: #3a1a1a; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #EF4444;">
-    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${data.date}</p>
-    ${data.details ? `<p style="color: #cccccc; margin: 4px 0;">${data.details}</p>` : ''}
+    <p style="color: #cccccc; margin: 4px 0;"><strong>Date:</strong> ${
+      data.date
+    }</p>
+    ${
+      data.details
+        ? `<p style="color: #cccccc; margin: 4px 0;">${data.details}</p>`
+        : ""
+    }
   </div>
 `;
 
@@ -361,10 +518,16 @@ const performanceReviewTemplate = (data) => `
  * Default Template (fallback)
  */
 const defaultTemplate = (data) => `
-  <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">${data.title || 'Notification'}</h2>
-  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${data.employeeName}</strong>,</p>
+  <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">${
+    data.title || "Notification"
+  }</h2>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
   <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
-    <p style="color: #cccccc; font-size: 14px; line-height: 1.6;">${data.message || 'You have a new notification.'}</p>
+    <p style="color: #cccccc; font-size: 14px; line-height: 1.6;">${
+      data.message || "You have a new notification."
+    }</p>
   </div>
   <a href="${clientUrl}" style="display: inline-block; padding: 12px 28px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">
     Visit HRMS Portal
