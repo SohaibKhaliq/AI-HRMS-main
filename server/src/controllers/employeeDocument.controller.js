@@ -17,12 +17,36 @@ const uploadDocument = catchErrors(async (req, res) => {
 
   const uploadedBy = req.user.id;
 
-  if (!employee || !category || !title) {
-    throw new Error("Employee, category, and title are required");
+  // category is optional for employee upload; require employee and title
+  if (!employee || !title) {
+    throw new Error("Employee and title are required");
   }
 
   if (!req.file) {
     throw new Error("Document file is required");
+  }
+
+  // Prevent duplicate submissions: if the same employee has already uploaded
+  // a document for this documentType that is pending or verified, block it.
+  if (documentType) {
+    const existing = await EmployeeDocument.findOne({
+      employee,
+      documentType,
+      status: { $in: ["pending", "verified"] },
+    });
+    if (existing) {
+      throw new Error("You have already submitted this document type.");
+    }
+  } else {
+    // If no documentType provided, check for same title to avoid duplicates
+    const existingByTitle = await EmployeeDocument.findOne({
+      employee,
+      title,
+      status: { $in: ["pending", "verified"] },
+    });
+    if (existingByTitle) {
+      throw new Error("You have already submitted a document with this title.");
+    }
   }
 
   const document = await EmployeeDocument.create({
@@ -36,7 +60,8 @@ const uploadDocument = catchErrors(async (req, res) => {
     fileSize: req.file.size,
     fileType: req.file.mimetype,
     uploadedBy,
-    issueDate: issueDate ? new Date(issueDate) : null,
+    // if issueDate/expiryDate not provided, set issueDate to now and expiryDate to null
+    issueDate: issueDate ? new Date(issueDate) : new Date(),
     expiryDate: expiryDate ? new Date(expiryDate) : null,
     tags: tags ? JSON.parse(tags) : [],
   });
@@ -86,7 +111,9 @@ const getEmployeeDocuments = catchErrors(async (req, res) => {
   if (category) query.category = category;
   if (status) query.status = status;
 
-  const cacheKey = `employeeDocuments-${employeeId}-${category || "all"}-${status || "all"}`;
+  const cacheKey = `employeeDocuments-${employeeId}-${category || "all"}-${
+    status || "all"
+  }`;
   const cached = myCache.get(cacheKey);
   if (cached) {
     return res.status(200).json({
@@ -161,8 +188,10 @@ const updateDocument = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Document ID is required");
 
-  if (updateData.issueDate) updateData.issueDate = new Date(updateData.issueDate);
-  if (updateData.expiryDate) updateData.expiryDate = new Date(updateData.expiryDate);
+  if (updateData.issueDate)
+    updateData.issueDate = new Date(updateData.issueDate);
+  if (updateData.expiryDate)
+    updateData.expiryDate = new Date(updateData.expiryDate);
   if (updateData.tags && typeof updateData.tags === "string") {
     updateData.tags = JSON.parse(updateData.tags);
   }
@@ -228,7 +257,9 @@ const verifyDocument = catchErrors(async (req, res) => {
     const message =
       status === "verified"
         ? `Your document "${document.title}" has been verified.`
-        : `Your document "${document.title}" was rejected. Reason: ${rejectionReason || "Not specified"}`;
+        : `Your document "${document.title}" was rejected. Reason: ${
+            rejectionReason || "Not specified"
+          }`;
 
     await sendFullNotification({
       employee: emp,
@@ -254,8 +285,19 @@ const deleteDocument = catchErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new Error("Document ID is required");
 
-  const document = await EmployeeDocument.findByIdAndDelete(id);
+  const document = await EmployeeDocument.findById(id);
   if (!document) throw new Error("Document not found");
+
+  // Allow deletion if requester is admin or owner
+  const requesterId = req.user?.id;
+  const requester = await Employee.findById(requesterId);
+  const isAdmin = requester?.admin;
+
+  if (!isAdmin && document.employee.toString() !== requesterId) {
+    throw new Error("Unauthorized access");
+  }
+
+  await EmployeeDocument.findByIdAndDelete(id);
 
   myCache.del(`employeeDocuments-${document.employee}`);
 
