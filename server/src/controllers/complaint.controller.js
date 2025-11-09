@@ -116,7 +116,8 @@ const createComplaint = catchErrors(async (req, res) => {
   // Send notification to employee confirming complaint submission
   const employeeData = await Employee.findById(employee);
   if (employeeData) {
-    await sendFullNotification({
+    // Fire-and-forget notification/email
+    sendFullNotification({
       employee: employeeData,
       title: "Complaint Submitted",
       message: `Your complaint regarding ${complainType} has been submitted successfully and is under review.`,
@@ -130,7 +131,12 @@ const createComplaint = catchErrors(async (req, res) => {
         subject: complainSubject,
         status: "Pending",
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: complaint notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del("insights");
@@ -195,7 +201,8 @@ const respondComplaint = catchErrors(async (req, res) => {
   // Send notification using new service
   const employeeData = await Employee.findById(complaint.employee._id);
   if (employeeData) {
-    await sendFullNotification({
+    // Fire-and-forget notification/email
+    sendFullNotification({
       employee: employeeData,
       title: `Complaint ${status}`,
       message: `Your complaint regarding ${
@@ -212,7 +219,12 @@ const respondComplaint = catchErrors(async (req, res) => {
         status: status,
         remarks: remarks,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: complaint update notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del("insights");
