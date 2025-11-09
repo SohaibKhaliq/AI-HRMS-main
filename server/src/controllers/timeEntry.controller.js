@@ -330,11 +330,62 @@ const getTimeEntryById = catchErrors(async (req, res) => {
 
   if (!timeEntry) throw new Error("Time entry not found");
 
-  return res.status(200).json({
-    success: true,
-    message: "Time entry fetched successfully",
-    timeEntry,
-  });
+  // Compute live totals (handles active entries and open breaks)
+  try {
+    const now = new Date();
+    const entry = timeEntry.toObject ? timeEntry.toObject() : timeEntry;
+
+    const clockIn = entry.clockIn ? new Date(entry.clockIn) : null;
+    const clockOut = entry.clockOut ? new Date(entry.clockOut) : null;
+    const endTime = clockOut || now;
+
+    if (clockIn) {
+      const totalMs = endTime - clockIn;
+      entry.totalHours = totalMs / (1000 * 60 * 60);
+    } else {
+      entry.totalHours = entry.totalHours || 0;
+    }
+
+    // Breaks: sum startTime..endTime (use now for active break)
+    let breakMs = 0;
+    if (entry.breaks && entry.breaks.length > 0) {
+      entry.breaks.forEach((b) => {
+        const bStart = b.startTime
+          ? new Date(b.startTime)
+          : b.start
+          ? new Date(b.start)
+          : null;
+        const bEnd = b.endTime
+          ? new Date(b.endTime)
+          : b.end
+          ? new Date(b.end)
+          : null;
+        if (bStart) {
+          const be = bEnd || now;
+          if (be > bStart) breakMs += be - bStart;
+        }
+      });
+    }
+    entry.breakHours = breakMs / (1000 * 60 * 60);
+
+    entry.workHours = Math.max(
+      0,
+      (entry.totalHours || 0) - (entry.breakHours || 0)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Time entry fetched successfully",
+      timeEntry: entry,
+    });
+  } catch (e) {
+    // Fallback to original document if computation fails
+    return res.status(200).json({
+      success: true,
+      message: "Time entry fetched successfully",
+      timeEntry,
+    });
+  }
 });
 
 const updateTimeEntry = catchErrors(async (req, res) => {
