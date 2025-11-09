@@ -5,11 +5,12 @@ import cors from "cors";
 import path from "path";
 import express from "express";
 import { createServer } from "http";
+import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import cloudinary from "cloudinary";
 import bodyParser from "body-parser";
 import { connectDB } from "./config/index.js";
-import { initializeSocket } from "./socket/index.js";
+import { initializeSocket, getIO } from "./socket/index.js";
 import {
   role,
   leave,
@@ -202,6 +203,158 @@ connectDB()
     server.listen(port, () => {
       console.log(`Express running → On http://localhost:${port} 🚀`);
       console.log(`Socket.IO running → ws://localhost:${port} 🔌`);
+      // Start analysis worker as a child process and keep it running
+      try {
+        const workerPath = path.join(
+          __dirname,
+          "workers",
+          "analysis.worker.js"
+        );
+        let workerProc = null;
+        let restartDelay = 1000; // 1s
+        const maxDelay = 60 * 1000; // 1 minute
+
+        const startWorker = () => {
+          console.log("Starting analysis worker:", workerPath);
+          workerProc = spawn(process.execPath, [workerPath], {
+            cwd: __dirname,
+            env: process.env,
+            stdio: ["ignore", "pipe", "pipe"],
+          });
+          // Collect stdout chunks into a buffer so we can robustly parse
+          // WORKER_EVENT:<json> messages even if JSON arrives split across chunks.
+          let workerStdoutBuffer = "";
+          workerProc.stdout.on("data", (chunk) => {
+            const text = chunk.toString();
+            process.stdout.write(`[worker] ${text}`);
+
+            workerStdoutBuffer += text;
+            const marker = "WORKER_EVENT:";
+
+            // Extract all complete WORKER_EVENT JSON payloads from the buffer
+            let markerIdx = workerStdoutBuffer.indexOf(marker);
+            while (markerIdx !== -1) {
+              const after = workerStdoutBuffer.slice(markerIdx + marker.length);
+              // Try to find end of JSON by locating a newline after the marker
+              const newlineIdx = after.indexOf("\n");
+              if (newlineIdx === -1) {
+                // No newline yet — wait for more data
+                break;
+              }
+              const jsonText = after.slice(0, newlineIdx).trim();
+              // Remove the processed part from buffer
+              workerStdoutBuffer = after.slice(newlineIdx + 1);
+
+              if (jsonText) {
+                try {
+                  const evt = JSON.parse(jsonText);
+                  try {
+                    const io = getIO();
+                    console.log(
+                      "[worker->socket] emitting analysis:progress",
+                      evt
+                    );
+                    io.emit("analysis:progress", evt);
+                  } catch (emitErr) {
+                    // socket not available — ignore
+                  }
+                } catch (parseErr) {
+                  // parse failed — skip this payload
+                  console.debug(
+                    "Failed to parse worker event JSON:",
+                    parseErr && parseErr.message ? parseErr.message : parseErr
+                  );
+                }
+              }
+
+              markerIdx = workerStdoutBuffer.indexOf(marker);
+            }
+          });
+          workerProc.stderr.on("data", (chunk) => {
+            process.stderr.write(`[worker][err] ${chunk}`);
+          });
+
+          workerProc.on("exit", (code, signal) => {
+            console.warn(
+              `Analysis worker exited (code=${code}, signal=${signal}). Restarting in ${restartDelay}ms...`
+            );
+            setTimeout(() => {
+              restartDelay = Math.min(maxDelay, restartDelay * 2);
+              startWorker();
+            }, restartDelay);
+          });
+
+          workerProc.on("error", (err) => {
+            console.error(
+              "Failed to start analysis worker:",
+              err && err.message ? err.message : err
+            );
+          });
+        };
+
+        startWorker();
+        // Run backfill once at startup and then periodically
+        try {
+          const backfillPath = path.join(
+            __dirname,
+            "..",
+            "scripts",
+            "analysis_backfill.js"
+          );
+          let backfillRunning = false;
+          const BACKFILL_INTERVAL_MS = parseInt(
+            process.env.BACKFILL_INTERVAL_MS || String(1000 * 60 * 60 * 6),
+            10
+          ); // default 6 hours
+
+          const runBackfill = () => {
+            if (backfillRunning) {
+              console.log("Backfill already running — skipping this interval");
+              return;
+            }
+            backfillRunning = true;
+            console.log("Starting analysis backfill:", backfillPath);
+            const bf = spawn(process.execPath, [backfillPath], {
+              cwd: path.join(__dirname, ".."),
+              env: process.env,
+              stdio: ["ignore", "pipe", "pipe"],
+            });
+
+            bf.stdout.on("data", (chunk) => {
+              const t = chunk.toString();
+              process.stdout.write(`[backfill] ${t}`);
+              // emit simple event for UI if desired
+              try {
+                const io = getIO();
+                io.emit("analysis:backfill", { text: t });
+              } catch (e) {
+                // ignore
+              }
+            });
+            bf.stderr.on("data", (c) =>
+              process.stderr.write(`[backfill][err] ${c}`)
+            );
+            bf.on("exit", (code) => {
+              backfillRunning = false;
+              console.log(`Backfill exited with code=${code}`);
+            });
+          };
+
+          // Run an initial backfill immediately, then schedule periodic runs
+          setTimeout(runBackfill, 2000);
+          setInterval(runBackfill, BACKFILL_INTERVAL_MS);
+        } catch (err) {
+          console.warn(
+            "Could not schedule backfill:",
+            err && err.message ? err.message : err
+          );
+        }
+      } catch (err) {
+        console.warn(
+          "Could not start analysis worker:",
+          err && err.message ? err.message : err
+        );
+      }
     });
   })
   .catch((err) => {
