@@ -46,6 +46,11 @@ const processSingle = async (job) => {
       fb.analysisMeta = { provider: "local-transformers" };
       fb.lastAnalyzedAt = new Date();
       await fb.save();
+      // create a short safe snippet for UI to display
+      var snippet = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 160);
     } else if (type === "complaint") {
       const cp = await Complaint.findById(refId);
       if (!cp) throw new Error("Complaint not found");
@@ -58,6 +63,11 @@ const processSingle = async (job) => {
       cp.analysisMeta = { provider: "local-transformers" };
       cp.lastAnalyzedAt = new Date();
       await cp.save();
+      // create a short safe snippet for UI to display
+      var snippet = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 160);
     }
 
     // Invalidate insights cache after each successful update
@@ -74,7 +84,12 @@ const processSingle = async (job) => {
       const evt = {
         event: "analysis:job",
         ts: new Date().toISOString(),
-        job: { id: String(job._id), type: job.type, refId: String(job.refId) },
+        job: {
+          id: String(job._id),
+          type: job.type,
+          refId: String(job.refId),
+          snippet,
+        },
         result: { ok: true, took },
       };
       console.log("WORKER_EVENT:" + JSON.stringify(evt));
@@ -98,7 +113,12 @@ const processSingle = async (job) => {
       const evt = {
         event: "analysis:job",
         ts: new Date().toISOString(),
-        job: { id: String(job._id), type: job.type, refId: String(job.refId) },
+        job: {
+          id: String(job._id),
+          type: job.type,
+          refId: String(job.refId),
+          snippet: snippet || "",
+        },
         result: {
           ok: false,
           error: err && err.message ? err.message : String(err),
