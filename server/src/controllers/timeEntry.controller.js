@@ -311,16 +311,26 @@ const approveTimeEntry = catchErrors(async (req, res) => {
   // Send notification to employee
   const emp = await Employee.findById(timeEntry.employee._id);
   if (emp) {
+    const adminNotes = timeEntry.adminNotes || null;
+    const reason = timeEntry.reason || null;
+    // Build message with optional admin notes/reason for transparency
+    let msg = `Your timesheet for ${new Date(
+      timeEntry.date
+    ).toLocaleDateString()} has been ${status}.`;
+    if (reason) msg += ` Reason: ${reason}.`;
+    if (adminNotes) msg += ` Notes: ${adminNotes}.`;
+
     await sendFullNotification({
       employee: emp,
       title: `Timesheet ${status === "approved" ? "Approved" : "Rejected"}`,
-      message: `Your timesheet for ${new Date(
-        timeEntry.date
-      ).toLocaleDateString()} has been ${status}.`,
+      message: msg,
       type: "general",
       priority: "medium",
       link: "/time-tracking",
-      metadata: { timeEntryId: timeEntry._id },
+      metadata: { timeEntryId: timeEntry._id, reason, adminNotes },
+      // include adminNotes/reason in email data if email template is used
+      emailTemplate: "timeEntryReview",
+      emailData: { reason, adminNotes, timeEntry },
     });
   }
 
