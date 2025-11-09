@@ -11,7 +11,8 @@ import {
 const router = express.Router();
 
 router.post("/", verifyAdminToken, createDocumentType);
-router.get("/", verifyAdminToken, getAllDocumentTypes);
+// Public: allow employees and guests to fetch document types (use ?status=active to filter)
+router.get("/", getAllDocumentTypes);
 router.get("/:id", verifyAdminToken, getDocumentTypeById);
 router.patch("/:id", verifyAdminToken, updateDocumentType);
 router.delete("/:id", verifyAdminToken, deleteDocumentType);
