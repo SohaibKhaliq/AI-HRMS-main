@@ -15,7 +15,9 @@ const AddEmployee = () => {
 
   const roles = useSelector((state) => state.role.roles);
   const departments = useSelector((state) => state.department.departments);
-  const designations = useSelector((state) => state.designation.designations || []);
+  const designations = useSelector(
+    (state) => state.designation.designations || []
+  );
   const shifts = useSelector((state) => state.shift?.shifts || []);
   const { loading, formLoading } = useSelector((state) => state.employee);
 
@@ -502,8 +504,14 @@ const AddEmployee = () => {
                         const val = e.target.value;
                         field.onChange(val);
                         // find the selected designation and set salary (compare IDs as strings)
-                        const sel = designations.find((d) => String(d._id) === String(val));
-                        if (sel && (sel.salary !== undefined && sel.salary !== null)) {
+                        const sel = designations.find(
+                          (d) => String(d._id) === String(val)
+                        );
+                        if (
+                          sel &&
+                          sel.salary !== undefined &&
+                          sel.salary !== null
+                        ) {
                           setValue("salary", sel.salary);
                         }
                       }}
@@ -519,7 +527,10 @@ const AddEmployee = () => {
                           const dept = watch("department");
                           // if department selected, show designations that belong to it or those with no department
                           if (!dept) return true;
-                          const dDept = d.department && d.department._id ? String(d.department._id) : String(d.department || "");
+                          const dDept =
+                            d.department && d.department._id
+                              ? String(d.department._id)
+                              : String(d.department || "");
                           return !d.department || dDept === String(dept);
                         })
                         .map((d) => (
@@ -582,7 +593,9 @@ const AddEmployee = () => {
                       {shifts.map((s) => (
                         <option key={s._id} value={s._id}>
                           {s.name}
-                          {s.startTime ? ` — ${s.startTime} - ${s.endTime}` : ""}
+                          {s.startTime
+                            ? ` — ${s.startTime} - ${s.endTime}`
+                            : ""}
                         </option>
                       ))}
                     </select>
