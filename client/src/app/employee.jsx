@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import Loader from "../components/shared/loaders/Loader";
 import NotFound from "../components/shared/error/NotFound";
 import EmployeeSidebar from "../components/ui/EmployeeSidebar";
+import Topbar from "../components/ui/Topbar";
 import { getEmployeeInsights } from "../services/insights.service";
 
 const Home = lazy(() => import("../pages/home/Home"));
@@ -24,6 +25,9 @@ const EmployeeDocuments = lazy(() =>
 );
 const Payroll = lazy(() => import("../pages/payroll/Payroll"));
 const CalendarView = lazy(() => import("../pages/calendar/CalendarView"));
+const Notifications = lazy(() =>
+  import("../pages/notifications/Notifications")
+);
 
 const EmployeeApp = () => {
   const dispatch = useDispatch();
@@ -38,10 +42,11 @@ const EmployeeApp = () => {
       className="min-h-screen max-h-auto text-gray-800 bg-gray-100 dark:text-gray-200 dark:bg-primary flex justify-between relative"
     >
       <EmployeeSidebar />
+      <Topbar />
       <Suspense fallback={<Loader />}>
         <main
           id="overflow"
-          className="w-full lg:w-[85%] lg:ml-[255px] py-1 sm:px-2 mt-[69px] lg:mt-0"
+          className="w-full lg:w-[85%] lg:ml-[255px] py-1 sm:px-2 mt-[69px] lg:mt-[70px]"
         >
           <Routes>
             <Route path="/" element={<Home />} />
@@ -55,6 +60,7 @@ const EmployeeApp = () => {
             <Route path="/leave-balance" element={<LeaveBalance />} />
             <Route path="/meetings" element={<EmployeeMeetings />} />
             <Route path="/documents" element={<EmployeeDocuments />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/payroll" element={<Payroll />} />
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="/resignation" element={<Resignation />} />
