@@ -93,7 +93,10 @@ const ViewEmployee = () => {
                 {formatDate(employee?.dateOfJoining) || "-"}
               </p>
               <p>
-                <strong>Work Shift:</strong> {employee?.shift || "-"}
+                <strong>Work Shift:</strong>{" "}
+                {employee?.shift
+                  ? `${employee.shift.name}${employee.shift.startTime ? ` — ${employee.shift.startTime} - ${employee.shift.endTime}` : ""}`
+                  : "-"}
               </p>
               <p>
                 <strong>Employee Type:</strong>{" "}
