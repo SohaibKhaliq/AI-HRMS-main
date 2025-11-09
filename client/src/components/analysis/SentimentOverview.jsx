@@ -124,6 +124,7 @@ const SentimentOverview = ({ insights = {} }) => {
               ok: !!evt.result?.ok,
               took: evt.result?.took,
               error: evt.result?.error,
+              snippet: evt.job?.snippet || "",
               ts: evt.ts || new Date().toISOString(),
             };
             setJobToasts((prev) => [toast, ...(prev || [])].slice(0, 6));
@@ -192,8 +193,16 @@ const SentimentOverview = ({ insights = {} }) => {
                 t.ok ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
               }`}
             >
-              <span className="font-medium">{t.type}</span>
-              <span>{t.ok ? "✔️" : "❌"}</span>
+              <div className="flex flex-col">
+                <span className="font-medium">
+                  {t.type} {t.ok ? "✔️" : "❌"}
+                </span>
+                {t.snippet ? (
+                  <span className="text-xs text-gray-600 max-w-[220px] truncate">
+                    {t.snippet}
+                  </span>
+                ) : null}
+              </div>
               {t.took ? (
                 <span className="ml-1 text-gray-600">{t.took}ms</span>
               ) : null}
