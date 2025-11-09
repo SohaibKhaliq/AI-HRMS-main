@@ -32,11 +32,11 @@ const ViewEmployee = () => {
         <div className="flex flex-col items-center bg-gray-100 dark:bg-navy p-5 rounded-lg mb-2 shadow">
           <img
             src={employee?.profilePicture || "/unknown.jpeg"}
-            alt={employee.name}
+            alt={employee?.name || "Employee"}
             className="w-28 h-28 border-4 border-blue-500 rounded-full mb-4"
           />
-          <h2 className="text-xl font-bold">{employee.name}</h2>
-          <p className="text-gray-500">{employee.role.name}</p>
+          <h2 className="text-xl font-bold">{employee?.name || "-"}</h2>
+          <p className="text-gray-500">{employee?.role?.name || "-"}</p>
         </div>
 
         <main className="bg-gray-100 dark:bg-secondary p-4 sm:p-6 rounded-lg space-y-6 text-[0.88rem] shadow">
@@ -46,23 +46,33 @@ const ViewEmployee = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <p>
-                <strong>Email:</strong> {employee.email}
+                <strong>Email:</strong> {employee?.email || "-"}
               </p>
               <p>
-                <strong>Phone:</strong> {employee.phoneNumber}
+                <strong>Phone:</strong> {employee?.phoneNumber || "-"}
               </p>
               <p>
-                <strong>Gender:</strong> {employee.gender}
+                <strong>Gender:</strong> {employee?.gender || "-"}
               </p>
               <p>
-                <strong>Date of Birth:</strong> {formatDate(employee.dob)}
+                <strong>Date of Birth:</strong>{" "}
+                {formatDate(employee?.dob) || "-"}
               </p>
               <p>
-                <strong>Marital Status:</strong> {employee.martialStatus}
+                <strong>Marital Status:</strong>{" "}
+                {employee?.martialStatus || "-"}
               </p>
               <p>
                 <strong>Address:</strong>{" "}
-                {`${employee?.address?.street}, ${employee?.address?.city}, ${employee?.address?.country}`}
+                {employee?.address
+                  ? `${employee.address.street || ""}${
+                      employee.address.city ? ", " + employee.address.city : ""
+                    }${
+                      employee.address.country
+                        ? ", " + employee.address.country
+                        : ""
+                    }`
+                  : "-"}
               </p>
             </div>
           </div>
@@ -73,23 +83,24 @@ const ViewEmployee = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <p>
-                <strong>Department:</strong> {employee?.department?.name}
+                <strong>Department:</strong> {employee?.department?.name || "-"}
               </p>
               <p>
-                <strong>Position:</strong> {employee?.role?.name}
+                <strong>Position:</strong> {employee?.role?.name || "-"}
               </p>
               <p>
                 <strong>Joining Date:</strong>{" "}
-                {formatDate(employee?.dateOfJoining)}
+                {formatDate(employee?.dateOfJoining) || "-"}
               </p>
               <p>
-                <strong>Work Shift:</strong> {employee?.shift}
+                <strong>Work Shift:</strong> {employee?.shift || "-"}
               </p>
               <p>
-                <strong>Employee Type:</strong> {employee?.employmentType}
+                <strong>Employee Type:</strong>{" "}
+                {employee?.employmentType || "-"}
               </p>
               <p>
-                <strong>Status:</strong> {employee?.status}
+                <strong>Status:</strong> {employee?.status || "-"}
               </p>
             </div>
           </div>
@@ -100,17 +111,22 @@ const ViewEmployee = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <p>
-                <strong>Base Salary:</strong> {employee?.salary} PKR
+                <strong>Base Salary:</strong>{" "}
+                {employee?.salary ? `${employee.salary} PKR` : "-"}
               </p>
               <p>
-                <strong>Leave Balance:</strong> {employee?.leaveBalance} days
+                <strong>Leave Balance:</strong>{" "}
+                {employee?.leaveBalance != null
+                  ? `${employee.leaveBalance} days`
+                  : "-"}
               </p>
               <p>
                 <strong>Bank Acc No:</strong>{" "}
-                {employee?.bankDetails?.accountNumber}
+                {employee?.bankDetails?.accountNumber || "-"}
               </p>
               <p>
-                <strong>Bank Name:</strong> {employee?.bankDetails?.bankName}
+                <strong>Bank Name:</strong>{" "}
+                {employee?.bankDetails?.bankName || "-"}
               </p>
             </div>
           </div>
@@ -122,15 +138,15 @@ const ViewEmployee = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <p>
                 <strong>Contact Name:</strong>
-                {employee?.emergencyContact?.name}
+                {employee?.emergencyContact?.name || "-"}
               </p>
               <p>
                 <strong>Relationship:</strong>
-                {employee?.emergencyContact?.relationship}
+                {employee?.emergencyContact?.relationship || "-"}
               </p>
               <p>
                 <strong>Phone Number:</strong>
-                {employee?.emergencyContact?.phoneNumber}
+                {employee?.emergencyContact?.phoneNumber || "-"}
               </p>
             </div>
           </div>
