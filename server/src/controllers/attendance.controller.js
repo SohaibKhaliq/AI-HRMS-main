@@ -578,6 +578,42 @@ const getFaceDescriptor = catchErrors(async (req, res) => {
   });
 });
 
+// Unregister own face descriptor (employee)
+const unregisterOwnFace = catchErrors(async (req, res) => {
+  const employeeId = req.user.id;
+
+  const employee = await Employee.findById(employeeId);
+
+  if (!employee) throw new Error("Employee not found");
+
+  employee.faceDescriptor = undefined;
+  await employee.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Face data removed successfully",
+  });
+});
+
+// Unregister face descriptor for a given employee (admin)
+const unregisterFaceForEmployee = catchErrors(async (req, res) => {
+  const { employeeId } = req.params;
+
+  if (!employeeId) throw new Error("Employee id is required");
+
+  const employee = await Employee.findById(employeeId);
+
+  if (!employee) throw new Error("Employee not found");
+
+  employee.faceDescriptor = undefined;
+  await employee.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Face data removed for employee",
+  });
+});
+
 // Mark attendance using face recognition
 const markAttendanceByFace = catchErrors(async (req, res) => {
   const employeeId = req.user.id;
@@ -637,5 +673,7 @@ export {
   getEmployeeMonthAttendanceByDepartment,
   registerFaceDescriptor,
   getFaceDescriptor,
+  unregisterOwnFace,
+  unregisterFaceForEmployee,
   markAttendanceByFace,
 };
