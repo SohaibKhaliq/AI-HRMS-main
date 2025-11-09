@@ -7,7 +7,7 @@ import {
   getFaceDescriptor,
 } from "../../utils/faceRecognition";
 
-const FaceRegistration = ({ onFaceRegistered, onClose }) => {
+const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -21,6 +21,9 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
   const [faceQuality, setFaceQuality] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [cameraError, setCameraError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [isUnregistering, setIsUnregistering] = useState(false);
 
   useEffect(() => {
     initializeCamera();
@@ -268,13 +271,39 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 
         // If we have 3 captures, we're done
         if (newDescriptors.length >= 3) {
-          toast.loading("Processing face data...");
+          // Start a local progress indicator while processing
+          setIsProcessing(true);
+          setProcessingProgress(0);
+
           // Average the descriptors for better accuracy
           const avgDescriptor = averageDescriptors(newDescriptors);
-          await onFaceRegistered(avgDescriptor);
-          stopCamera();
-          toast.success("Face registered successfully!");
-          onClose();
+
+          // Animate progress while onFaceRegistered runs
+          let progress = 0;
+          const progressInterval = setInterval(() => {
+            // increase progress with diminishing increments, cap at 95
+            const inc = Math.floor(Math.random() * 6) + 3; // 3..8
+            progress = Math.min(95, progress + inc);
+            setProcessingProgress(progress);
+          }, 200);
+
+          try {
+            await onFaceRegistered(avgDescriptor);
+            // finish progress
+            setProcessingProgress(100);
+            // small delay to let UI show 100%
+            await new Promise((r) => setTimeout(r, 300));
+            stopCamera();
+            toast.success("Face registered successfully!");
+            onClose();
+          } catch (error) {
+            console.error("Error processing face registration:", error);
+            toast.error(error?.message || "Failed to process face data");
+          } finally {
+            clearInterval(progressInterval);
+            setIsProcessing(false);
+            setProcessingProgress(0);
+          }
         }
       } else {
         toast.error("Could not extract face data. Please try again.");
@@ -303,7 +332,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6">
           <div className="flex justify-between items-center">
@@ -317,15 +346,48 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
                 angles
               </p>
             </div>
-            <button
-              onClick={() => {
-                stopCamera();
-                onClose();
-              }}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
-            >
-              <i className="fas fa-times text-xl"></i>
-            </button>
+            <div className="flex items-center gap-2">
+              {onUnregister && (
+                <button
+                  onClick={async () => {
+                    if (!window.confirm("Unregister face for this user?"))
+                      return;
+                    try {
+                      setIsUnregistering(true);
+                      await onUnregister();
+                      toast.success("Face unregistered");
+                      // keep camera running so user can re-register if desired
+                    } catch (err) {
+                      console.error("Unregister error:", err);
+                      toast.error(err?.message || "Failed to unregister");
+                    } finally {
+                      setIsUnregistering(false);
+                    }
+                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-2 mr-2 font-semibold text-sm shadow"
+                  disabled={isUnregistering || isProcessing}
+                >
+                  {isUnregistering ? (
+                    <i className="fas fa-spinner fa-spin"></i>
+                  ) : (
+                    <>
+                      <i className="fas fa-user-times mr-2"></i>
+                      Unregister
+                    </>
+                  )}
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  stopCamera();
+                  onClose();
+                }}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
+              >
+                <i className="fas fa-times text-xl"></i>
+              </button>
+            </div>
           </div>
 
           {/* Progress Bar */}
@@ -336,6 +398,23 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
             />
           </div>
         </div>
+
+        {/* Processing Overlay */}
+        {isProcessing && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-80 text-center shadow-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-200 mb-4">
+                Processing face data... {processingProgress}%
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-3 transition-all"
+                  style={{ width: `${processingProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Body */}
         <div className="p-6">
@@ -577,6 +656,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose }) => {
 FaceRegistration.propTypes = {
   onFaceRegistered: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
+  onUnregister: PropTypes.func,
 };
 
 export default FaceRegistration;
