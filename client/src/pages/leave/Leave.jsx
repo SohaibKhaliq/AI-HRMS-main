@@ -5,6 +5,7 @@ import { leaveSchema } from "../../validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSelector, useDispatch } from "react-redux";
 import { createLeave, getMyLeaves } from "../../services/leave.service";
+import { getMyLeaveBalances } from "../../services/leaveBalance.service";
 import { getLeaveTypes } from "../../services/leaveType.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 import Loader from "../../components/shared/loaders/Loader";
@@ -16,6 +17,7 @@ const Leave = () => {
   const { loading, myLeaves, fetch } = useSelector((state) => state.leave);
   const { leaveTypes } = useSelector((state) => state.leaveType);
   const { user } = useSelector((state) => state.authentication);
+  const { myBalances } = useSelector((state) => state.leaveBalance || {});
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredLeaves, setFilteredLeaves] = useState([]);
@@ -39,6 +41,8 @@ const Leave = () => {
       dispatch(getMyLeaves());
     }
     dispatch(getLeaveTypes());
+    // fetch current employee leave balances (dynamic assigned balances)
+    dispatch(getMyLeaveBalances({ year: new Date().getFullYear() }));
   }, [dispatch, fetch]);
 
   useEffect(() => {
@@ -46,7 +50,9 @@ const Leave = () => {
       if (filterStatus === "All") {
         setFilteredLeaves(myLeaves);
       } else {
-        setFilteredLeaves(myLeaves.filter(item => item.status === filterStatus));
+        setFilteredLeaves(
+          myLeaves.filter((item) => item.status === filterStatus)
+        );
       }
     }
   }, [myLeaves, filterStatus]);
@@ -73,9 +79,11 @@ const Leave = () => {
 
   const statusCounts = {
     All: myLeaves?.length || 0,
-    Pending: myLeaves?.filter(item => item.status === "Pending").length || 0,
-    Approved: myLeaves?.filter(item => item.status === "Approved").length || 0,
-    Rejected: myLeaves?.filter(item => item.status === "Rejected").length || 0,
+    Pending: myLeaves?.filter((item) => item.status === "Pending").length || 0,
+    Approved:
+      myLeaves?.filter((item) => item.status === "Approved").length || 0,
+    Rejected:
+      myLeaves?.filter((item) => item.status === "Rejected").length || 0,
   };
 
   const getStatusColor = (status) => {
@@ -115,8 +123,8 @@ const Leave = () => {
             onClick={() => setShowForm(!showForm)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2"
           >
-            <i className={`fas ${showForm ? 'fa-times' : 'fa-plus'}`}></i>
-            {showForm ? 'Cancel' : 'Apply Leave'}
+            <i className={`fas ${showForm ? "fa-times" : "fa-plus"}`}></i>
+            {showForm ? "Cancel" : "Apply Leave"}
           </button>
         </div>
 
@@ -125,7 +133,20 @@ const Leave = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">Available Leave Balance</p>
-              <p className="text-4xl font-bold mt-1">{user?.leaveBalance || 0} Days</p>
+              <p className="text-4xl font-bold mt-1">
+                {(() => {
+                  // Prefer authoritative leave balances if present
+                  if (myBalances && myBalances.length) {
+                    const totalAvailable = myBalances.reduce((sum, b) => {
+                      const avail = Number(b.available || 0);
+                      return sum + (isNaN(avail) ? 0 : avail);
+                    }, 0);
+                    return `${totalAvailable} Days`;
+                  }
+                  // Fallback to user.leaveBalance if no balances are present
+                  return `${user?.leaveBalance || 0} Days`;
+                })()}
+              </p>
             </div>
             <i className="fas fa-calendar-check text-5xl opacity-50"></i>
           </div>
@@ -142,7 +163,7 @@ const Leave = () => {
               <i className="fas fa-list text-3xl opacity-75"></i>
             </div>
           </div>
-          
+
           <div className="bg-yellow-500 dark:bg-yellow-600 text-white p-4 rounded-lg shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -152,7 +173,7 @@ const Leave = () => {
               <i className="fas fa-hourglass-half text-3xl opacity-75"></i>
             </div>
           </div>
-          
+
           <div className="bg-green-500 dark:bg-green-600 text-white p-4 rounded-lg shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -162,7 +183,7 @@ const Leave = () => {
               <i className="fas fa-check-circle text-3xl opacity-75"></i>
             </div>
           </div>
-          
+
           <div className="bg-red-500 dark:bg-red-600 text-white p-4 rounded-lg shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -181,7 +202,10 @@ const Leave = () => {
               <i className="fas fa-file-alt text-blue-600"></i>
               New Leave Application
             </h2>
-            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Leave Type <span className="text-red-500">*</span>
@@ -189,7 +213,9 @@ const Leave = () => {
                 <select
                   {...register("leaveType")}
                   className={`w-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm p-3 rounded-lg border ${
-                    errors.leaveType ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    errors.leaveType
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   disabled={loading}
                 >
@@ -201,7 +227,9 @@ const Leave = () => {
                   ))}
                 </select>
                 {errors.leaveType && (
-                  <p className="text-red-500 text-xs mt-1">{errors.leaveType.message}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.leaveType.message}
+                  </p>
                 )}
               </div>
 
@@ -214,13 +242,17 @@ const Leave = () => {
                   placeholder="Auto-calculated"
                   {...register("duration")}
                   className={`w-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm p-3 rounded-lg border ${
-                    errors.duration ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    errors.duration
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   disabled={loading}
                   readOnly
                 />
                 {errors.duration && (
-                  <p className="text-red-500 text-xs mt-1">{errors.duration.message}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.duration.message}
+                  </p>
                 )}
               </div>
 
@@ -232,12 +264,16 @@ const Leave = () => {
                   type="date"
                   {...register("fromDate")}
                   className={`w-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm p-3 rounded-lg border ${
-                    errors.fromDate ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    errors.fromDate
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   disabled={loading}
                 />
                 {errors.fromDate && (
-                  <p className="text-red-500 text-xs mt-1">{errors.fromDate.message}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.fromDate.message}
+                  </p>
                 )}
               </div>
 
@@ -249,12 +285,16 @@ const Leave = () => {
                   type="date"
                   {...register("toDate")}
                   className={`w-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm p-3 rounded-lg border ${
-                    errors.toDate ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    errors.toDate
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   disabled={loading}
                 />
                 {errors.toDate && (
-                  <p className="text-red-500 text-xs mt-1">{errors.toDate.message}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.toDate.message}
+                  </p>
                 )}
               </div>
 
@@ -267,12 +307,16 @@ const Leave = () => {
                   placeholder="Write your reason for leave..."
                   rows="3"
                   className={`w-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm p-3 rounded-lg border ${
-                    errors.description ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                    errors.description
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
                   disabled={loading}
                 ></textarea>
                 {errors.description && (
-                  <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.description.message}
+                  </p>
                 )}
               </div>
 
@@ -336,12 +380,24 @@ const Leave = () => {
             <table className="min-w-full table-auto text-sm">
               <thead className="sticky top-0">
                 <tr className="bg-headLight dark:bg-head text-primary">
-                  <th className="py-3 px-4 border-b border-gray-500 text-left">Leave Type</th>
-                  <th className="py-3 px-4 border-b border-gray-500 text-left">From Date</th>
-                  <th className="py-3 px-4 border-b border-gray-500 text-left">To Date</th>
-                  <th className="py-3 px-4 border-b border-gray-500 text-left">Duration</th>
-                  <th className="py-3 px-4 border-b border-gray-500 text-left">Status</th>
-                  <th className="py-3 px-4 border-b border-gray-500 text-left">Remarks</th>
+                  <th className="py-3 px-4 border-b border-gray-500 text-left">
+                    Leave Type
+                  </th>
+                  <th className="py-3 px-4 border-b border-gray-500 text-left">
+                    From Date
+                  </th>
+                  <th className="py-3 px-4 border-b border-gray-500 text-left">
+                    To Date
+                  </th>
+                  <th className="py-3 px-4 border-b border-gray-500 text-left">
+                    Duration
+                  </th>
+                  <th className="py-3 px-4 border-b border-gray-500 text-left">
+                    Status
+                  </th>
+                  <th className="py-3 px-4 border-b border-gray-500 text-left">
+                    Remarks
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -364,10 +420,16 @@ const Leave = () => {
                         {formatDate(leave.toDate)}
                       </td>
                       <td className="py-3 px-4 border-b border-gray-500">
-                        <span className="font-semibold">{leave.duration} days</span>
+                        <span className="font-semibold">
+                          {leave.duration} days
+                        </span>
                       </td>
                       <td className="py-3 px-4 border-b border-gray-500">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(leave.status)}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                            leave.status
+                          )}`}
+                        >
                           {leave.status}
                         </span>
                       </td>
@@ -382,8 +444,8 @@ const Leave = () => {
                       <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
                         <i className="fas fa-inbox text-4xl mb-3"></i>
                         <p className="text-sm">
-                          {filterStatus === "All" 
-                            ? "No leave requests yet. Click 'Apply Leave' to create one." 
+                          {filterStatus === "All"
+                            ? "No leave requests yet. Click 'Apply Leave' to create one."
                             : `No ${filterStatus.toLowerCase()} leave requests found.`}
                         </p>
                       </div>
