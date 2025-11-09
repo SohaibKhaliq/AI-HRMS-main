@@ -6,6 +6,7 @@ import {
   detectFaceFromVideo,
   getFaceDescriptor,
 } from "../../utils/faceRecognition";
+import { drawFaceDetection } from "../../utils/faceRecognition";
 
 const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
   const videoRef = useRef(null);
@@ -18,6 +19,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
   const [modelsReady, setModelsReady] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
+  const [detectionScore, setDetectionScore] = useState(null);
   const [faceQuality, setFaceQuality] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [cameraError, setCameraError] = useState(null);
@@ -25,6 +27,8 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [isUnregistering, setIsUnregistering] = useState(false);
 
+  // intentionally run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     initializeCamera();
 
@@ -34,6 +38,19 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
         clearInterval(detectionIntervalRef.current);
       }
     };
+  }, []);
+
+  // Keep canvas size in sync with video
+  const syncCanvasSize = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    // Use intrinsic video dimensions for drawing, but style to fit displayed size
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.style.width = `${video.clientWidth}px`;
+    canvas.style.height = `${video.clientHeight}px`;
   }, []);
 
   // Start continuous face detection function (declared before effect to avoid TDZ)
@@ -53,9 +70,28 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
             // Analyze face quality
             const quality = analyzeFaceQuality(detection);
             setFaceQuality(quality);
+            // show detection score
+            setDetectionScore(detection.detection.score ?? null);
+
+            // draw overlay mesh
+            if (canvasRef.current) {
+              syncCanvasSize();
+              drawFaceDetection(canvasRef.current, detection, videoRef.current);
+            }
           } else {
             setFaceDetected(false);
             setFaceQuality(null);
+            setDetectionScore(null);
+            if (canvasRef.current) {
+              const ctx = canvasRef.current.getContext("2d");
+              ctx &&
+                ctx.clearRect(
+                  0,
+                  0,
+                  canvasRef.current.width,
+                  canvasRef.current.height
+                );
+            }
           }
         } catch (error) {
           // Silently handle detection errors
@@ -63,7 +99,7 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
         }
       }
     }, 500); // Check every 500ms
-  }, [modelsReady, isCapturing]);
+  }, [modelsReady, isCapturing, syncCanvasSize]);
 
   useEffect(() => {
     // Start continuous face detection when models are ready
@@ -134,6 +170,9 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
         // Simple play without promise
         videoRef.current.onloadedmetadata = () => {
           videoRef.current.play();
+          // sync canvas once video metadata is available
+          syncCanvasSize();
+          window.addEventListener("resize", syncCanvasSize);
           setTimeout(() => {
             setIsLoading(false);
             toast.success("Camera ready!", { id: "camera" });
@@ -189,6 +228,10 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => window.removeEventListener("resize", syncCanvasSize);
+  }, [syncCanvasSize]);
 
   const analyzeFaceQuality = (detection) => {
     // Analyze detection quality
@@ -580,6 +623,13 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
                         {faceQuality.message}
                       </div>
                     )}
+
+                    {/* Detection score */}
+                    {detectionScore !== null && (
+                      <div className="ml-3 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        Score: {detectionScore.toFixed(3)}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -607,8 +657,8 @@ const FaceRegistration = ({ onFaceRegistered, onClose, onUnregister }) => {
 
                 <canvas
                   ref={canvasRef}
-                  className="absolute top-0 left-0"
-                  style={{ display: "none" }}
+                  className="absolute top-0 left-0 pointer-events-none"
+                  style={{ width: "100%", height: "100%" }}
                 />
               </div>
 
