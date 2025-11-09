@@ -7,31 +7,36 @@ export const loadModels = async () => {
   if (modelsLoaded) return;
 
   try {
-    // Try local models first, fallback to CDN
-    let MODEL_URL = "/models";
+    // Always use local models placed under /models in the client/public folder.
+    // If models are not available, throw a helpful error instructing how to predownload them.
+    const MODEL_URL = "/models";
 
-    try {
-      // Test if local models are accessible
-      const testResponse = await fetch(
-        `${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`
+    // Test if local models are accessible
+    const testResponse = await fetch(
+      `${MODEL_URL}/tiny_face_detector/tiny_face_detector_model-weights_manifest.json`
+    );
+    if (!testResponse.ok) {
+      throw new Error(
+        `Local face-api models not found at ${MODEL_URL}. Please run the predownload script: node server/scripts/predownload_face_models.js and restart the client.`
       );
-      if (!testResponse.ok) {
-        throw new Error("Local models not found");
-      }
-    } catch {
-      // local models not accessible; fallback to CDN
-      console.log("Local models not accessible, using CDN...");
-      // Use jsDelivr CDN as fallback
-      MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model";
     }
 
-    console.log("Loading face recognition models from:", MODEL_URL);
+    console.log(
+      "Loading face recognition models from local folder:",
+      MODEL_URL
+    );
 
     await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.tinyFaceDetector.loadFromUri(
+        `${MODEL_URL}/tiny_face_detector`
+      ),
+      faceapi.nets.faceLandmark68Net.loadFromUri(
+        `${MODEL_URL}/face_landmark_68`
+      ),
+      faceapi.nets.faceRecognitionNet.loadFromUri(
+        `${MODEL_URL}/face_recognition`
+      ),
+      faceapi.nets.ssdMobilenetv1.loadFromUri(`${MODEL_URL}/ssd_mobilenetv1`),
     ]);
 
     modelsLoaded = true;
