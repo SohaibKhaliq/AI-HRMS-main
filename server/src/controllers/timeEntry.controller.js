@@ -320,7 +320,8 @@ const approveTimeEntry = catchErrors(async (req, res) => {
     if (reason) msg += ` Reason: ${reason}.`;
     if (adminNotes) msg += ` Notes: ${adminNotes}.`;
 
-    await sendFullNotification({
+    // Send notification/email in background so the API response isn't blocked by email delivery.
+    sendFullNotification({
       employee: emp,
       title: `Timesheet ${status === "approved" ? "Approved" : "Rejected"}`,
       message: msg,
@@ -331,6 +332,12 @@ const approveTimeEntry = catchErrors(async (req, res) => {
       // include adminNotes/reason in email data if email template is used
       emailTemplate: "timeEntryReview",
       emailData: { reason, adminNotes, timeEntry },
+    }).catch((e) => {
+      // Log but don't fail the request if email/notification delivery fails
+      console.warn(
+        "Non-fatal: failed to send time entry notification/email:",
+        e && e.message ? e.message : e
+      );
     });
   }
 
