@@ -73,10 +73,10 @@ const uploadDocument = catchErrors(async (req, res) => {
     .populate("documentType", "name")
     .populate("uploadedBy", "name");
 
-  // Send notification to employee
+  // Send notification to employee (fire-and-forget)
   const emp = await Employee.findById(employee);
   if (emp) {
-    await sendFullNotification({
+    sendFullNotification({
       employee: emp,
       title: "New Document Uploaded",
       message: `A new document "${title}" has been uploaded to your profile.`,
@@ -90,7 +90,12 @@ const uploadDocument = catchErrors(async (req, res) => {
         title: "New Document Uploaded",
         message: `A new document "${title}" has been uploaded to your profile. Please review it at your earliest convenience.`,
       },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: document upload notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del(`employeeDocuments-${employee}`);
@@ -252,7 +257,7 @@ const verifyDocument = catchErrors(async (req, res) => {
 
   if (!document) throw new Error("Document not found");
 
-  // Send notification to employee
+  // Send notification to employee (fire-and-forget)
   const emp = await Employee.findById(document.employee._id);
   if (emp) {
     const message =
@@ -262,7 +267,7 @@ const verifyDocument = catchErrors(async (req, res) => {
             rejectionReason || "Not specified"
           }`;
 
-    await sendFullNotification({
+    sendFullNotification({
       employee: emp,
       title: `Document ${status === "verified" ? "Verified" : "Rejected"}`,
       message,
@@ -270,7 +275,12 @@ const verifyDocument = catchErrors(async (req, res) => {
       priority: status === "verified" ? "medium" : "high",
       link: "/documents",
       metadata: { documentId: document._id },
-    });
+    }).catch((e) =>
+      console.warn(
+        "Non-fatal: document verification notification failed:",
+        e && e.message ? e.message : e
+      )
+    );
   }
 
   myCache.del(`employeeDocuments-${document.employee._id}`);
