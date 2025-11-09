@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import * as bcrypt from "bcrypt";
-import cloudinary from "cloudinary";
+// cloudinary removed - using local file storage helpers
 import { myCache, formatDate } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
 import Shift from "../models/shift.model.js";
@@ -34,10 +34,10 @@ const clearEmployeeCache = () => {
 // Helper function to convert shift strings to ObjectIds
 const convertShiftToObjectId = async (shiftValue) => {
   if (!shiftValue) return null;
-  
+
   // If already an ObjectId, return as is
   if (typeof shiftValue !== "string") return shiftValue;
-  
+
   // If it's a shift name string, convert to ObjectId
   if (["Morning", "Evening", "Night"].includes(shiftValue)) {
     // Try both formats: "Morning" and "Morning Shift"
@@ -47,7 +47,7 @@ const convertShiftToObjectId = async (shiftValue) => {
     }
     return shiftDoc ? shiftDoc._id : null;
   }
-  
+
   // If it's already an ObjectId string, return it
   return shiftValue;
 };
@@ -183,9 +183,9 @@ const createEmployee = catchErrors(async (req, res) => {
   try {
     // Fetch the created employee with populated fields
     const createdEmployee = await Employee.findById(employee._id)
-      .populate('department', 'name')
-      .populate('designation', 'name');
-    
+      .populate("department", "name")
+      .populate("designation", "name");
+
     await sendEmailNotification({
       email: email,
       subject: "Welcome to Metro HRMS!",
@@ -395,19 +395,18 @@ const updateProfile = catchErrors(async (req, res) => {
   const id = req.user.id;
   const { name, email } = req.body;
 
-
   const employee = await Employee.findById(id);
 
   if (
     req.file &&
     employee.profilePicture !== `${process.env.CLIENT_URL}/unknown.jpeg`
   ) {
-    const publicId = getPublicIdFromUrl(employee.profilePicture);
-    if (publicId) {
-      const res = await cloudinary.v2.uploader.destroy(`uploads/${publicId}`);
-
-      if (res.result !== "ok") throw new Error("Id" + res.result);
-    } else throw new Error("Invalid Cloudinary id");
+    try {
+      const { deleteUploadedFile } = await import("../utils/index.js");
+      await deleteUploadedFile(employee.profilePicture);
+    } catch (err) {
+      console.log("Error deleting old profile image file:", err.message);
+    }
   }
 
   if (name) employee.name = name;
@@ -437,13 +436,16 @@ const changeEmployeePassword = catchErrors(async (req, res) => {
   const { password } = req.body;
 
   if (!id) throw new Error("Please provide employee Id");
-  if (!password || password.length < 6) throw new Error("Password must be at least 6 characters");
+  if (!password || password.length < 6)
+    throw new Error("Password must be at least 6 characters");
 
   const hashed = await bcrypt.hash(password, 10);
   await Employee.findByIdAndUpdate(id, { password: hashed });
   clearEmployeeCache();
 
-  return res.status(200).json({ success: true, message: "Password updated successfully" });
+  return res
+    .status(200)
+    .json({ success: true, message: "Password updated successfully" });
 });
 
 export {
