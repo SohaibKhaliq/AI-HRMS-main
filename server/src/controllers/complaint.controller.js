@@ -88,7 +88,8 @@ const createComplaint = catchErrors(async (req, res) => {
 
   let documentUrl = null;
   if (req.file) {
-    documentUrl = req.file.path;
+    // Store public URL for the uploaded document
+    documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
   }
 
   const complaint = await Complaint.create({
@@ -250,7 +251,8 @@ const updateComplaint = catchErrors(async (req, res) => {
   if (status) complaint.status = status;
   if (assignComplaint) complaint.assignComplaint = assignComplaint;
   if (remarks) complaint.remarks = remarks;
-  if (req.file) complaint.documentUrl = req.file.path;
+  if (req.file)
+    complaint.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
 
   await complaint.save();
 
