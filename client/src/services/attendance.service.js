@@ -158,6 +158,38 @@ export const getFaceDescriptor = createAsyncThunk(
   }
 );
 
+// Unregister own face descriptor
+export const unregisterFaceDescriptor = createAsyncThunk(
+  "attendance/unregisterFaceDescriptor",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.delete("/attendance/face");
+      toast.success(data.message);
+      return data;
+    } catch (error) {
+      toast.error(error.response?.data.message || "An error occurred.");
+      return rejectWithValue(error.response?.data.message || error.message);
+    }
+  }
+);
+
+// Unregister face descriptor for a specific employee (admin)
+export const unregisterFaceDescriptorForAdmin = createAsyncThunk(
+  "attendance/unregisterFaceDescriptorForAdmin",
+  async (employeeId, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.delete(
+        `/attendance/face/${employeeId}`
+      );
+      toast.success(data.message);
+      return employeeId;
+    } catch (error) {
+      toast.error(error.response?.data.message || "An error occurred.");
+      return rejectWithValue(error.response?.data.message || error.message);
+    }
+  }
+);
+
 // Mark Attendance using Face Recognition
 export const markAttendanceUsingFace = createAsyncThunk(
   "attendance/markAttendanceUsingFace",
