@@ -12,6 +12,8 @@ import {
   registerFaceDescriptor,
   getFaceDescriptor,
   markAttendanceByFace,
+  unregisterOwnFace,
+  unregisterFaceForEmployee,
 } from "../controllers/attendance.controller.js";
 import {
   verifyAdminToken,
@@ -39,5 +41,7 @@ router.get(
 router.post("/face/register", verifyEmployeeToken, registerFaceDescriptor);
 router.get("/face/descriptor", verifyEmployeeToken, getFaceDescriptor);
 router.post("/mark/face", verifyEmployeeToken, markAttendanceByFace);
+router.delete("/face", verifyEmployeeToken, unregisterOwnFace);
+router.delete("/face/:employeeId", verifyAdminToken, unregisterFaceForEmployee);
 
 export default router;
