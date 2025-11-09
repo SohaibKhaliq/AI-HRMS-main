@@ -4,7 +4,7 @@ import Employee from "../models/employee.model.js";
 import { sendFullNotification } from "../services/notification.service.js";
 
 const clockIn = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.employee?._id || req.user?.id;
   const { project, task, notes } = req.body;
 
   const today = new Date();
@@ -83,7 +83,7 @@ const clockIn = catchErrors(async (req, res) => {
 });
 
 const clockOut = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.employee?._id || req.user?.id;
   const { notes } = req.body;
 
   const today = new Date();
@@ -119,7 +119,7 @@ const clockOut = catchErrors(async (req, res) => {
 });
 
 const startBreak = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.employee?._id || req.user?.id;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -155,7 +155,7 @@ const startBreak = catchErrors(async (req, res) => {
 });
 
 const endBreak = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.employee?._id || req.user?.id;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -188,7 +188,7 @@ const endBreak = catchErrors(async (req, res) => {
 });
 
 const getMyTimeEntries = catchErrors(async (req, res) => {
-  const employeeId = req.employee._id;
+  const employeeId = req.employee?._id || req.user?.id;
   const { startDate, endDate, status } = req.query;
 
   const query = { employee: employeeId };
@@ -332,6 +332,20 @@ const getTimeEntryById = catchErrors(async (req, res) => {
 
   // Compute live totals (handles active entries and open breaks)
   try {
+    // Diagnostic: log shapes if developer mode enabled
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        console.debug(
+          "approveTimeEntry debug - req.user.id:",
+          req.user?.id,
+          "req.employee keys:",
+          req.employee ? Object.keys(req.employee) : null
+        );
+        // don't stringify full objects to avoid secrets
+      } catch (d) {
+        /* ignore */
+      }
+    }
     const now = new Date();
     const entry = timeEntry.toObject ? timeEntry.toObject() : timeEntry;
 
@@ -406,7 +420,16 @@ const updateTimeEntry = catchErrors(async (req, res) => {
 
   if (!timeEntry) throw new Error("Time entry not found");
 
-  myCache.del(`timeEntries-${timeEntry.employee._id}`);
+  // myCache key expects employee id string; handle populated employee or plain id
+  try {
+    const cacheEmployeeId = timeEntry.employee?._id || timeEntry.employee;
+    if (cacheEmployeeId) myCache.del(`timeEntries-${cacheEmployeeId}`);
+  } catch (err) {
+    console.warn(
+      "Non-fatal: failed to clear timeEntries cache for updated entry:",
+      err && err.message ? err.message : err
+    );
+  }
 
   return res.status(200).json({
     success: true,
@@ -418,7 +441,8 @@ const updateTimeEntry = catchErrors(async (req, res) => {
 const approveTimeEntry = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const approvedBy = req.employee._id;
+  // approvedBy: prefer full employee object _id, fall back to req.user.id for safety
+  const approvedBy = (req.employee && req.employee._id) || req.user?.id;
 
   if (!id) throw new Error("Time entry ID is required");
   if (!status || !["approved", "rejected"].includes(status)) {
@@ -443,8 +467,9 @@ const approveTimeEntry = catchErrors(async (req, res) => {
 
   if (!timeEntry) throw new Error("Time entry not found");
 
-  // Send notification to employee
-  const emp = await Employee.findById(timeEntry.employee._id);
+  // Send notification to employee — handle both populated employee object and id string
+  const empId = timeEntry.employee?._id || timeEntry.employee;
+  const emp = empId ? await Employee.findById(empId) : null;
   if (emp) {
     const adminNotes = timeEntry.adminNotes || null;
     const reason = timeEntry.reason || null;
@@ -476,7 +501,16 @@ const approveTimeEntry = catchErrors(async (req, res) => {
     });
   }
 
-  myCache.del(`timeEntries-${timeEntry.employee._id}`);
+  // Clear cache using whichever form employee is stored in (populated doc or id)
+  try {
+    const cacheEmployeeId = timeEntry.employee?._id || timeEntry.employee;
+    if (cacheEmployeeId) myCache.del(`timeEntries-${cacheEmployeeId}`);
+  } catch (err) {
+    console.warn(
+      "Non-fatal: failed to clear timeEntries cache after approve:",
+      err && err.message ? err.message : err
+    );
+  }
 
   return res.status(200).json({
     success: true,
