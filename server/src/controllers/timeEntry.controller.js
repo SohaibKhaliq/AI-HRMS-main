@@ -37,6 +37,38 @@ const clockIn = catchErrors(async (req, res) => {
 
   myCache.del(`timeEntries-${employeeId}`);
 
+  // Notify admins that an employee has clocked in
+  try {
+    const admins = await Employee.find({ admin: true }).select(
+      "_id name email"
+    );
+    if (admins && admins.length > 0) {
+      const notifyPromises = admins.map((admin) =>
+        sendFullNotification({
+          employee: admin,
+          title: `Employee Clocked In: ${populated.employee.name}`,
+          message: `${populated.employee.name} has clocked in at ${new Date(
+            populated.clockIn
+          ).toLocaleTimeString()}.`,
+          type: "general",
+          priority: "low",
+          link: "/time-tracking",
+          metadata: { timeEntryId: populated._id },
+        }).catch((e) => {
+          // log and continue
+          console.warn("Failed to notify admin:", admin._id, e?.message || e);
+        })
+      );
+
+      await Promise.allSettled(notifyPromises);
+    }
+  } catch (notifyErr) {
+    console.warn(
+      "Admin notification error (non-fatal):",
+      notifyErr.message || notifyErr
+    );
+  }
+
   return res.status(201).json({
     success: true,
     message: "Clocked in successfully",
