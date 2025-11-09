@@ -2,7 +2,7 @@ import { useTheme } from "../../context";
 import Modal from "../shared/modals/Modal";
 import Loader from "../shared/loaders/Loader";
 import { navbarLinks } from "../../constants";
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import SettingModal from "../shared/modals/SettingModal";
@@ -67,8 +67,8 @@ const EmployeeSidebar = () => {
 
   const handleClick = async () => {
     const formData = new FormData();
-      formData.append("name", user.name);
-      formData.append("email", user.email);
+    formData.append("name", user.name);
+    formData.append("email", user.email);
     formData.append("profilePicture", file);
 
     const updatedProfilePicture = await updateProfile(
@@ -76,8 +76,8 @@ const EmployeeSidebar = () => {
       formData
     );
     if (updatedProfilePicture) {
-        setImagePreview(updatedProfilePicture.profilePicture);
-         dispatch(updateProfileState(updatedProfilePicture));
+      setImagePreview(updatedProfilePicture.profilePicture);
+      dispatch(updateProfileState(updatedProfilePicture));
     }
     setShowButton(false);
     setToggleModal(false);
@@ -134,7 +134,7 @@ const EmployeeSidebar = () => {
           showSidebar ? "left-0" : "-left-full"
         } lg:left-0 w-[75%] lg:w-[255px]`}
       >
-        <div className="p-3 mt-3 sm:mt-5 flex justify-between lg:justify-center items-center space-x-2 px-7 animate-float">
+        <div className="p-3 mt-3 sm:mt-5 flex justify-between lg:justify-center items-center space-x-2 px-7 animate-float relative">
           <div className="flex flex-col items-center">
             <img className="w-[55px]" src="/metro.png" alt="logo" />
             <h1
@@ -143,6 +143,10 @@ const EmployeeSidebar = () => {
             >
               Metro HR
             </h1>
+          </div>
+          {/* Desktop notification bell */}
+          <div className="hidden lg:flex absolute right-4 top-4">
+            <NotificationBell />
           </div>
           <div
             onClick={() => setShowSidebar(false)}
