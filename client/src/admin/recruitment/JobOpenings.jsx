@@ -62,7 +62,7 @@ function JobOpenings() {
         job.title?.toLowerCase().includes(q) ||
         job.role?.name?.toLowerCase().includes(q) ||
         job.description?.toLowerCase().includes(q) ||
-        job.type?.toLowerCase().includes(q)
+        (job.type?.name || job.type || "").toString().toLowerCase().includes(q)
       );
     });
   }, [jobs, searchQuery]);
@@ -177,7 +177,7 @@ function JobOpenings() {
                       Rs - {job.minSalary}
                     </td>
                     <td className="py-3 px-4 border-b border-secondary">
-                      {job.type}
+                      {job.type?.name || job.type || "-"}
                     </td>
 
                     {/* Description with Tooltip */}
