@@ -18,6 +18,10 @@ const getFeedbacks = catchErrors(async (req, res) => {
 
   const query = {};
   if (review) query.review = { $regex: review, $options: "i" };
+  // Optional server-side filter: return only a specific employee's feedbacks when requested
+  if (req.query.employee) {
+    query.employee = req.query.employee;
+  }
 
   const pageNumber = Math.max(parseInt(page), 1);
   const limitNumber = Math.max(parseInt(limit), 1);
