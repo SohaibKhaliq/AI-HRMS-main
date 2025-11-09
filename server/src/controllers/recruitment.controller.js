@@ -150,20 +150,27 @@ const createApplicant = catchErrors(async (req, res) => {
   if (job.postedBy) {
     try {
       const { default: Employee } = await import("../models/employee.model.js");
-      const poster = await Employee.findById(job.postedBy).select("status name");
+      const poster = await Employee.findById(job.postedBy).select(
+        "status name"
+      );
       if (poster && poster.status && poster.status.toLowerCase() !== "active") {
-        throw new Error("Applications are only accepted for jobs posted by active employees");
+        throw new Error(
+          "Applications are only accepted for jobs posted by active employees"
+        );
       }
     } catch (e) {
       // If employee model lookup fails, fail-safe: allow, but log
-      console.error("Warning: could not verify job poster active status:", e?.message || e);
+      console.error(
+        "Warning: could not verify job poster active status:",
+        e?.message || e
+      );
     }
   }
 
   if (job.deadline && job.deadline < Date.now())
     throw new Error("Job expired, deadline reached");
 
-  // Handle both Cloudinary (path) and local storage (filename) for resume URL
+  // Handle local storage path for resume URL (multer.diskStorage writes to server/public/uploads/resumes)
   const resumePath = req.file.path || `/uploads/resumes/${req.file.filename}`;
 
   job.applicants.push({
@@ -216,10 +223,11 @@ const updateApplicationStatus = catchErrors(async (req, res) => {
   if (status === "Rejected" || status === "Selected") {
     try {
       const statusColor = status === "Selected" ? "#10B981" : "#EF4444";
-      const statusMessage = status === "Selected" 
-        ? "Congratulations! Our HR team will contact you soon with the next steps."
-        : "We appreciate your interest in joining our team. We encourage you to apply for future opportunities.";
-      
+      const statusMessage =
+        status === "Selected"
+          ? "Congratulations! Our HR team will contact you soon with the next steps."
+          : "We appreciate your interest in joining our team. We encourage you to apply for future opportunities.";
+
       await sendMail({
         email: applicant.email,
         subject: `Metro HRMS - Application ${status}`,
@@ -228,9 +236,13 @@ const updateApplicationStatus = catchErrors(async (req, res) => {
             <img src="http://metrohrms.netlify.app/metro.png" alt="Metro HRMS Logo" style="width: 120px; margin-bottom: 24px;">
             <div style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Metro HRMS</div>
             <h2 style="color: ${statusColor}; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Application ${status}</h2>
-            <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${applicant.name}</strong>,</p>
+            <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+              applicant.name
+            }</strong>,</p>
             <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
-              Your application for <strong>${job.title}</strong> has been ${status.toLowerCase()}.
+              Your application for <strong>${
+                job.title
+              }</strong> has been ${status.toLowerCase()}.
             </p>
             <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
               ${statusMessage}
