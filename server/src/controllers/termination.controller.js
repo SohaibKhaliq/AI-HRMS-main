@@ -50,7 +50,9 @@ const createTermination = catchErrors(async (req, res) => {
     await sendFullNotification({
       employee: employeeData,
       title: "Termination Notice",
-      message: `This is to inform you about your employment termination. Type: ${type}. Termination date: ${formatDate(terminationDate)}. Please contact HR for more details.`,
+      message: `This is to inform you about your employment termination. Type: ${type}. Termination date: ${formatDate(
+        terminationDate
+      )}. Please contact HR for more details.`,
       type: "termination",
       priority: "high",
       link: "/profile",
@@ -58,7 +60,13 @@ const createTermination = catchErrors(async (req, res) => {
       emailTemplate: "announcement",
       emailData: {
         title: "Employment Termination Notice",
-        message: `This is to inform you about your employment termination. Type: ${type}. Notice date: ${formatDate(noticeDate)}. Termination date: ${formatDate(terminationDate)}. Reason: ${reason}. ${remarks ? `Additional remarks: ${remarks}` : ''} Please contact HR for further details.`,
+        message: `This is to inform you about your employment termination. Type: ${type}. Notice date: ${formatDate(
+          noticeDate
+        )}. Termination date: ${formatDate(
+          terminationDate
+        )}. Reason: ${reason}. ${
+          remarks ? `Additional remarks: ${remarks}` : ""
+        } Please contact HR for further details.`,
       },
     });
   }
@@ -73,31 +81,53 @@ const createTermination = catchErrors(async (req, res) => {
 });
 
 const getAllTerminations = catchErrors(async (req, res) => {
-  const terminations = await Termination.find()
-    .populate("employee", "name firstName lastName employeeId email profilePicture")
-    .sort({ createdAt: -1 });
+  try {
+    const terminations = await Termination.find()
+      .populate(
+        "employee",
+        "name firstName lastName employeeId email profilePicture"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
 
-  myCache.set("terminations", terminations, 600);
+    myCache.set("terminations", terminations, 600);
 
-  return res.status(200).json({
-    success: true,
-    message: "Terminations fetched successfully",
-    terminations,
-  });
+    return res.status(200).json({
+      success: true,
+      message: "Terminations fetched successfully",
+      terminations,
+    });
+  } catch (err) {
+    console.error(
+      "Error in getAllTerminations:",
+      err && err.message ? err.message : err
+    );
+    throw err;
+  }
 });
 
 const getTerminationById = catchErrors(async (req, res) => {
-  const { id } = req.params;
-  if (!id) throw new Error("Please provide termination id");
-  const termination = await Termination.findById(id).populate(
-    "employee",
-    "name firstName lastName employeeId email profilePicture"
-  );
-  return res.status(200).json({
-    success: true,
-    message: "Termination fetched",
-    termination,
-  });
+  try {
+    const { id } = req.params;
+    if (!id) throw new Error("Please provide termination id");
+    const termination = await Termination.findById(id)
+      .populate(
+        "employee",
+        "name firstName lastName employeeId email profilePicture"
+      )
+      .lean();
+    return res.status(200).json({
+      success: true,
+      message: "Termination fetched",
+      termination,
+    });
+  } catch (err) {
+    console.error(
+      "Error in getTerminationById:",
+      err && err.message ? err.message : err
+    );
+    throw err;
+  }
 });
 
 const updateTermination = catchErrors(async (req, res) => {
@@ -130,7 +160,10 @@ const updateTermination = catchErrors(async (req, res) => {
 
   const termination = await Termination.findByIdAndUpdate(id, updateData, {
     new: true,
-  }).populate("employee", "name firstName lastName employeeId email profilePicture");
+  }).populate(
+    "employee",
+    "name firstName lastName employeeId email profilePicture"
+  );
 
   myCache.del("terminations");
 
@@ -146,7 +179,9 @@ const deleteTermination = catchErrors(async (req, res) => {
   if (!id) throw new Error("Please provide termination id");
   await Termination.findByIdAndDelete(id);
   myCache.del("terminations");
-  return res.status(200).json({ success: true, message: "Termination deleted" });
+  return res
+    .status(200)
+    .json({ success: true, message: "Termination deleted" });
 });
 
 export {
