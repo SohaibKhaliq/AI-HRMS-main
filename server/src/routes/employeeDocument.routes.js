@@ -7,6 +7,7 @@ import {
   getMyDocuments,
   getDocumentById,
   updateDocument,
+  getAllDocuments,
   verifyDocument,
   deleteDocument,
   getExpiringDocuments,
@@ -23,6 +24,7 @@ router.post(
 router.get("/my", verifyEmployeeToken, getMyDocuments);
 router.get("/employee/:employeeId", verifyAdminToken, getEmployeeDocuments);
 router.get("/expiring", verifyAdminToken, getExpiringDocuments);
+router.get("/", verifyAdminToken, getAllDocuments);
 router.get("/:id", verifyEmployeeToken, getDocumentById);
 router.patch(
   "/:id",
