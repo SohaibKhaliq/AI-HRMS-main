@@ -1,6 +1,10 @@
 import { Helmet } from "react-helmet";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { getJobTypes, createJobType } from "../../services/jobmeta.service";
+import JobTypeModal from "../../components/shared/modals/JobTypeModal";
+import { useState } from "react";
 import { createJob } from "../../services/recruitment.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 
@@ -17,10 +21,26 @@ const PostJob = () => {
   const roles = useSelector((state) => state.role.roles);
   const { loading } = useSelector((state) => state.recruitment);
   const departments = useSelector((state) => state.department.departments);
+  const jobTypesState = useSelector(
+    (state) => state.jobmeta?.types || { items: [], loading: false }
+  );
+  const jobTypes = jobTypesState.items || [];
+  const jobTypesLoading = jobTypesState.loading;
+  const [showJobTypeModal, setShowJobTypeModal] = useState(false);
+
+  useEffect(() => {
+    dispatch(getJobTypes());
+  }, [dispatch]);
 
   const onSubmit = (data) => {
     dispatch(createJob(data));
     reset();
+  };
+
+  const handleCreateJobType = async (payload) => {
+    // createJobType will refresh the list via its thunk
+    await dispatch(createJobType(payload)).unwrap();
+    setShowJobTypeModal(false);
   };
 
   return (
@@ -146,22 +166,49 @@ const PostJob = () => {
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <div className="relative">
-                    <select
-                      id="select"
-                      {...register("type", {
-                        required: "Job type is required",
-                      })}
-                      className={`w-full bg-[#EFEFEF] text-sm sm:text-center p-[17px] rounded-full focus:outline focus:outline-2 font-[500]  ${
-                        errors.type
-                          ? "border-red-400 bg-red-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <option value="">---Select job type---</option>
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        id="select"
+                        {...register("type", {
+                          required: "Job type is required",
+                        })}
+                        disabled={jobTypesLoading}
+                        className={`w-full bg-[#EFEFEF] text-sm sm:text-center p-[17px] rounded-full focus:outline focus:outline-2 font-[500]  ${
+                          errors.type
+                            ? "border-red-400 bg-red-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <option value="">
+                          {jobTypesLoading
+                            ? "Loading job types..."
+                            : "---Select job type---"}
+                        </option>
+                        {!jobTypesLoading && jobTypes.length > 0
+                          ? jobTypes.map((t) => (
+                              <option key={t._id} value={t._id}>
+                                {t.name}
+                              </option>
+                            ))
+                          : null}
+                        {!jobTypesLoading && jobTypes.length === 0 && (
+                          <>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                          </>
+                        )}
+                      </select>
+                      {/* Quick add job type */}
+                      <button
+                        type="button"
+                        onClick={() => setShowJobTypeModal(true)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-200 rounded text-sm"
+                        title="Add Job Type"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                   {errors.type && (
                     <p className="text-xs text-red-500 ml-1">
@@ -266,6 +313,14 @@ const PostJob = () => {
           </div>
         </div>
       </section>
+      {showJobTypeModal && (
+        <JobTypeModal
+          isOpen={showJobTypeModal}
+          onClose={() => setShowJobTypeModal(false)}
+          action="create"
+          onSubmit={handleCreateJobType}
+        />
+      )}
     </>
   );
 };
