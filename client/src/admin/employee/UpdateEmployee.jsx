@@ -66,7 +66,7 @@ const EditEmployee = () => {
       setValue("gender", employee.gender || "");
       setValue("martialStatus", employee.martialStatus || "");
       setValue("employmentType", employee.employmentType || "");
-  setValue("shift", employee.shift?._id || employee.shift || "");
+      setValue("shift", employee.shift?._id || employee.shift || "");
       setValue("status", employee.status || "Active");
       setValue("salary", employee.salary || "");
       setValue(
@@ -555,7 +555,9 @@ const EditEmployee = () => {
                       {shifts.map((s) => (
                         <option key={s._id} value={s._id}>
                           {s.name}
-                          {s.startTime ? ` — ${s.startTime} - ${s.endTime}` : ""}
+                          {s.startTime
+                            ? ` — ${s.startTime} - ${s.endTime}`
+                            : ""}
                         </option>
                       ))}
                     </select>
