@@ -40,9 +40,9 @@ const jobSchema = new mongoose.Schema({
   minSalary: String,
   maxSalary: String,
   type: {
-    type: String,
-    enum: ["Full-time", "Part-time", "Contract"],
-    default: "full-time",
+    // Normalized: store reference to JobType document. Keep legacy string values possible
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
   },
   description: String,
   postedBy: {
