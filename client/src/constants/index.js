@@ -210,12 +210,8 @@ const employeesOnLeaveButtons = [
   { label: "Tommorow Leaves", value: "Tomorrow", icon: "fa-arrow-right" },
 ];
 
-const feedbackButtons = [
-  { label: "All Feedbacks", value: "", icon: "fa-globe" },
-  { label: "Positive Feedbacks", value: "Positive", icon: "fa-thumbs-up" },
-  { label: "Neutral Feedbacks", value: "Neutral", icon: "fa-hand-paper" },
-  { label: "Negative Feedbacks", value: "Negative", icon: "fa-thumbs-down" },
-];
+// feedbackButtons removed — kept as an empty array so imports stay stable.
+const feedbackButtons = [];
 
 const recruitmentButtons = [
   { label: "All Recuitments", value: "", icon: "fa-solid fa-briefcase" },
