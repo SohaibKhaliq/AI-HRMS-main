@@ -56,6 +56,9 @@ const CalendarView = lazy(() => import("../pages/calendar/CalendarView"));
 const SubstituteAnalysisPage = lazy(() =>
   import("../admin/analysis/SubstituteAnalysisPage")
 );
+const Trainings = lazy(() => import("../admin/training/Trainings"));
+const ViewTraining = lazy(() => import("../admin/training/ViewTraining"));
+const CreateTraining = lazy(() => import("../admin/training/CreateTraining"));
 
 const AdminApp = () => {
   const dispatch = useDispatch();
@@ -120,6 +123,9 @@ const AdminApp = () => {
               path="/substitute-analysis"
               element={<SubstituteAnalysisPage />}
             />
+            <Route path="/trainings" element={<Trainings />} />
+            <Route path="/trainings/create" element={<CreateTraining />} />
+            <Route path="/trainings/:id" element={<ViewTraining />} />
             <Route path="/shifts" element={<Shift />} />
             <Route path="/meetings" element={<Meeting />} />
             <Route path="/leave-types" element={<LeaveType />} />
