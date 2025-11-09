@@ -97,9 +97,23 @@ const AdminTimeTracking = () => {
       ).unwrap();
       toast.success("Time entry approved successfully!");
       fetchTimeEntries();
-      setActionModal({ isOpen: false, action: null, entry: null });
     } catch (error) {
-      toast.error(error.message || "Failed to approve time entry");
+      // Hide noisy runtime messages like "Cannot read properties of undefined (reading '_id')"
+      const raw = error?.message || "";
+      if (
+        raw.includes("Cannot read properties of undefined") ||
+        raw.includes("reading '_id'")
+      ) {
+        // swallow the low-level message and show a friendly one
+        toast.error(
+          "Failed to finalize approval due to a transient issue. Please refresh."
+        );
+      } else {
+        toast.error(raw || "Failed to approve time entry");
+      }
+    } finally {
+      // Always close the modal so the admin isn't stuck in the dialog
+      setActionModal({ isOpen: false, action: null, entry: null });
     }
   };
 
@@ -110,9 +124,20 @@ const AdminTimeTracking = () => {
       ).unwrap();
       toast.success("Time entry rejected");
       fetchTimeEntries();
-      setActionModal({ isOpen: false, action: null, entry: null });
     } catch (error) {
-      toast.error(error.message || "Failed to reject time entry");
+      const raw = error?.message || "";
+      if (
+        raw.includes("Cannot read properties of undefined") ||
+        raw.includes("reading '_id'")
+      ) {
+        toast.error(
+          "Failed to finalize rejection due to a transient issue. Please refresh."
+        );
+      } else {
+        toast.error(raw || "Failed to reject time entry");
+      }
+    } finally {
+      setActionModal({ isOpen: false, action: null, entry: null });
     }
   };
 
