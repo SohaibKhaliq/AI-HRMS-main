@@ -2,6 +2,24 @@ import toast from "react-hot-toast";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../axios/axiosInstance";
 
+// Generate payrolls for a specific month (admin)
+export const generatePayrollForMonth = createAsyncThunk(
+  "payroll/generateForMonth",
+  async ({ month, year }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post(`/payrolls/generate-month`, {
+        month,
+        year,
+      });
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data.message || "Failed to generate payrolls for month"
+      );
+    }
+  }
+);
+
 // Fetch Payroll
 export const getAllPayrolls = createAsyncThunk(
   "payroll/getAllPayrolls",
