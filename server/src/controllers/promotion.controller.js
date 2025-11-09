@@ -1,14 +1,32 @@
 import { catchErrors, myCache, formatDate } from "../utils/index.js";
 import Promotion from "../models/promotion.model.js";
 import Employee from "../models/employee.model.js";
-import cloudinary from "cloudinary";
 import { sendFullNotification } from "../services/notification.service.js";
 
 const createPromotion = catchErrors(async (req, res) => {
-  const { employee, previousDesignation, newDesignation, promotionDate, effectiveDate, salaryAdjustment, status, documentUrl, remarks, createdAt } = req.body;
+  const {
+    employee,
+    previousDesignation,
+    newDesignation,
+    promotionDate,
+    effectiveDate,
+    salaryAdjustment,
+    status,
+    documentUrl,
+    remarks,
+    createdAt,
+  } = req.body;
 
-  if (!employee || !previousDesignation || !newDesignation || !promotionDate || !effectiveDate) {
-    throw new Error("Missing required fields: employee, previousDesignation, newDesignation, promotionDate, effectiveDate");
+  if (
+    !employee ||
+    !previousDesignation ||
+    !newDesignation ||
+    !promotionDate ||
+    !effectiveDate
+  ) {
+    throw new Error(
+      "Missing required fields: employee, previousDesignation, newDesignation, promotionDate, effectiveDate"
+    );
   }
 
   let finalDocumentUrl = documentUrl || null;
@@ -43,7 +61,11 @@ const createPromotion = catchErrors(async (req, res) => {
     await sendFullNotification({
       employee: employeeData,
       title: "Promotion Notification",
-      message: `Congratulations! You have been promoted from ${populated.previousDesignation?.name || 'your previous position'} to ${populated.newDesignation?.name || 'new position'}. Effective from ${formatDate(effectiveDate)}.`,
+      message: `Congratulations! You have been promoted from ${
+        populated.previousDesignation?.name || "your previous position"
+      } to ${
+        populated.newDesignation?.name || "new position"
+      }. Effective from ${formatDate(effectiveDate)}.`,
       type: "promotion",
       priority: "high",
       link: "/profile",
@@ -51,21 +73,41 @@ const createPromotion = catchErrors(async (req, res) => {
       emailTemplate: "announcement",
       emailData: {
         title: "Congratulations on Your Promotion!",
-        message: `You have been promoted from ${populated.previousDesignation?.name || 'your previous position'} to ${populated.newDesignation?.name || 'new position'}. This promotion is effective from ${formatDate(effectiveDate)}. ${salaryAdjustment ? `Your new salary adjustment is $${salaryAdjustment}.` : ''} We wish you continued success in your new role!`,
+        message: `You have been promoted from ${
+          populated.previousDesignation?.name || "your previous position"
+        } to ${
+          populated.newDesignation?.name || "new position"
+        }. This promotion is effective from ${formatDate(effectiveDate)}. ${
+          salaryAdjustment
+            ? `Your new salary adjustment is $${salaryAdjustment}.`
+            : ""
+        } We wish you continued success in your new role!`,
       },
     });
   }
 
   myCache.del("promotions");
 
-  return res.status(201).json({ success: true, message: "Promotion created successfully", promotion: populated });
+  return res
+    .status(201)
+    .json({
+      success: true,
+      message: "Promotion created successfully",
+      promotion: populated,
+    });
 });
 
 const getAllPromotions = catchErrors(async (req, res) => {
   const cacheKey = "promotions";
   const cached = myCache.get(cacheKey);
   if (cached) {
-    return res.status(200).json({ success: true, message: "Promotions fetched (cache)", promotions: cached });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Promotions fetched (cache)",
+        promotions: cached,
+      });
   }
 
   const promotions = await Promotion.find()
@@ -75,7 +117,13 @@ const getAllPromotions = catchErrors(async (req, res) => {
     .lean();
   myCache.set(cacheKey, promotions);
 
-  return res.status(200).json({ success: true, message: "Promotions fetched successfully", promotions });
+  return res
+    .status(200)
+    .json({
+      success: true,
+      message: "Promotions fetched successfully",
+      promotions,
+    });
 });
 
 const getPromotionById = catchErrors(async (req, res) => {
@@ -85,12 +133,25 @@ const getPromotionById = catchErrors(async (req, res) => {
     .populate("employee", "name employeeId email")
     .populate("previousDesignation", "name")
     .populate("newDesignation", "name");
-  return res.status(200).json({ success: true, message: "Promotion fetched", promotion });
+  return res
+    .status(200)
+    .json({ success: true, message: "Promotion fetched", promotion });
 });
 
 const updatePromotion = catchErrors(async (req, res) => {
   const { id } = req.params;
-  const { employee, previousDesignation, newDesignation, promotionDate, effectiveDate, salaryAdjustment, status, documentUrl, remarks, createdAt } = req.body;
+  const {
+    employee,
+    previousDesignation,
+    newDesignation,
+    promotionDate,
+    effectiveDate,
+    salaryAdjustment,
+    status,
+    documentUrl,
+    remarks,
+    createdAt,
+  } = req.body;
   if (!id) throw new Error("Please provide promotion id");
 
   const updateData = {};
@@ -99,7 +160,8 @@ const updatePromotion = catchErrors(async (req, res) => {
   if (newDesignation) updateData.newDesignation = newDesignation;
   if (promotionDate) updateData.promotionDate = new Date(promotionDate);
   if (effectiveDate) updateData.effectiveDate = new Date(effectiveDate);
-  if (salaryAdjustment !== undefined) updateData.salaryAdjustment = salaryAdjustment;
+  if (salaryAdjustment !== undefined)
+    updateData.salaryAdjustment = salaryAdjustment;
   if (status) updateData.status = status;
   if (remarks !== undefined) updateData.remarks = remarks;
   if (createdAt) updateData.createdAt = new Date(createdAt);
@@ -109,11 +171,12 @@ const updatePromotion = catchErrors(async (req, res) => {
     // Get existing promotion to delete old document if it exists
     const existingPromotion = await Promotion.findById(id);
     if (existingPromotion && existingPromotion.documentUrl) {
-      const publicId = existingPromotion.documentUrl.split("/").pop().split(".")[0];
       try {
-        await cloudinary.v2.uploader.destroy(`promotion-documents/${publicId}`, { resource_type: "raw" });
+        // Try to delete local uploaded file if present
+        const { deleteUploadedFile } = await import("../utils/index.js");
+        await deleteUploadedFile(existingPromotion.documentUrl);
       } catch (err) {
-        console.log("Error deleting old document from Cloudinary:", err.message);
+        console.log("Error deleting old document file:", err.message);
       }
     }
     updateData.documentUrl = req.file.path;
@@ -121,14 +184,18 @@ const updatePromotion = catchErrors(async (req, res) => {
     updateData.documentUrl = documentUrl;
   }
 
-  const promotion = await Promotion.findByIdAndUpdate(id, updateData, { new: true })
+  const promotion = await Promotion.findByIdAndUpdate(id, updateData, {
+    new: true,
+  })
     .populate("employee", "name employeeId email")
     .populate("previousDesignation", "name")
     .populate("newDesignation", "name");
 
   myCache.del("promotions");
 
-  return res.status(200).json({ success: true, message: "Promotion updated", promotion });
+  return res
+    .status(200)
+    .json({ success: true, message: "Promotion updated", promotion });
 });
 
 const deletePromotion = catchErrors(async (req, res) => {
@@ -139,4 +206,10 @@ const deletePromotion = catchErrors(async (req, res) => {
   return res.status(200).json({ success: true, message: "Promotion deleted" });
 });
 
-export { createPromotion, getAllPromotions, getPromotionById, updatePromotion, deletePromotion };
+export {
+  createPromotion,
+  getAllPromotions,
+  getPromotionById,
+  updatePromotion,
+  deletePromotion,
+};
