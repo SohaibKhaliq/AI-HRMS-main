@@ -55,7 +55,8 @@ const uploadDocument = catchErrors(async (req, res) => {
     documentType: documentType || null,
     title,
     description: description || "",
-    fileUrl: req.file.path, // Local multer file path (server/public/uploads/documents)
+    // Store public URL so client can fetch over HTTP
+    fileUrl: `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`,
     fileName: req.file.originalname,
     fileSize: req.file.size,
     fileType: req.file.mimetype,
@@ -198,7 +199,7 @@ const updateDocument = catchErrors(async (req, res) => {
 
   // If file is being updated
   if (req.file) {
-    updateData.fileUrl = req.file.path;
+    updateData.fileUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
     updateData.fileName = req.file.originalname;
     updateData.fileSize = req.file.size;
     updateData.fileType = req.file.mimetype;
