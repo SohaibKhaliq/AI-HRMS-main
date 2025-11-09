@@ -40,6 +40,25 @@ const AdminTimeTracking = () => {
     dispatch(getAllEmployees());
   }, [dispatch]);
 
+  // Helpers to gracefully read employee name/initials from different API shapes
+  const getEmployeeDisplayName = (emp) => {
+    if (!emp) return "-";
+    if (emp.name) return emp.name;
+    if (emp.firstName || emp.lastName)
+      return `${emp.firstName || ""} ${emp.lastName || ""}`.trim();
+    if (emp.employeeId) return emp.employeeId;
+    return "-";
+  };
+
+  const getEmployeeInitials = (emp) => {
+    const name = getEmployeeDisplayName(emp);
+    if (!name || name === "-") return "?";
+    const parts = name.split(" ").filter(Boolean);
+    const first = parts[0] ? parts[0][0] : "";
+    const second = parts[1] ? parts[1][0] : "";
+    return `${first}${second}`.toUpperCase();
+  };
+
   const fetchTimeEntries = useCallback(() => {
     const params = {
       ...(filters.employee && { employee: filters.employee }),
@@ -232,7 +251,7 @@ const AdminTimeTracking = () => {
               <option value="">All Employees</option>
               {employees?.map((emp) => (
                 <option key={emp._id} value={emp._id}>
-                  {emp.firstName} {emp.lastName}
+                  {getEmployeeDisplayName(emp)}
                 </option>
               ))}
             </select>
@@ -344,13 +363,11 @@ const AdminTimeTracking = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
-                          {entry.employee?.firstName?.[0]}
-                          {entry.employee?.lastName?.[0]}
+                          {getEmployeeInitials(entry.employee)}
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {entry.employee?.firstName}{" "}
-                            {entry.employee?.lastName}
+                            {getEmployeeDisplayName(entry.employee)}
                           </div>
                         </div>
                       </div>
