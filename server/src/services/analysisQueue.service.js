@@ -49,12 +49,10 @@ const fetchAndLockJobs = async (limit = 5) => {
   return locked;
 };
 
-const markJobDone = async (jobId) => {
-  return AnalysisJob.findByIdAndUpdate(
-    jobId,
-    { status: "done" },
-    { new: true }
-  );
+const markJobDone = async (jobId, result = null) => {
+  const update = { status: "done" };
+  if (result !== null) update.result = result;
+  return AnalysisJob.findByIdAndUpdate(jobId, update, { new: true });
 };
 
 const markJobFailed = async (jobId, error) => {
