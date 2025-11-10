@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { createRole, updateRole } from "../../../services/role.service";
 import PropTypes from "prop-types";
 import { FaTimes, FaUserTag } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 /**
  * Props
@@ -54,7 +55,7 @@ const RoleModal = ({ action = "create", onClose, role = null }) => {
   /* --------------------------------------------------------------
    *  Submit handler
    * ------------------------------------------------------------ */
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // In view mode just close the modal
@@ -66,13 +67,37 @@ const RoleModal = ({ action = "create", onClose, role = null }) => {
       return;
     }
 
-    if (action === "update" && role?._id) {
-      dispatch(updateRole({ id: role._id, role: formData }));
-    } else {
-      dispatch(createRole(formData));
-    }
+    try {
+      if (action === "update" && role?._id) {
+        await dispatch(updateRole({ id: role._id, role: formData })).unwrap();
+      } else {
+        await dispatch(createRole(formData)).unwrap();
+      }
 
-    onClose();
+      onClose();
+    } catch (error) {
+      // error could be a string, an Error, or a server response object (from rejectWithValue)
+      // Prefer structured payload when available
+      const payload =
+        (typeof error === "object" && error) ||
+        (typeof error === "string" ? { message: error } : {});
+
+      const msg = payload.message || payload.error || "Failed to save role";
+
+      // Structured field-level error handling
+      if (payload.field === "name" || payload.code === "DUPLICATE_NAME") {
+        setErrors({ name: msg });
+        return;
+      }
+
+      // Fallback: also detect duplicate wording in message
+      if (String(msg).toLowerCase().includes("already in use")) {
+        setErrors({ name: msg });
+        return;
+      }
+
+      toast.error(msg);
+    }
   };
 
   return (
