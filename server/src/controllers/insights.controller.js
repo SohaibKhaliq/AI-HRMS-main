@@ -4,6 +4,7 @@ import { catchErrors } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
 import Feedback from "../models/feedback.model.js";
 import Complaint from "../models/complaint.model.js";
+import LeaveBalance from "../models/leaveBalance.model.js";
 import {
   getEmployeeAttendanceByMonth,
   getMonthlyAttendancePercentage,
@@ -279,25 +280,40 @@ const getEmployeeInsights = catchErrors(async (req, res) => {
 
   if (!employee) throw new Error("Employee ID is required");
 
+  const currentYear = new Date().getFullYear();
+
   const [
     performanceRecord,
-    employeeData,
-    leavesTaken,
+    leaveBalances,
+    approvedLeaves,
     complaintResolved,
     feedbackSubmitted,
     attendancePercentageByMonth,
   ] = await Promise.all([
     Performance.findOne({ employee }).select("kpiScore kpis"),
-    Employee.findById(employee).select("leaveBalance"),
-    Complaint.find({ employee, status: "Approved" }).countDocuments(),
+    LeaveBalance.find({ employee, year: currentYear }).select("available"),
+    Leave.find({
+      employee,
+      status: "Approved",
+      fromDate: {
+        $gte: new Date(currentYear, 0, 1),
+        $lte: new Date(currentYear, 11, 31),
+      },
+    }).countDocuments(),
     Complaint.find({ employee, status: "Resolved" }).countDocuments(),
     Feedback.find({ employee }).countDocuments(),
-    getEmployeeAttendanceByMonth(employee, new Date().getFullYear()),
+    getEmployeeAttendanceByMonth(employee, currentYear),
   ]);
 
+  // Calculate total available leave balance from all leave types
+  const totalAvailableLeave = leaveBalances.reduce(
+    (sum, balance) => sum + (balance.available || 0),
+    0
+  );
+
   const insights = {
-    leaveBalance: employeeData?.leaveBalance || 0,
-    leavesTaken,
+    leaveBalance: totalAvailableLeave,
+    leavesTaken: approvedLeaves,
     complaintResolved,
     feedbackSubmitted,
     attendanceRecord: attendancePercentageByMonth,
