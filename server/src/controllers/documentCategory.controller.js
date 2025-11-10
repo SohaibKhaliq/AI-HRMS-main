@@ -2,16 +2,40 @@ import { catchErrors, myCache } from "../utils/index.js";
 import DocumentCategory from "../models/documentCategory.model.js";
 
 const createDocumentCategory = catchErrors(async (req, res) => {
-  const { name, description, requiresExpiry, isMandatory, allowedFormats, maxSizeMB } = req.body;
+  const {
+    name,
+    description,
+    requiresExpiry,
+    isMandatory,
+    allowedFormats,
+    maxSizeMB,
+  } = req.body;
 
   if (!name) throw new Error("Category name is required");
+
+  // Check for duplicate document category name
+  const existingCategory = await DocumentCategory.findOne({ name });
+  if (existingCategory) {
+    const error = new Error(
+      `Document category name '${name}' is already in use. Please use a different name.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
 
   const category = await DocumentCategory.create({
     name,
     description: description || "",
     requiresExpiry: requiresExpiry || false,
     isMandatory: isMandatory || false,
-    allowedFormats: allowedFormats || [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"],
+    allowedFormats: allowedFormats || [
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".jpg",
+      ".jpeg",
+      ".png",
+    ],
     maxSizeMB: maxSizeMB || 5,
   });
 
@@ -53,7 +77,24 @@ const updateDocumentCategory = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Category ID is required");
 
-  const category = await DocumentCategory.findByIdAndUpdate(id, updateData, { new: true });
+  // Check for duplicate document category name (excluding current category)
+  if (updateData.name) {
+    const existingCategory = await DocumentCategory.findOne({
+      name: updateData.name,
+      _id: { $ne: id },
+    });
+    if (existingCategory) {
+      const error = new Error(
+        `Document category name '${updateData.name}' is already in use. Please use a different name.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
+  const category = await DocumentCategory.findByIdAndUpdate(id, updateData, {
+    new: true,
+  });
   if (!category) throw new Error("Document category not found");
 
   myCache.del("documentCategories");
