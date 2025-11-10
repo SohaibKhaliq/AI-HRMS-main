@@ -7,6 +7,16 @@ const createRole = catchErrors(async (req, res) => {
 
   if (!name || !description) throw new Error("Please provide all fields");
 
+  // Check for duplicate role name
+  const existingRole = await Role.findOne({ name });
+  if (existingRole) {
+    const error = new Error(
+      `Role name '${name}' is already in use. Please use a different name.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   const role = await Role.create({ name, description });
 
   myCache.del("insights");
@@ -93,6 +103,21 @@ const updateRole = catchErrors(async (req, res) => {
   const { name, description } = req.body;
 
   if (!id) throw new Error("Please provide role Id");
+
+  // Check for duplicate role name (excluding current role)
+  if (name) {
+    const existingRole = await Role.findOne({
+      name,
+      _id: { $ne: id },
+    });
+    if (existingRole) {
+      const error = new Error(
+        `Role name '${name}' is already in use. Please use a different name.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
 
   const role = await Role.findByIdAndUpdate(
     id,
