@@ -48,6 +48,9 @@ const Payroll = lazy(() => import("../admin/payroll/Payroll"));
 const Shift = lazy(() => import("../admin/shift/Shift"));
 const Meeting = lazy(() => import("../admin/meeting/Meeting"));
 const LeaveType = lazy(() => import("../admin/leaveType/LeaveType"));
+const AssignLeaveBalance = lazy(() =>
+  import("../admin/leave/AssignLeaveBalance")
+);
 const DocumentCategory = lazy(() =>
   import("../admin/documentCategory/DocumentCategory")
 );
@@ -134,6 +137,7 @@ const AdminApp = () => {
             <Route path="/trainings" element={<Trainings />} />
             <Route path="/trainings/create" element={<CreateTraining />} />
             <Route path="/trainings/:id" element={<ViewTraining />} />
+            <Route path="/leave-balances" element={<AssignLeaveBalance />} />
             <Route path="/shifts" element={<Shift />} />
             <Route path="/meetings" element={<Meeting />} />
             <Route path="/leave-types" element={<LeaveType />} />
