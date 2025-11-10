@@ -27,7 +27,7 @@ export const updateRole = createAsyncThunk(
       return data.role;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data.message || "Failed to update role"
+        error.response?.data || { message: "Failed to update role" }
       );
     }
   }
@@ -43,7 +43,7 @@ export const createRole = createAsyncThunk(
       return data.role;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data.message || "Failed to create role"
+        error.response?.data || { message: "Failed to create role" }
       );
     }
   }
@@ -59,7 +59,7 @@ export const deleteRole = createAsyncThunk(
       return id;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data.message || "Failed to delete role"
+        error.response?.data || { message: "Failed to delete role" }
       );
     }
   }
