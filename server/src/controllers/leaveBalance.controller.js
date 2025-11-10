@@ -18,7 +18,9 @@ const initializeEmployeeBalance = catchErrors(async (req, res) => {
   const leaveTypes = await LeaveType.find({ isActive: true });
 
   if (leaveTypes.length === 0) {
-    throw new Error("No active leave types found. Please create leave types first.");
+    throw new Error(
+      "No active leave types found. Please create leave types first."
+    );
   }
 
   const balances = [];
@@ -148,8 +150,14 @@ const updateBalance = catchErrors(async (req, res) => {
 const adjustBalance = catchErrors(async (req, res) => {
   const { employeeId, leaveTypeId, year, adjustment, reason } = req.body;
 
-  if (!employeeId || !leaveTypeId || !adjustment) {
+  if (!employeeId || !leaveTypeId || adjustment === undefined) {
     throw new Error("Employee ID, leave type ID, and adjustment are required");
+  }
+
+  // Validate adjustment is a number
+  const adjustmentNum = Number(adjustment);
+  if (isNaN(adjustmentNum)) {
+    throw new Error("Adjustment must be a valid number");
   }
 
   const currentYear = year || new Date().getFullYear();
@@ -165,18 +173,38 @@ const adjustBalance = catchErrors(async (req, res) => {
     const leaveType = await LeaveType.findById(leaveTypeId);
     if (!leaveType) throw new Error("Leave type not found");
 
+    const newTotal = leaveType.maxDaysPerYear + adjustmentNum;
+
+    // Validate new total is non-negative
+    if (newTotal < 0) {
+      throw new Error("Total allocated days cannot be negative");
+    }
+
     balance = await LeaveBalance.create({
       employee: employeeId,
       leaveType: leaveTypeId,
       year: currentYear,
-      totalAllotted: leaveType.maxDaysPerYear + adjustment,
+      totalAllotted: newTotal,
       used: 0,
       pending: 0,
-      available: leaveType.maxDaysPerYear + adjustment,
+      available: newTotal,
       carriedForward: 0,
     });
   } else {
-    balance.totalAllotted += adjustment;
+    const newTotal = balance.totalAllotted + adjustmentNum;
+
+    // Validate new total is non-negative
+    if (newTotal < 0) {
+      throw new Error("Total allocated days cannot be negative");
+    }
+
+    balance.totalAllotted = newTotal;
+    // Explicitly recalculate available to ensure it's correct
+    balance.available =
+      balance.totalAllotted +
+      balance.carriedForward -
+      balance.used -
+      balance.pending;
     await balance.save();
   }
 
@@ -188,7 +216,9 @@ const adjustBalance = catchErrors(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    message: `Leave balance adjusted by ${adjustment} days. Reason: ${reason || "N/A"}`,
+    message: `Leave balance adjusted by ${adjustmentNum} days. Reason: ${
+      reason || "N/A"
+    }`,
     balance: populated,
   });
 });
