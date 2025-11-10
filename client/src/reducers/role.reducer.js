@@ -17,6 +17,18 @@ const roleSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
+    // helper to extract a readable message from rejected action payloads
+    const extractErrorMessage = (payload, defaultMsg) => {
+      if (!payload) return defaultMsg || "Something went wrong";
+      if (typeof payload === "string") return payload;
+      if (payload.message) return payload.message;
+      if (payload.error) return payload.error;
+      try {
+        return JSON.stringify(payload);
+      } catch {
+        return defaultMsg || "Something went wrong";
+      }
+    };
     builder
       // Handling the getRoles action
       .addCase(getRoles.pending, (state) => {
@@ -29,7 +41,10 @@ const roleSlice = createSlice({
       })
       .addCase(getRoles.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = extractErrorMessage(
+          action.payload,
+          action.error?.message || "Failed to fetch roles"
+        );
       })
 
       // Handling the updateDepartment action
@@ -51,7 +66,10 @@ const roleSlice = createSlice({
       })
       .addCase(updateRole.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = extractErrorMessage(
+          action.payload,
+          action.error?.message || "Failed to update role"
+        );
       })
 
       // Handling the createRole action
@@ -65,7 +83,10 @@ const roleSlice = createSlice({
       })
       .addCase(createRole.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = extractErrorMessage(
+          action.payload,
+          action.error?.message || "Failed to create role"
+        );
       });
 
     // deleteRole
@@ -80,7 +101,10 @@ const roleSlice = createSlice({
       })
       .addCase(deleteRole.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = extractErrorMessage(
+          action.payload,
+          action.error?.message || "Failed to delete role"
+        );
       });
   },
 });
