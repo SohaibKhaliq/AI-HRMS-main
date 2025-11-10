@@ -48,3 +48,19 @@ export const createRole = createAsyncThunk(
     }
   }
 );
+
+// Delete Role
+export const deleteRole = createAsyncThunk(
+  "role/deleteRole",
+  async (id, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.delete(`/roles/${id}`);
+      toast.success(data.message);
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data.message || "Failed to delete role"
+      );
+    }
+  }
+);
