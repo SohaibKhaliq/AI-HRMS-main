@@ -21,9 +21,30 @@ const createLeaveType = catchErrors(async (req, res) => {
     throw new Error("Name, code, and maxDaysPerYear are required");
   }
 
+  // Check for duplicate leave type name
+  const existingName = await LeaveType.findOne({ name });
+  if (existingName) {
+    const error = new Error(
+      `Leave type name '${name}' is already in use. Please use a different name.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  // Check for duplicate leave type code
+  const upperCode = code.toUpperCase();
+  const existingCode = await LeaveType.findOne({ code: upperCode });
+  if (existingCode) {
+    const error = new Error(
+      `Leave type code '${upperCode}' is already in use. Please use a different code.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   const leaveType = await LeaveType.create({
     name,
-    code: code.toUpperCase(),
+    code: upperCode,
     description: description || "",
     maxDaysPerYear,
     carryForward: carryForward || false,
@@ -56,7 +77,9 @@ const getAllLeaveTypes = catchErrors(async (req, res) => {
     });
   }
 
-  const leaveTypes = await LeaveType.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+  const leaveTypes = await LeaveType.find({ isActive: true })
+    .sort({ createdAt: -1 })
+    .lean();
   myCache.set(cacheKey, leaveTypes);
 
   return res.status(200).json({
@@ -86,11 +109,40 @@ const updateLeaveType = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Leave type ID is required");
 
-  if (updateData.code) {
-    updateData.code = updateData.code.toUpperCase();
+  // Check for duplicate leave type name (excluding current record)
+  if (updateData.name) {
+    const existingName = await LeaveType.findOne({
+      name: updateData.name,
+      _id: { $ne: id },
+    });
+    if (existingName) {
+      const error = new Error(
+        `Leave type name '${updateData.name}' is already in use. Please use a different name.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
   }
 
-  const leaveType = await LeaveType.findByIdAndUpdate(id, updateData, { new: true });
+  // Check for duplicate leave type code (excluding current record)
+  if (updateData.code) {
+    updateData.code = updateData.code.toUpperCase();
+    const existingCode = await LeaveType.findOne({
+      code: updateData.code,
+      _id: { $ne: id },
+    });
+    if (existingCode) {
+      const error = new Error(
+        `Leave type code '${updateData.code}' is already in use. Please use a different code.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
+  const leaveType = await LeaveType.findByIdAndUpdate(id, updateData, {
+    new: true,
+  });
   if (!leaveType) throw new Error("Leave type not found");
 
   myCache.del("leaveTypes");
@@ -117,4 +169,10 @@ const deleteLeaveType = catchErrors(async (req, res) => {
   });
 });
 
-export { createLeaveType, getAllLeaveTypes, getLeaveTypeById, updateLeaveType, deleteLeaveType };
+export {
+  createLeaveType,
+  getAllLeaveTypes,
+  getLeaveTypeById,
+  updateLeaveType,
+  deleteLeaveType,
+};
