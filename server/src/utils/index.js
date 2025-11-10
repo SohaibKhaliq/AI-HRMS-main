@@ -110,6 +110,60 @@ const catchErrors = (fn) => {
     fn(req, res, next).catch((err) => {
       console.error("❌ Error caught:", err);
       console.error("Stack trace:", err.stack);
+
+      // Handle MongoDB duplicate key errors (E11000)
+      if (err.code === 11000 || err.message?.includes("E11000")) {
+        const field = Object.keys(err.keyPattern || {})[0] || "field";
+        const value = err.keyValue?.[field] || "value";
+        const message = `${
+          field.charAt(0).toUpperCase() + field.slice(1)
+        } '${value}' is already in use. Please use a different ${field}.`;
+
+        return res.status(409).json({
+          success: false,
+          message: message,
+          error: "Duplicate Entry",
+          field: field,
+        });
+      }
+
+      // Handle MongoDB validation errors
+      if (err.name === "ValidationError") {
+        const errors = Object.values(err.errors).map((e) => e.message);
+        return res.status(400).json({
+          success: false,
+          message: errors.join(", "),
+          error: "Validation Error",
+        });
+      }
+
+      // Handle MongoDB cast errors (invalid ObjectId, etc.)
+      if (err.name === "CastError") {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid ${err.path}: ${err.value}`,
+          error: "Invalid Data",
+        });
+      }
+
+      // Handle JWT errors
+      if (err.name === "JsonWebTokenError") {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid token. Please log in again.",
+          error: "Authentication Error",
+        });
+      }
+
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Your token has expired. Please log in again.",
+          error: "Token Expired",
+        });
+      }
+
+      // Pass to next error handler
       next(err.message);
     });
   };
