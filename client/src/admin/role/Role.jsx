@@ -6,6 +6,7 @@ import FetchError from "../../components/shared/error/FetchError";
 import RoleModal from "../../components/shared/modals/RoleModal";
 import { getRoles, deleteRole } from "../../services/role.service";
 import { FaEye, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import ConfirmModal from "../../components/shared/modals/ConfirmModal";
 
 const Role = () => {
   const dispatch = useDispatch();
@@ -53,9 +54,19 @@ const Role = () => {
     setAction("view");
     setModalOpen(d);
   };
-  const handleDelete = (id) => {
-    if (!confirm("Are you sure you want to delete this role?")) return;
-    dispatch(deleteRole(id));
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+
+  const openDeleteConfirm = (id, name) => {
+    setConfirmTarget({ id, name });
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteConfirmed = () => {
+    if (!confirmTarget) return;
+    dispatch(deleteRole(confirmTarget.id));
+    setConfirmOpen(false);
+    setConfirmTarget(null);
   };
 
   if (error) return <FetchError error={error} />;
@@ -178,7 +189,7 @@ const Role = () => {
                           <FaEdit />
                         </button>
                         <button
-                          onClick={() => handleDelete(d._id)}
+                          onClick={() => openDeleteConfirm(d._id, d.name)}
                           title="Delete"
                           className="text-red-600 p-2 rounded-full"
                         >
@@ -225,6 +236,22 @@ const Role = () => {
             onClose={() => setModalOpen(null)}
           />
         )}
+
+        <ConfirmModal
+          open={confirmOpen}
+          title="Delete role"
+          message={
+            confirmTarget
+              ? `Delete "${confirmTarget.name}"? This cannot be undone.`
+              : "Are you sure?"
+          }
+          onConfirm={handleDeleteConfirmed}
+          onCancel={() => {
+            setConfirmOpen(false);
+            setConfirmTarget(null);
+          }}
+          confirmLabel="Delete"
+        />
       </section>
     </>
   );
