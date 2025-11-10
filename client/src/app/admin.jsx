@@ -18,6 +18,7 @@ const ViewEmployee = lazy(() => import("../admin/employee/ViewEmployee"));
 const Department = lazy(() => import("../admin/department/Department"));
 const Designation = lazy(() => import("../admin/designation/Designation"));
 const DocumentTypes = lazy(() => import("../admin/documentType/DocumentType"));
+const RoleManagement = lazy(() => import("../admin/role/Role"));
 const AdminDocuments = lazy(() => import("../admin/document/AdminDocuments"));
 const Promotion = lazy(() => import("../admin/promotion/Promotion"));
 const Resignation = lazy(() => import("../admin/resignation/Resignation"));
@@ -97,6 +98,7 @@ const AdminApp = () => {
             <Route path="/employee/create" element={<AddEmployee />} />
             <Route path="/employee/update/:id" element={<EditEmployee />} />
             <Route path="/department" element={<Department />} />
+            <Route path="/roles" element={<RoleManagement />} />
             <Route path="/designations" element={<Designation />} />
             <Route path="/document-types" element={<DocumentTypes />} />
             <Route path="/employee-documents" element={<AdminDocuments />} />
