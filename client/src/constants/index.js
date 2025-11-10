@@ -40,6 +40,7 @@ const sidebarLinks = [
     childrens: [
       { name: "Leave Requests", link: "/leaves" },
       { name: "On-Leave Employees", link: "/leave/active" },
+      { name: "Leave Balances", link: "/leave-balances" },
       { name: "Leave Types", link: "/leave-types" },
     ],
   },
