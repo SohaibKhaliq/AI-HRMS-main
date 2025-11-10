@@ -357,16 +357,29 @@ connectDB()
     console.error(err.message);
   });
 
+// 404 Handler - for routes that don't exist
 app.use((req, res, next) => {
-  const error = new Error("404 Endpoint Not Found");
-  error.status = 404;
-  next(error.message);
+  res.status(404).json({
+    success: false,
+    message: `Cannot ${req.method} ${req.originalUrl} - Endpoint not found`,
+  });
 });
 
+// Global Error Handler - catches all errors passed via next(err)
 app.use((err, req, res, next) => {
-  const message = err || "Internal server error";
-  res.status(500).json({
+  // Log error for debugging
+  console.error("Error:", err);
+
+  // Default to 500 if no status set
+  const statusCode = err.statusCode || err.status || 500;
+
+  // Prepare error message
+  const message = err.message || "Internal server error";
+
+  // Send error response
+  res.status(statusCode).json({
     success: false,
     message,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
