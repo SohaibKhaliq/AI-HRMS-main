@@ -148,6 +148,39 @@ const createEmployee = catchErrors(async (req, res) => {
     throw new Error("Please provide all required fields.");
   }
 
+  // Check if email already exists
+  const existingEmailEmployee = await Employee.findOne({ email });
+  if (existingEmailEmployee) {
+    return res.status(409).json({
+      success: false,
+      message: `Email '${email}' is already registered. Please use a different email.`,
+      error: "Duplicate Entry",
+      field: "email",
+    });
+  }
+
+  // Check if employeeId already exists
+  const existingIdEmployee = await Employee.findOne({ employeeId });
+  if (existingIdEmployee) {
+    return res.status(409).json({
+      success: false,
+      message: `Employee ID '${employeeId}' is already in use. Please use a different ID.`,
+      error: "Duplicate Entry",
+      field: "employeeId",
+    });
+  }
+
+  // Check if phoneNumber already exists
+  const existingPhoneEmployee = await Employee.findOne({ phoneNumber });
+  if (existingPhoneEmployee) {
+    return res.status(409).json({
+      success: false,
+      message: `Phone number '${phoneNumber}' is already registered. Please use a different phone number.`,
+      error: "Duplicate Entry",
+      field: "phoneNumber",
+    });
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const shiftId = await convertShiftToObjectId(shift);
 
@@ -351,6 +384,54 @@ const updateEmployee = catchErrors(async (req, res) => {
   } = req.body;
 
   if (!id) throw new Error("Please provide employee Id");
+
+  // Check if email is being changed and if it's already in use by another employee
+  if (email) {
+    const existingEmployee = await Employee.findOne({
+      email,
+      _id: { $ne: id },
+    });
+    if (existingEmployee) {
+      return res.status(409).json({
+        success: false,
+        message: `Email '${email}' is already in use by another employee. Please use a different email.`,
+        error: "Duplicate Entry",
+        field: "email",
+      });
+    }
+  }
+
+  // Check if employeeId is being changed and if it's already in use by another employee
+  if (employeeId) {
+    const existingEmployee = await Employee.findOne({
+      employeeId,
+      _id: { $ne: id },
+    });
+    if (existingEmployee) {
+      return res.status(409).json({
+        success: false,
+        message: `Employee ID '${employeeId}' is already in use by another employee. Please use a different ID.`,
+        error: "Duplicate Entry",
+        field: "employeeId",
+      });
+    }
+  }
+
+  // Check if phoneNumber is being changed and if it's already in use by another employee
+  if (phoneNumber) {
+    const existingEmployee = await Employee.findOne({
+      phoneNumber,
+      _id: { $ne: id },
+    });
+    if (existingEmployee) {
+      return res.status(409).json({
+        success: false,
+        message: `Phone number '${phoneNumber}' is already in use by another employee. Please use a different phone number.`,
+        error: "Duplicate Entry",
+        field: "phoneNumber",
+      });
+    }
+  }
 
   const shiftId = await convertShiftToObjectId(shift);
 
