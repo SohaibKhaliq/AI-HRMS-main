@@ -2,11 +2,16 @@ import Leave from "../models/leave.model.js";
 import Payroll from "../models/payroll.model.js";
 import Employee from "../models/employee.model.js";
 import LeaveType from "../models/leaveType.model.js";
+import LeaveBalance from "../models/leaveBalance.model.js";
 import { getSubstitute } from "../predictions/index.js";
 import { catchErrors, formatDate, myCache } from "../utils/index.js";
 import { leaveRespond, notifySubstituteEmployee } from "../templates/index.js";
 import { createUpdate } from "./update.controller.js";
-import { sendFullNotification } from "../services/notification.service.js";
+import {
+  sendFullNotification,
+  createBulkNotifications,
+} from "../services/notification.service.js";
+import { sendNotificationToUser } from "../socket/index.js";
 
 const getLeaves = catchErrors(async (req, res) => {
   const { status = "pending" } = req.query;
@@ -95,6 +100,37 @@ const applyLeave = catchErrors(async (req, res) => {
   if (!employeeId || !leaveType || !fromDate || !toDate)
     throw new Error("All fields are required");
 
+  // Validate leave type exists
+  const leaveTypeDoc = await LeaveType.findById(leaveType);
+  if (!leaveTypeDoc) {
+    throw new Error("Invalid leave type selected");
+  }
+
+  // Check leave balance for the current year
+  const currentYear = new Date(fromDate).getFullYear();
+  const leaveBalance = await LeaveBalance.findOne({
+    employee: employeeId,
+    leaveType: leaveType,
+    year: currentYear,
+  });
+
+  if (!leaveBalance) {
+    throw new Error(
+      `Leave balance not initialized for ${leaveTypeDoc.name}. Please contact HR to initialize your leave balances.`
+    );
+  }
+
+  // Validate sufficient available days
+  if (leaveBalance.available < duration) {
+    throw new Error(
+      `Insufficient leave balance. You have ${leaveBalance.available} days available for ${leaveTypeDoc.name}, but requested ${duration} days.`
+    );
+  }
+
+  // Update pending leave days
+  leaveBalance.pending += duration;
+  await leaveBalance.save();
+
   const leave = await Leave.create({
     employee: employeeId,
     leaveType,
@@ -105,25 +141,27 @@ const applyLeave = catchErrors(async (req, res) => {
     status: "Pending",
   });
 
-  // Get employee and leave type details for notification
-  const employee = await Employee.findById(employeeId);
-  const leaveTypeDoc = await LeaveType.findById(leaveType);
+  // Populate leave for response
+  const populatedLeave = await Leave.findById(leave._id)
+    .populate("leaveType", "name")
+    .populate("employee", "name email");
 
-  // Send notification with email (fire-and-forget)
+  // Get employee details
+  const employee = await Employee.findById(employeeId);
+
+  // Send notification to employee
   if (employee) {
     sendFullNotification({
       employee,
       title: "Leave Application Submitted",
-      message: `Your ${
-        leaveTypeDoc?.name || "leave"
-      } application has been submitted successfully and is pending approval.`,
+      message: `Your ${leaveTypeDoc.name} application for ${duration} days has been submitted successfully and is pending approval.`,
       type: "leave",
       priority: "medium",
       link: "/leave",
       emailSubject: "Leave Application Submitted",
       emailTemplate: "leaveApplied",
       emailData: {
-        leaveType: leaveTypeDoc?.name || "Leave",
+        leaveType: leaveTypeDoc.name,
         fromDate: formatDate(fromDate),
         toDate: formatDate(toDate),
         duration: duration,
@@ -136,12 +174,62 @@ const applyLeave = catchErrors(async (req, res) => {
     );
   }
 
+  // Notify all admins about new leave application
+  try {
+    const admins = await Employee.find({ admin: true }).select("_id name");
+    if (admins && admins.length > 0) {
+      // Create in-app notifications for all admins
+      const adminNotifications = await createBulkNotifications(
+        admins.map((admin) => admin._id),
+        {
+          title: "New Leave Application",
+          message: `${employee?.name || "An employee"} has applied for ${
+            leaveTypeDoc.name
+          } (${duration} days) from ${formatDate(fromDate)} to ${formatDate(
+            toDate
+          )}.`,
+          type: "leave",
+          priority: "high",
+          link: "/admin/leave",
+          metadata: {
+            leaveId: leave._id,
+            employeeId: employeeId,
+            employeeName: employee?.name,
+            leaveType: leaveTypeDoc.name,
+            duration: duration,
+          },
+        }
+      );
+
+      // Send real-time socket notifications to online admins
+      admins.forEach((admin) => {
+        try {
+          sendNotificationToUser(admin._id.toString(), "notification", {
+            _id: adminNotifications[0]?._id,
+            title: "New Leave Application",
+            message: `${employee?.name || "An employee"} has applied for ${
+              leaveTypeDoc.name
+            } (${duration} days)`,
+            type: "leave",
+            priority: "high",
+            link: "/admin/leave",
+            createdAt: new Date(),
+          });
+        } catch (socketError) {
+          console.log(`Admin ${admin._id} not connected via socket`);
+        }
+      });
+    }
+  } catch (notifyError) {
+    console.warn("Non-fatal: admin notification failed:", notifyError.message);
+  }
+
   myCache.del("insights");
 
   return res.status(201).json({
     success: true,
     message: "Leave applied successfully",
-    leave,
+    leave: populatedLeave,
   });
 });
 
@@ -149,6 +237,19 @@ const rejectLeave = async (leave, remarks) => {
   leave.status = "Rejected";
   if (remarks) leave.remarks = remarks;
   await leave.save();
+
+  // Update leave balance - remove from pending
+  const currentYear = new Date(leave.fromDate).getFullYear();
+  const leaveBalance = await LeaveBalance.findOne({
+    employee: leave.employee._id,
+    leaveType: leave.leaveType._id,
+    year: currentYear,
+  });
+
+  if (leaveBalance) {
+    leaveBalance.pending = Math.max(0, leaveBalance.pending - leave.duration);
+    await leaveBalance.save();
+  }
 
   await createUpdate({
     employee: leave.employee._id,
@@ -237,30 +338,48 @@ const deductFromSalary = async (
 const approveLeave = async (leave, employee) => {
   leave.status = "Approved";
 
-  if (employee.leaveBalance > 0) {
-    const { daysFromBalance, daysFromSalary } = deductFromLeaveBalance(
-      employee,
-      leave.duration
-    );
+  // Update leave balance - move from pending to used
+  const currentYear = new Date(leave.fromDate).getFullYear();
+  const leaveBalance = await LeaveBalance.findOne({
+    employee: leave.employee,
+    leaveType: leave.leaveType._id,
+    year: currentYear,
+  });
 
-    if (daysFromBalance > 0) {
-      leave.remarks = `${daysFromBalance} days deducted from leave balance. `;
-    }
+  if (leaveBalance) {
+    leaveBalance.pending = Math.max(0, leaveBalance.pending - leave.duration);
+    leaveBalance.used += leave.duration;
+    await leaveBalance.save();
+    leave.remarks = `${leave.duration} days deducted from ${
+      leave.leaveType?.name || "leave"
+    } balance. `;
+  } else {
+    // Fallback to old system if leave balance not found
+    if (employee.leaveBalance > 0) {
+      const { daysFromBalance, daysFromSalary } = deductFromLeaveBalance(
+        employee,
+        leave.duration
+      );
 
-    if (daysFromSalary > 0) {
+      if (daysFromBalance > 0) {
+        leave.remarks = `${daysFromBalance} days deducted from leave balance. `;
+      }
+
+      if (daysFromSalary > 0) {
+        leave.remarks = await deductFromSalary(
+          leave.employee,
+          leave.fromDate,
+          daysFromSalary,
+          leave.remarks
+        );
+      }
+    } else {
       leave.remarks = await deductFromSalary(
         leave.employee,
         leave.fromDate,
-        daysFromSalary,
-        leave.remarks
+        leave.duration
       );
     }
-  } else {
-    leave.remarks = await deductFromSalary(
-      leave.employee,
-      leave.fromDate,
-      leave.duration
-    );
   }
 
   // Get shift name (handle both populated object and string)
