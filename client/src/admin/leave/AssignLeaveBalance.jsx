@@ -23,6 +23,8 @@ export default function AssignLeaveBalance() {
   const [hasMoreSuggestions, setHasMoreSuggestions] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [adjustInputs, setAdjustInputs] = useState({});
+  const [invalidInputs, setInvalidInputs] = useState({}); // { [leaveTypeId]: errorMessage }
+  const [adjustReasons, setAdjustReasons] = useState({}); // { [leaveTypeId]: reason }
   const debounceRef = useRef(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmPayload, setConfirmPayload] = useState(null);
@@ -173,18 +175,29 @@ export default function AssignLeaveBalance() {
   };
 
   const handleSetAdjustInput = (leaveTypeId, value) => {
+    // Update input and validate inline
     setAdjustInputs((prev) => ({ ...prev, [leaveTypeId]: value }));
+    // Inline validation rules: allow empty while typing (treated as no change), non-negative number otherwise
+    const msg = (() => {
+      if (value === "" || value === undefined) return null;
+      const n = Number(value);
+      if (Number.isNaN(n)) return "Enter a valid number";
+      if (n < 0) return "Value cannot be negative";
+      return null;
+    })();
+    setInvalidInputs((prev) => ({ ...prev, [leaveTypeId]: msg }));
   };
 
-  const handleSaveAdjustment = async (balance) => {
-    // open confirmation modal for adjust
-    setConfirmPayload({ action: "adjust", balance });
-    setConfirmOpen(true);
+  const handleReasonChange = (leaveTypeId, value) => {
+    setAdjustReasons((prev) => ({ ...prev, [leaveTypeId]: value }));
   };
 
-  const performAdjust = async (balance) => {
-    setConfirmOpen(false);
-    const rawValue = adjustInputs[balance.leaveType._id];
+  const performAdjust = async (balance, overrideValue, reason) => {
+    // When called directly (Save click or blur), no confirmation modal
+    if (!balance || !balance.leaveType?._id) return;
+    const ltId = balance.leaveType._id;
+    const rawValue =
+      overrideValue !== undefined ? overrideValue : adjustInputs[ltId];
     // Fallback: if user didn't change the input we use current allotted (or default) instead of undefined
     const baseAllotted =
       balance.totalAllotted || balance.leaveType?.maxDaysPerYear || 0;
@@ -200,17 +213,23 @@ export default function AssignLeaveBalance() {
       await dispatch(
         adjustLeaveBalance({
           employeeId: balance.employee || selectedEmployee,
-          leaveTypeId: balance.leaveType._id,
+          leaveTypeId: ltId,
           year: selectedYear,
           adjustment,
+          reason: reason ?? adjustReasons[ltId] ?? undefined,
         })
       ).unwrap();
       // store previous value for undo
       setLastAdjustments((prev) => ({
         ...prev,
-        [balance.leaveType._id]: balance.totalAllotted || 0,
+        [ltId]: balance.totalAllotted || 0,
       }));
       toast.success("Adjustment applied");
+      // clear error and sync input to the saved total
+      setInvalidInputs((prev) => ({ ...prev, [ltId]: null }));
+      setAdjustInputs((prev) => ({ ...prev, [ltId]: newTotal }));
+      // Optionally clear reason after save
+      setAdjustReasons((prev) => ({ ...prev, [ltId]: "" }));
       await dispatch(
         getBalanceByEmployeeAndYear({
           employeeId: selectedEmployee,
@@ -467,51 +486,97 @@ export default function AssignLeaveBalance() {
                       <td className="px-4 py-2">{balance.pending}</td>
                       <td className="px-4 py-2">{available}</td>
                       <td className="px-4 py-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {!initialized && (
-                            <button
-                              className="px-3 py-1 text-white bg-indigo-600 rounded"
-                              onClick={() => {
-                                // initialize ONLY this type via adjust with 0 adjustment
-                                setConfirmPayload({
-                                  action: "adjust",
-                                  balance: { ...balance, leaveType: type },
-                                });
-                                setConfirmOpen(true);
+                        <div className="flex flex-col gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {!initialized && (
+                              <button
+                                className="px-3 py-1 text-white bg-indigo-600 rounded"
+                                onClick={() =>
+                                  performAdjust(
+                                    { ...balance, leaveType: type },
+                                    type.maxDaysPerYear || 0,
+                                    adjustReasons[ltId]
+                                  )
+                                }
+                              >
+                                Init
+                              </button>
+                            )}
+                            <input
+                              type="number"
+                              min={0}
+                              disabled={disabled}
+                              value={adjustInputs[ltId] ?? totalAllotted}
+                              onChange={(e) =>
+                                handleSetAdjustInput(ltId, e.target.value)
+                              }
+                              onBlur={() => {
+                                const err = invalidInputs[ltId];
+                                const raw = adjustInputs[ltId];
+                                // Only auto-save if valid and actually changed
+                                const newVal =
+                                  raw === undefined || raw === ""
+                                    ? totalAllotted
+                                    : Number(raw);
+                                if (!err && newVal !== totalAllotted) {
+                                  performAdjust(
+                                    { ...balance, leaveType: type },
+                                    newVal,
+                                    adjustReasons[ltId]
+                                  );
+                                }
                               }}
-                            >
-                              Init
-                            </button>
-                          )}
-                          <input
-                            type="number"
-                            disabled={disabled}
-                            value={adjustInputs[ltId] ?? totalAllotted}
-                            onChange={(e) =>
-                              handleSetAdjustInput(ltId, e.target.value)
-                            }
-                            className={`w-24 px-2 py-1 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                              disabled ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                          />
-                          <button
-                            disabled={disabled}
-                            className={`px-3 py-1 bg-green-600 text-white rounded ${
-                              disabled ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                            onClick={() =>
-                              initialized && handleSaveAdjustment(balance)
-                            }
-                          >
-                            Save
-                          </button>
-                          {lastAdjustments[ltId] && initialized && (
+                              className={`w-24 px-2 py-1 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                                disabled ? "opacity-50 cursor-not-allowed" : ""
+                              } ${invalidInputs[ltId] ? "border-red-500" : ""}`}
+                            />
                             <button
-                              className="px-2 py-1 text-white bg-yellow-500 rounded"
-                              onClick={() => handleUndoAdjustment(balance)}
+                              disabled={
+                                disabled || Boolean(invalidInputs[ltId])
+                              }
+                              className={`px-3 py-1 bg-green-600 text-white rounded ${
+                                disabled || invalidInputs[ltId]
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                              onClick={() =>
+                                initialized &&
+                                performAdjust(
+                                  balance,
+                                  adjustInputs[ltId],
+                                  adjustReasons[ltId]
+                                )
+                              }
                             >
-                              Undo
+                              Save
                             </button>
+                            {lastAdjustments[ltId] && initialized && (
+                              <button
+                                className="px-2 py-1 text-white bg-yellow-500 rounded"
+                                onClick={() => handleUndoAdjustment(balance)}
+                              >
+                                Undo
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              placeholder="Reason (optional)"
+                              value={adjustReasons[ltId] ?? ""}
+                              onChange={(e) =>
+                                handleReasonChange(ltId, e.target.value)
+                              }
+                              disabled={disabled}
+                              className={`flex-1 px-2 py-1 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                                disabled ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                            />
+                          </div>
+                          {invalidInputs[ltId] && (
+                            <p className="text-xs text-red-600">
+                              {invalidInputs[ltId]}
+                            </p>
                           )}
                         </div>
                       </td>
@@ -525,30 +590,16 @@ export default function AssignLeaveBalance() {
       </div>
       <ConfirmModal
         open={confirmOpen}
-        title={
-          confirmPayload?.action === "adjust"
-            ? "Confirm adjustment"
-            : "Confirm initialize"
-        }
-        message={
-          confirmPayload?.action === "adjust"
-            ? "Apply this adjustment?"
-            : `Initialize leave balances for ${
-                confirmPayload?.targets?.length || 0
-              } employee(s)?`
-        }
+        title={"Confirm initialize"}
+        message={`Initialize leave balances for ${
+          confirmPayload?.targets?.length || 0
+        } employee(s)?`}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
           if (!confirmPayload) return setConfirmOpen(false);
-          if (confirmPayload.action === "initialize")
-            return performInitialize(confirmPayload.targets);
-          if (confirmPayload.action === "adjust")
-            return performAdjust(confirmPayload.balance);
-          return setConfirmOpen(false);
+          return performInitialize(confirmPayload.targets);
         }}
-        confirmLabel={
-          confirmPayload?.action === "adjust" ? "Apply" : "Initialize"
-        }
+        confirmLabel={"Initialize"}
       />
     </div>
   );
