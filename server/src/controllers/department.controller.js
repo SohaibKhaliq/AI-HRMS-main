@@ -8,6 +8,16 @@ const createDepartment = catchErrors(async (req, res) => {
 
   if (!name) throw new Error("Please provide department name");
 
+  // Check for duplicate department name
+  const existingDepartment = await Department.findOne({ name });
+  if (existingDepartment) {
+    const error = new Error(
+      `Department name '${name}' is already in use. Please use a different name.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   const departmentData = {
     name,
     status: status || "Active",
@@ -92,6 +102,21 @@ const updateDepartment = catchErrors(async (req, res) => {
   const { name, head, description, status, createdAt } = req.body;
 
   if (!id) throw new Error("Please provide departmed Id");
+
+  // Check for duplicate department name (excluding current department)
+  if (name) {
+    const existingDepartment = await Department.findOne({
+      name,
+      _id: { $ne: id },
+    });
+    if (existingDepartment) {
+      const error = new Error(
+        `Department name '${name}' is already in use. Please use a different name.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
 
   const updateData = { name, description, status };
   if (createdAt) updateData.createdAt = new Date(createdAt);
