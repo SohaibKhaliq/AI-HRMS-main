@@ -17,7 +17,10 @@ const addressSchema = z.object({
     .string()
     .min(2, "* City must be at least 2 characters")
     .max(50, "* City must not exceed 50 characters")
-    .regex(cityRegex, "* City name can only contain letters, spaces, and hyphens")
+    .regex(
+      cityRegex,
+      "* City name can only contain letters, spaces, and hyphens"
+    )
     .refine((val) => !/\d/.test(val), {
       message: "* City name cannot contain numbers",
     }),
@@ -25,7 +28,10 @@ const addressSchema = z.object({
     .string()
     .min(2, "* State must be at least 2 characters")
     .max(50, "* State must not exceed 50 characters")
-    .regex(cityRegex, "* State name can only contain letters, spaces, and hyphens")
+    .regex(
+      cityRegex,
+      "* State name can only contain letters, spaces, and hyphens"
+    )
     .refine((val) => !/\d/.test(val), {
       message: "* State name cannot contain numbers",
     }),
@@ -38,7 +44,10 @@ const addressSchema = z.object({
     .string()
     .min(2, "* Country must be at least 2 characters")
     .max(50, "* Country must not exceed 50 characters")
-    .regex(cityRegex, "* Country name can only contain letters, spaces, and hyphens")
+    .regex(
+      cityRegex,
+      "* Country name can only contain letters, spaces, and hyphens"
+    )
     .refine((val) => !/\d/.test(val), {
       message: "* Country name cannot contain numbers",
     }),
@@ -50,7 +59,10 @@ const emergencyContactSchema = z.object({
     .string()
     .min(2, "* Emergency contact name must be at least 2 characters")
     .max(100, "* Emergency contact name must not exceed 100 characters")
-    .regex(nameRegex, "* Name can only contain letters, spaces, hyphens, and apostrophes")
+    .regex(
+      nameRegex,
+      "* Name can only contain letters, spaces, hyphens, and apostrophes"
+    )
     .refine((val) => !/\d/.test(val), {
       message: "* Name cannot contain numbers",
     }),
@@ -85,7 +97,10 @@ const createEmployeeSchema = z.object({
     .string()
     .min(2, "* Full name must be at least 2 characters")
     .max(100, "* Full name must not exceed 100 characters")
-    .regex(/^[A-Za-z\s'-]+$/, "* Name can only contain letters, spaces, hyphens, and apostrophes")
+    .regex(
+      /^[A-Za-z\s'-]+$/,
+      "* Name can only contain letters, spaces, hyphens, and apostrophes"
+    )
     .refine((val) => !/\d/.test(val), {
       message: "* Name cannot contain numbers",
     })
@@ -121,7 +136,7 @@ const createEmployeeSchema = z.object({
     .number()
     .min(0, "* Salary must be a positive number")
     .max(10000000, "* Salary must not exceed 10,000,000"),
-  shift: z.enum(["Morning", "Evening", "Night"]),
+  shift: z.string().min(1, "* Shift is required"),
   status: z.enum(["Active", "Inactive", "Leave"]),
   dateOfJoining: z
     .string()
@@ -149,7 +164,10 @@ const updateEmployeeSchema = z.object({
     .string()
     .min(2, "* Full name must be at least 2 characters")
     .max(100, "* Full name must not exceed 100 characters")
-    .regex(nameRegex, "* Name can only contain letters, spaces, hyphens, and apostrophes")
+    .regex(
+      nameRegex,
+      "* Name can only contain letters, spaces, hyphens, and apostrophes"
+    )
     .refine((val) => !/\d/.test(val), {
       message: "* Name cannot contain numbers",
     })
@@ -183,7 +201,7 @@ const updateEmployeeSchema = z.object({
     .number()
     .min(0, "* Salary must be a positive number")
     .max(10000000, "* Salary must not exceed 10,000,000"),
-  shift: z.enum(["Morning", "Evening", "Night"]),
+  shift: z.string().min(1, "* Shift is required"),
   status: z.enum(["Active", "Inactive", "Leave"]),
   dateOfJoining: z
     .string()
@@ -279,7 +297,9 @@ const complaintSchema = z.object({
     .string()
     .refine(
       (val) =>
-        ["Pending", "In Progress", "Resolved", "Closed", "Escalated"].includes(val),
+        ["Pending", "In Progress", "Resolved", "Closed", "Escalated"].includes(
+          val
+        ),
       {
         message: "* Invalid status",
       }
@@ -326,12 +346,10 @@ const resignationSchema = z
         today.setHours(0, 0, 0, 0);
         return d >= today;
       }, "* Last working day must be today or in the future"),
-    noticePeriod: z
-      .string()
-      .refine((val) => {
-        const num = parseInt(val);
-        return num > 0 && num <= 365;
-      }, "* Notice period must be between 1 and 365 days"),
+    noticePeriod: z.string().refine((val) => {
+      const num = parseInt(val);
+      return num > 0 && num <= 365;
+    }, "* Notice period must be between 1 and 365 days"),
     reason: z
       .string()
       .min(1, "* Resignation reason is required")
@@ -354,8 +372,7 @@ const resignationSchema = z
     status: z
       .string()
       .refine(
-        (val) =>
-          ["Pending", "Approved", "Rejected", "Completed"].includes(val),
+        (val) => ["Pending", "Approved", "Rejected", "Completed"].includes(val),
         {
           message: "* Invalid status",
         }
@@ -369,56 +386,56 @@ const resignationSchema = z
       path: ["lastWorkingDay"],
     }
   )
-  .refine((data) => {
-    const resignDate = new Date(data.resignationDate);
-    const lastDate = new Date(data.lastWorkingDay);
-    const diffTime = Math.abs(lastDate - resignDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays === parseInt(data.noticePeriod);
-  }, {
-    message:
-      "* Notice period must match the difference between resignation date and last working day",
-    path: ["noticePeriod"],
-  });
+  .refine(
+    (data) => {
+      const resignDate = new Date(data.resignationDate);
+      const lastDate = new Date(data.lastWorkingDay);
+      const diffTime = Math.abs(lastDate - resignDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays === parseInt(data.noticePeriod);
+    },
+    {
+      message:
+        "* Notice period must match the difference between resignation date and last working day",
+      path: ["noticePeriod"],
+    }
+  );
 
-const employeeResignationSchema = z
-  .object({
-    resignationDate: z
-      .string()
-      .min(1, "* Resignation date is required")
-      .refine((date) => {
-        const d = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return d >= today;
-      }, "* Resignation date must be today or in the future"),
-    noticePeriod: z
-      .string()
-      .refine((val) => {
-        const num = parseInt(val);
-        return num > 0 && num <= 365;
-      }, "* Notice period must be between 1 and 365 days"),
-    reason: z
-      .string()
-      .min(1, "* Resignation reason is required")
-      .refine(
-        (val) =>
-          [
-            "Career change",
-            "Better opportunities",
-            "Relocation",
-            "Further education",
-            "Personal reasons",
-            "Health reasons",
-            "Family matters",
-            "Other",
-          ].includes(val),
-        {
-          message: "* Invalid resignation reason",
-        }
-      ),
-    remarks: z.string().optional(),
-  });
+const employeeResignationSchema = z.object({
+  resignationDate: z
+    .string()
+    .min(1, "* Resignation date is required")
+    .refine((date) => {
+      const d = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    }, "* Resignation date must be today or in the future"),
+  noticePeriod: z.string().refine((val) => {
+    const num = parseInt(val);
+    return num > 0 && num <= 365;
+  }, "* Notice period must be between 1 and 365 days"),
+  reason: z
+    .string()
+    .min(1, "* Resignation reason is required")
+    .refine(
+      (val) =>
+        [
+          "Career change",
+          "Better opportunities",
+          "Relocation",
+          "Further education",
+          "Personal reasons",
+          "Health reasons",
+          "Family matters",
+          "Other",
+        ].includes(val),
+      {
+        message: "* Invalid resignation reason",
+      }
+    ),
+  remarks: z.string().optional(),
+});
 
 const terminationSchema = z
   .object({
@@ -474,7 +491,11 @@ const terminationSchema = z
           message: "* Invalid status",
         }
       ),
-    remarks: z.string().max(500, "* Remarks must not exceed 500 characters").optional().or(z.literal("")),
+    remarks: z
+      .string()
+      .max(500, "* Remarks must not exceed 500 characters")
+      .optional()
+      .or(z.literal("")),
   })
   .refine(
     (data) => {
@@ -491,7 +512,9 @@ const terminationSchema = z
     (data) => {
       const noticeDate = new Date(data.noticeDate);
       const terminationDate = new Date(data.terminationDate);
-      const daysDifference = Math.ceil((noticeDate - terminationDate) / (1000 * 60 * 60 * 24));
+      const daysDifference = Math.ceil(
+        (noticeDate - terminationDate) / (1000 * 60 * 60 * 24)
+      );
       return daysDifference <= 365;
     },
     {
@@ -517,8 +540,7 @@ const holidaySchema = z.object({
     .string()
     .min(1, "* Category is required")
     .refine(
-      (val) =>
-        ["National", "Religious", "Company Specific"].includes(val),
+      (val) => ["National", "Religious", "Company Specific"].includes(val),
       {
         message: "* Invalid category",
       }
@@ -526,13 +548,9 @@ const holidaySchema = z.object({
   type: z
     .string()
     .min(1, "* Type is required")
-    .refine(
-      (val) =>
-        ["Full Day", "Half Day", "Floating"].includes(val),
-      {
-        message: "* Invalid type",
-      }
-    ),
+    .refine((val) => ["Full Day", "Half Day", "Floating"].includes(val), {
+      message: "* Invalid type",
+    }),
   description: z
     .string()
     .min(5, "* Description must be at least 5 characters")
@@ -540,66 +558,72 @@ const holidaySchema = z.object({
   isPaid: z.boolean().optional().default(true),
 });
 
-const announcementSchema = z.object({
-  title: z
-    .string()
-    .min(5, "* Title must be at least 5 characters")
-    .max(200, "* Title must not exceed 200 characters"),
-  category: z
-    .string()
-    .min(1, "* Category is required")
-    .refine(
-      (val) =>
-        ["General", "Policy", "Event", "Training", "Urgent", "Benefits", "Recognition"].includes(val),
-      {
-        message: "* Invalid category",
-      }
-    ),
-  description: z
-    .string()
-    .min(10, "* Description must be at least 10 characters")
-    .max(2000, "* Description must not exceed 2000 characters"),
-  startDate: z
-    .string()
-    .or(z.date())
-    .refine((val) => {
-      if (!val) return false;
-      const date = typeof val === "string" ? new Date(val) : val;
-      return !isNaN(date.getTime());
-    }, "* Valid start date is required"),
-  endDate: z
-    .string()
-    .or(z.date())
-    .refine((val) => {
-      if (!val) return false;
-      const date = typeof val === "string" ? new Date(val) : val;
-      return !isNaN(date.getTime());
-    }, "* Valid end date is required"),
-  targetDepartments: z.array(z.string()).optional().default(["All"]),
-  targetDesignations: z.array(z.string()).optional().default(["All"]),
-  priority: z
-    .string()
-    .refine(
-      (val) =>
-        ["Low", "Medium", "High", "Critical"].includes(val),
-      {
+const announcementSchema = z
+  .object({
+    title: z
+      .string()
+      .min(5, "* Title must be at least 5 characters")
+      .max(200, "* Title must not exceed 200 characters"),
+    category: z
+      .string()
+      .min(1, "* Category is required")
+      .refine(
+        (val) =>
+          [
+            "General",
+            "Policy",
+            "Event",
+            "Training",
+            "Urgent",
+            "Benefits",
+            "Recognition",
+          ].includes(val),
+        {
+          message: "* Invalid category",
+        }
+      ),
+    description: z
+      .string()
+      .min(10, "* Description must be at least 10 characters")
+      .max(2000, "* Description must not exceed 2000 characters"),
+    startDate: z
+      .string()
+      .or(z.date())
+      .refine((val) => {
+        if (!val) return false;
+        const date = typeof val === "string" ? new Date(val) : val;
+        return !isNaN(date.getTime());
+      }, "* Valid start date is required"),
+    endDate: z
+      .string()
+      .or(z.date())
+      .refine((val) => {
+        if (!val) return false;
+        const date = typeof val === "string" ? new Date(val) : val;
+        return !isNaN(date.getTime());
+      }, "* Valid end date is required"),
+    targetDepartments: z.array(z.string()).optional().default(["All"]),
+    targetDesignations: z.array(z.string()).optional().default(["All"]),
+    priority: z
+      .string()
+      .refine((val) => ["Low", "Medium", "High", "Critical"].includes(val), {
         message: "* Invalid priority",
-      }
-    )
-    .optional()
-    .default("Medium"),
-  isActive: z.boolean().optional().default(true),
-}).refine(
-  (data) => {
-    const startDate = new Date(data.startDate);
-    const endDate = new Date(data.endDate);
-    return endDate >= startDate;
-  },
-  {
-    message: "* End date must be after start date",
-    path: ["endDate"],
-  }
-);
+      })
+      .optional()
+      .default("Medium"),
+    isActive: z.boolean().optional().default(true),
+  })
+  .refine(
+    (data) => {
+      const startDate = new Date(data.startDate);
+      const endDate = new Date(data.endDate);
+      return endDate >= startDate;
+    },
+    {
+      message: "* End date must be after start date",
+      path: ["endDate"],
+    }
+  );
 
 export {
   leaveSchema,
