@@ -10,11 +10,14 @@ const createRole = catchErrors(async (req, res) => {
   // Check for duplicate role name
   const existingRole = await Role.findOne({ name });
   if (existingRole) {
-    const error = new Error(
-      `Role name '${name}' is already in use. Please use a different name.`
-    );
-    error.statusCode = 409;
-    throw error;
+    const message = `Role name '${name}' is already in use. Please use a different name.`;
+    return res.status(409).json({
+      success: false,
+      message,
+      error: "Duplicate Entry",
+      field: "name",
+      code: "DUPLICATE_NAME",
+    });
   }
 
   const role = await Role.create({ name, description });
@@ -111,11 +114,14 @@ const updateRole = catchErrors(async (req, res) => {
       _id: { $ne: id },
     });
     if (existingRole) {
-      const error = new Error(
-        `Role name '${name}' is already in use. Please use a different name.`
-      );
-      error.statusCode = 409;
-      throw error;
+      const message = `Role name '${name}' is already in use. Please use a different name.`;
+      return res.status(409).json({
+        success: false,
+        message,
+        error: "Duplicate Entry",
+        field: "name",
+        code: "DUPLICATE_NAME",
+      });
     }
   }
 
