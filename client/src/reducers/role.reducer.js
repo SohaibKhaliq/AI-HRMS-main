@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { createRole, getRoles, updateRole } from "../services/role.service";
+import {
+  createRole,
+  getRoles,
+  updateRole,
+  deleteRole,
+} from "../services/role.service";
 
 const initialState = {
   roles: [],
@@ -59,6 +64,21 @@ const roleSlice = createSlice({
         state.loading = false;
       })
       .addCase(createRole.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // deleteRole
+    builder
+      .addCase(deleteRole.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteRole.fulfilled, (state, action) => {
+        state.roles = state.roles.filter((r) => r._id !== action.payload);
+        state.loading = false;
+      })
+      .addCase(deleteRole.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
