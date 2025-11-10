@@ -5,6 +5,16 @@ const createDocumentType = catchErrors(async (req, res) => {
   const { name, description, required, status, createdAt } = req.body;
   if (!name) throw new Error("Please provide a name for document type");
 
+  // Check for duplicate document type name
+  const existingDocumentType = await DocumentType.findOne({ name });
+  if (existingDocumentType) {
+    const error = new Error(
+      `Document type name '${name}' is already in use. Please use a different name.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   const data = {
     name,
     description,
@@ -19,13 +29,11 @@ const createDocumentType = catchErrors(async (req, res) => {
     if (typeof k === "string" && k.startsWith("documentTypes")) myCache.del(k);
   });
 
-  return res
-    .status(201)
-    .json({
-      success: true,
-      message: "Document type created",
-      documentType: doc,
-    });
+  return res.status(201).json({
+    success: true,
+    message: "Document type created",
+    documentType: doc,
+  });
 });
 
 const getAllDocumentTypes = catchErrors(async (req, res) => {
@@ -44,26 +52,22 @@ const getAllDocumentTypes = catchErrors(async (req, res) => {
   }`;
   const cached = myCache.get(cacheKey);
   if (cached)
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Fetched (cache)",
-        documentTypes: cached,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Fetched (cache)",
+      documentTypes: cached,
+    });
 
   const query = {};
   if (normalizedStatus) query.status = normalizedStatus;
 
   const docTypes = await DocumentType.find(query).lean();
   myCache.set(cacheKey, docTypes);
-  return res
-    .status(200)
-    .json({
-      success: true,
-      message: "Document types fetched",
-      documentTypes: docTypes,
-    });
+  return res.status(200).json({
+    success: true,
+    message: "Document types fetched",
+    documentTypes: docTypes,
+  });
 });
 
 const getDocumentTypeById = catchErrors(async (req, res) => {
@@ -79,6 +83,22 @@ const updateDocumentType = catchErrors(async (req, res) => {
   const { id } = req.params;
   const { name, description, required, status, createdAt } = req.body;
   if (!id) throw new Error("Please provide id");
+
+  // Check for duplicate document type name (excluding current document type)
+  if (name) {
+    const existingDocumentType = await DocumentType.findOne({
+      name,
+      _id: { $ne: id },
+    });
+    if (existingDocumentType) {
+      const error = new Error(
+        `Document type name '${name}' is already in use. Please use a different name.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
   const update = { name, description, required: !!required, status };
   if (createdAt) update.createdAt = new Date(createdAt);
   const doc = await DocumentType.findByIdAndUpdate(id, update, { new: true });
