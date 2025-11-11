@@ -394,8 +394,41 @@ const Resignation = () => {
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
-                      {r.employee?.firstName} {r.employee?.lastName} (EMP{" "}
-                      {r.employee?.employeeId})
+                      {(() => {
+                        // Resolve employee object: it may be populated or just an id/partial object
+                        const empFromRow = r.employee;
+                        let emp = empFromRow;
+                        if (empFromRow && typeof empFromRow === "string") {
+                          emp =
+                            employees.find((e) => e._id === empFromRow) || null;
+                        }
+                        // If nested object contains only employeeId, try to map from global employees
+                        if (
+                          emp &&
+                          emp.employeeId &&
+                          !emp.firstName &&
+                          employees
+                        ) {
+                          emp =
+                            employees.find(
+                              (e) => e.employeeId === emp.employeeId
+                            ) || emp;
+                        }
+
+                        const displayName =
+                          emp?.name ||
+                          `${emp?.firstName || ""} ${
+                            emp?.lastName || ""
+                          }`.trim();
+                        if (displayName)
+                          return `${displayName} (EMP ${
+                            emp?.employeeId || "--"
+                          })`;
+                        // Fallbacks
+                        return `EMP ${
+                          emp?.employeeId || (emp?._id ? emp._id : "--")
+                        }`;
+                      })()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {r.resignationDate
