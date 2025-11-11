@@ -1,6 +1,7 @@
 # Node.js dependencies
 client/node_modules
 server/node_modules
+server/src/public/uploads/*
 
 
 # Ignore all .env files
