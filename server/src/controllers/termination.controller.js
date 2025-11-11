@@ -1,6 +1,11 @@
 import Termination from "../models/termination.model.js";
 import Employee from "../models/employee.model.js";
-import { myCache, catchErrors, formatDate } from "../utils/index.js";
+import {
+  myCache,
+  catchErrors,
+  formatDate,
+  buildPublicUrl,
+} from "../utils/index.js";
 import { sendFullNotification } from "../services/notification.service.js";
 
 const createTermination = catchErrors(async (req, res) => {
@@ -24,7 +29,10 @@ const createTermination = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    finalDocumentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    finalDocumentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
   }
 
   const data = {
@@ -160,7 +168,10 @@ const updateTermination = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    updateData.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    updateData.documentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
   }
 
   const termination = await Termination.findByIdAndUpdate(id, updateData, {
