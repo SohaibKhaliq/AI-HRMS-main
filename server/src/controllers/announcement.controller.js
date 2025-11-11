@@ -1,6 +1,6 @@
 import Announcement from "../models/announcement.model.js";
 import Employee from "../models/employee.model.js";
-import { catchErrors, myCache } from "../utils/index.js";
+import { catchErrors, myCache, buildPublicUrl } from "../utils/index.js";
 import {
   createBulkNotifications,
   sendEmailNotification,
@@ -64,7 +64,10 @@ const createAnnouncement = catchErrors(async (req, res) => {
 
   let attachmentUrl = null;
   if (req.file) {
-    attachmentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    attachmentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
   }
 
   // Parse targetDesignations if it's a JSON string
@@ -210,7 +213,10 @@ const updateAnnouncement = catchErrors(async (req, res) => {
   if (priority) announcement.priority = priority;
   if (isActive !== undefined) announcement.isActive = isActive;
   if (req.file)
-    announcement.attachmentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    announcement.attachmentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
 
   await announcement.save();
 
