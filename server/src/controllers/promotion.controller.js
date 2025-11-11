@@ -1,4 +1,9 @@
-import { catchErrors, myCache, formatDate } from "../utils/index.js";
+import {
+  catchErrors,
+  myCache,
+  formatDate,
+  buildPublicUrl,
+} from "../utils/index.js";
 import Promotion from "../models/promotion.model.js";
 import Employee from "../models/employee.model.js";
 import { sendFullNotification } from "../services/notification.service.js";
@@ -33,7 +38,10 @@ const createPromotion = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    finalDocumentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    finalDocumentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
   }
 
   const data = {
@@ -179,7 +187,10 @@ const updatePromotion = catchErrors(async (req, res) => {
         console.log("Error deleting old document file:", err.message);
       }
     }
-    updateData.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    updateData.documentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
   } else if (documentUrl !== undefined) {
     updateData.documentUrl = documentUrl;
   }
