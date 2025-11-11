@@ -3,7 +3,7 @@ dotenv.config();
 
 import * as bcrypt from "bcrypt";
 // cloudinary removed - using local file storage helpers
-import { myCache, formatDate } from "../utils/index.js";
+import { myCache, formatDate, buildPublicUrl } from "../utils/index.js";
 import Employee from "../models/employee.model.js";
 import Shift from "../models/shift.model.js";
 import Department from "../models/department.model.js";
@@ -191,7 +191,7 @@ const createEmployee = catchErrors(async (req, res) => {
     email,
     password: hashedPassword,
     profilePicture: req.file
-      ? `${process.env.CLIENT_URL}/uploads/images/${req.file.filename}`
+      ? buildPublicUrl(req, `/uploads/images/${req.file.filename}`)
       : profilePicture,
     phoneNumber,
     address,
@@ -444,7 +444,7 @@ const updateEmployee = catchErrors(async (req, res) => {
       email,
       // if a file was uploaded, prefer its public URL; otherwise use incoming value
       profilePicture: req.file
-        ? `${process.env.CLIENT_URL}/uploads/images/${req.file.filename}`
+        ? buildPublicUrl(req, `/uploads/images/${req.file.filename}`)
         : profilePicture,
       phoneNumber,
       address,
@@ -487,7 +487,7 @@ const updateProfile = catchErrors(async (req, res) => {
 
   if (
     req.file &&
-    employee.profilePicture !== `${process.env.CLIENT_URL}/unknown.jpeg`
+    employee.profilePicture !== buildPublicUrl(req, `/unknown.jpeg`)
   ) {
     try {
       const { deleteUploadedFile } = await import("../utils/index.js");
@@ -500,7 +500,10 @@ const updateProfile = catchErrors(async (req, res) => {
   if (name) employee.name = name;
   if (email) employee.email = email;
   if (req.file)
-    employee.profilePicture = `${process.env.CLIENT_URL}/uploads/images/${req.file.filename}`;
+    employee.profilePicture = buildPublicUrl(
+      req,
+      `/uploads/images/${req.file.filename}`
+    );
 
   await employee.save();
 
