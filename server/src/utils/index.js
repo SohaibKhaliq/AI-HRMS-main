@@ -276,6 +276,22 @@ const formatDate = (date) => {
   return `${day} ${month}, ${year}`;
 };
 
+/**
+ * Build a full public URL pointing to the server-hosted static assets.
+ * Preference order: SERVER_URL, CLIENT_URL, derived from request host.
+ * @param {object} req - Express request object (optional if SERVER_URL set)
+ * @param {string} relativePath - path starting with / (e.g. '/uploads/documents/x.pdf')
+ */
+const buildPublicUrl = (req, relativePath) => {
+  const base =
+    process.env.SERVER_URL ||
+    process.env.CLIENT_URL ||
+    (req ? `${req.protocol}://${req.get("host")}` : "");
+  if (!relativePath) return base.replace(/\/$/, "");
+  const rel = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  return `${base.replace(/\/$/, "")}${rel}`;
+};
+
 function formatTime(time24) {
   const [hours, minutes] = time24.split(":");
 
@@ -316,4 +332,5 @@ export {
   getPublicIdFromUrl,
   saveBufferToUploads,
   deleteUploadedFile,
+  buildPublicUrl,
 };
