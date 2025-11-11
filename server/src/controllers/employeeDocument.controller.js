@@ -1,4 +1,4 @@
-import { catchErrors, myCache } from "../utils/index.js";
+import { catchErrors, myCache, buildPublicUrl } from "../utils/index.js";
 import EmployeeDocument from "../models/employeeDocument.model.js";
 import Employee from "../models/employee.model.js";
 import { sendFullNotification } from "../services/notification.service.js";
@@ -8,13 +8,6 @@ import * as Jimp from "jimp";
 // jimp may be published as CommonJS; support both default and namespace imports
 const JimpLib = Jimp && (Jimp.default || Jimp);
 import { fileURLToPath } from "url";
-
-// Resolve public base URL at request time. Prefer SERVER_URL, then CLIENT_URL,
-// otherwise derive from the incoming request host so links point to the backend origin.
-const getPublicBase = (req) =>
-  process.env.SERVER_URL ||
-  process.env.CLIENT_URL ||
-  `${req.protocol}://${req.get("host")}`;
 
 const uploadDocument = catchErrors(async (req, res) => {
   const {
@@ -68,11 +61,9 @@ const uploadDocument = catchErrors(async (req, res) => {
     documentType: documentType || null,
     title,
     description: description || "",
-    // Store public URL so client can fetch over HTTP. Prefer the server URL so
-    // assets are requested from the backend that actually serves the files.
-    fileUrl: `${getPublicBase(req).replace(/\/$/, "")}/uploads/documents/${
-      req.file.filename
-    }`,
+    // Store public URL so client can fetch over HTTP. Use buildPublicUrl so
+    // assets are always referenced via the configured server/static base.
+    fileUrl: buildPublicUrl(req, `/uploads/documents/${req.file.filename}`),
     fileName: req.file.originalname,
     fileSize: req.file.size,
     fileType: req.file.mimetype,
@@ -121,10 +112,7 @@ const uploadDocument = catchErrors(async (req, res) => {
 
     // Persist thumbnail URL to the document record
     await EmployeeDocument.findByIdAndUpdate(document._id, {
-      thumbnailUrl: `${getPublicBase(req).replace(
-        /\/$/,
-        ""
-      )}/uploads/thumbnails/${thumbName}`,
+      thumbnailUrl: buildPublicUrl(req, `/uploads/thumbnails/${thumbName}`),
     });
   } catch (thumbErr) {
     console.warn(
@@ -270,10 +258,10 @@ const updateDocument = catchErrors(async (req, res) => {
 
   // If file is being updated
   if (req.file) {
-    updateData.fileUrl = `${getPublicBase(req).replace(
-      /\/$/,
-      ""
-    )}/uploads/documents/${req.file.filename}`;
+    updateData.fileUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
     updateData.fileName = req.file.originalname;
     updateData.fileSize = req.file.size;
     updateData.fileType = req.file.mimetype;
