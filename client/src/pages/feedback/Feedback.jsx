@@ -552,10 +552,12 @@ const Feedback = () => {
                       </p>
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getReviewColor(
-                          selectedFeedback.review
+                          selectedFeedback.sentimentLabel ||
+                            selectedFeedback.review
                         )}`}
                       >
-                        {selectedFeedback.review}
+                        {selectedFeedback.sentimentLabel ||
+                          selectedFeedback.review}
                       </span>
                     </div>
                   </div>
@@ -596,9 +598,12 @@ const Feedback = () => {
                     </p>
                     <p className="text-gray-900 dark:text-gray-100 mb-2">
                       Our AI has analyzed your feedback and classified it as{" "}
-                      <strong>{selectedFeedback.review}</strong> sentiment. This
-                      helps management understand and prioritize employee
-                      feedback effectively.
+                      <strong>
+                        {selectedFeedback.sentimentLabel ||
+                          selectedFeedback.review}
+                      </strong>{" "}
+                      sentiment. This helps management understand and prioritize
+                      employee feedback effectively.
                     </p>
                     <div className="flex flex-col gap-2">
                       <SentimentBadge
