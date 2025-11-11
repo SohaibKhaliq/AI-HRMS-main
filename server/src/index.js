@@ -42,6 +42,7 @@ import {
   training,
 } from "./routes/index.routes.js";
 import { warmup as analysisWarmup } from "./services/analysisService.js";
+import { scheduleDailyResignationCompletionJob } from "./services/resignationScheduler.service.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
 
 // ========================================
@@ -339,6 +340,16 @@ connectDB()
           // Run an initial backfill immediately, then schedule periodic runs
           setTimeout(runBackfill, 2000);
           setInterval(runBackfill, BACKFILL_INTERVAL_MS);
+          // Schedule resignation completion job (daily)
+          try {
+            scheduleDailyResignationCompletionJob();
+            console.log("Scheduled resignation completion job (daily)");
+          } catch (schedErr) {
+            console.warn(
+              "Could not schedule resignation completion job:",
+              schedErr && schedErr.message ? schedErr.message : schedErr
+            );
+          }
         } catch (err) {
           console.warn(
             "Could not schedule backfill:",
