@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import Loader from "../../components/shared/loaders/Loader";
 import FetchError from "../../components/shared/error/FetchError";
 import ResignationModal from "../../components/shared/modals/ResignationModal";
@@ -22,6 +23,7 @@ import {
 
 const Resignation = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { resignations, loading, error } = useSelector(
     (state) =>
       state.resignation || { resignations: [], loading: false, error: null }
@@ -519,6 +521,7 @@ const Resignation = () => {
         onSubmit={action === "view" ? null : handleModalSubmit}
         action={action}
         employees={employees}
+        navigate={navigate}
       />
     </>
   );
