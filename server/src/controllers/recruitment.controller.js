@@ -1,4 +1,4 @@
-import { catchErrors, sendMail } from "../utils/index.js";
+import { catchErrors, sendMail, buildPublicUrl } from "../utils/index.js";
 import Recruitment from "../models/recruitment.model.js";
 import JobType from "../models/jobType.model.js";
 import {
@@ -195,7 +195,7 @@ const createApplicant = catchErrors(async (req, res) => {
 
   // Use public URL for the resume so client loads over HTTP
   const resumePath = req.file
-    ? `${process.env.CLIENT_URL}/uploads/resumes/${req.file.filename}`
+    ? buildPublicUrl(req, `/uploads/resumes/${req.file.filename}`)
     : null;
 
   job.applicants.push({
