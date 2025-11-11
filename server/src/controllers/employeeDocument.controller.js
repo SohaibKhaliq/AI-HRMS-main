@@ -9,9 +9,12 @@ import * as Jimp from "jimp";
 const JimpLib = Jimp && (Jimp.default || Jimp);
 import { fileURLToPath } from "url";
 
-// Use SERVER_URL for serving uploaded files. Fall back to CLIENT_URL if SERVER_URL
-// isn't provided (keeps backward compatibility for some dev setups).
-const PUBLIC_BASE = process.env.SERVER_URL || process.env.CLIENT_URL || "";
+// Resolve public base URL at request time. Prefer SERVER_URL, then CLIENT_URL,
+// otherwise derive from the incoming request host so links point to the backend origin.
+const getPublicBase = (req) =>
+  process.env.SERVER_URL ||
+  process.env.CLIENT_URL ||
+  `${req.protocol}://${req.get("host")}`;
 
 const uploadDocument = catchErrors(async (req, res) => {
   const {
@@ -67,7 +70,9 @@ const uploadDocument = catchErrors(async (req, res) => {
     description: description || "",
     // Store public URL so client can fetch over HTTP. Prefer the server URL so
     // assets are requested from the backend that actually serves the files.
-    fileUrl: `${PUBLIC_BASE}/uploads/documents/${req.file.filename}`,
+    fileUrl: `${getPublicBase(req).replace(/\/$/, "")}/uploads/documents/${
+      req.file.filename
+    }`,
     fileName: req.file.originalname,
     fileSize: req.file.size,
     fileType: req.file.mimetype,
@@ -116,7 +121,10 @@ const uploadDocument = catchErrors(async (req, res) => {
 
     // Persist thumbnail URL to the document record
     await EmployeeDocument.findByIdAndUpdate(document._id, {
-      thumbnailUrl: `${PUBLIC_BASE}/uploads/thumbnails/${thumbName}`,
+      thumbnailUrl: `${getPublicBase(req).replace(
+        /\/$/,
+        ""
+      )}/uploads/thumbnails/${thumbName}`,
     });
   } catch (thumbErr) {
     console.warn(
@@ -262,7 +270,10 @@ const updateDocument = catchErrors(async (req, res) => {
 
   // If file is being updated
   if (req.file) {
-    updateData.fileUrl = `${PUBLIC_BASE}/uploads/documents/${req.file.filename}`;
+    updateData.fileUrl = `${getPublicBase(req).replace(
+      /\/$/,
+      ""
+    )}/uploads/documents/${req.file.filename}`;
     updateData.fileName = req.file.originalname;
     updateData.fileSize = req.file.size;
     updateData.fileType = req.file.mimetype;
@@ -317,7 +328,10 @@ const updateDocument = catchErrors(async (req, res) => {
       }
 
       await EmployeeDocument.findByIdAndUpdate(document._id, {
-        thumbnailUrl: `${PUBLIC_BASE}/uploads/thumbnails/${thumbName}`,
+        thumbnailUrl: `${getPublicBase(req).replace(
+          /\/$/,
+          ""
+        )}/uploads/thumbnails/${thumbName}`,
       });
     } catch (thumbErr) {
       console.warn(
