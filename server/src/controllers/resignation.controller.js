@@ -34,11 +34,18 @@ const createResignation = catchErrors(async (req, res) => {
     );
   }
 
+  const PUBLIC_BASE =
+    process.env.SERVER_URL ||
+    process.env.CLIENT_URL ||
+    `${req.protocol}://${req.get("host")}`;
+
   let finalDocumentUrl = documentUrl || null;
 
   // Handle file upload if document is provided
   if (req.file) {
-    finalDocumentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    finalDocumentUrl = `${PUBLIC_BASE.replace(/\/$/, "")}/uploads/documents/${
+      req.file.filename
+    }`;
   }
 
   const data = {
@@ -167,6 +174,10 @@ const getResignationById = catchErrors(async (req, res) => {
 });
 
 const updateResignation = catchErrors(async (req, res) => {
+  const PUBLIC_BASE =
+    process.env.SERVER_URL ||
+    process.env.CLIENT_URL ||
+    `${req.protocol}://${req.get("host")}`;
   const { id } = req.params;
   const {
     employee,
@@ -197,7 +208,10 @@ const updateResignation = catchErrors(async (req, res) => {
 
   // Handle file upload if document is provided
   if (req.file) {
-    updateData.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    updateData.documentUrl = `${PUBLIC_BASE.replace(
+      /\/$/,
+      ""
+    )}/uploads/documents/${req.file.filename}`;
   } else if (documentUrl !== undefined) {
     updateData.documentUrl = documentUrl;
   }
@@ -209,8 +223,11 @@ const updateResignation = catchErrors(async (req, res) => {
     "name firstName lastName employeeId email profilePicture"
   );
 
-  // Send notification if status changed to Approved or Rejected
-  if (status && (status === "Approved" || status === "Rejected")) {
+  // Send notification if status changed to Approved, Rejected or Completed
+  if (
+    status &&
+    (status === "Approved" || status === "Rejected" || status === "Completed")
+  ) {
     const employeeData = await Employee.findById(resignation.employee._id);
     if (employeeData) {
       if (status === "Approved") {
@@ -285,18 +302,40 @@ const updateResignation = catchErrors(async (req, res) => {
           );
         }
       } else if (status === "Rejected") {
+        // Send both in-app and email notification for rejection
         sendFullNotification({
           employee: employeeData,
-          title: "Resignation Update",
-          message: `Your resignation has been ${status.toLowerCase()}. ${
-            remarks || ""
-          }`,
+          title: "Resignation Rejected",
+          message: `Your resignation has been rejected. ${remarks || ""}`,
           type: "resignation",
           priority: "high",
           link: "/resignation",
+          emailSubject: "Resignation Update - Rejected",
+          emailTemplate: "resignationRejected",
+          emailData: {
+            remarks: remarks || "",
+          },
         }).catch((e) =>
           console.warn(
             "Non-fatal: resignation rejected notification failed:",
+            e && e.message ? e.message : e
+          )
+        );
+      } else if (status === "Completed") {
+        // Send a notification/email when resignation is marked completed
+        sendFullNotification({
+          employee: employeeData,
+          title: "Resignation Completed",
+          message: `Your resignation process is completed. Thank you for your service.`,
+          type: "resignation",
+          priority: "high",
+          link: "/resignation",
+          emailSubject: "Resignation Completed",
+          emailTemplate: "resignationCompleted",
+          emailData: {},
+        }).catch((e) =>
+          console.warn(
+            "Non-fatal: resignation completed notification failed:",
             e && e.message ? e.message : e
           )
         );
