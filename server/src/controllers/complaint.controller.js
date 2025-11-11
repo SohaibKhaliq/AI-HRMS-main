@@ -2,16 +2,26 @@ import Complaint from "../models/complaint.model.js";
 import Employee from "../models/employee.model.js";
 import { createUpdate } from "./update.controller.js";
 import { complaintRespond } from "../templates/index.js";
-import { catchErrors, myCache } from "../utils/index.js";
+import { catchErrors, myCache, buildPublicUrl } from "../utils/index.js";
 import { sendFullNotification } from "../services/notification.service.js";
 import { enqueueAnalysisJob } from "../services/analysisQueue.service.js";
 
 const getComplaints = catchErrors(async (req, res) => {
-  const { status, page = 1, limit = 12 } = req.query;
+  const { status, page = 1, limit = 12, employee } = req.query;
 
   const query = {};
 
   if (status) query.status = { $regex: status, $options: "i" };
+  // optional employee filter: support special value 'me' to return complaints
+  // where the requester is either the reporter or the target (againstEmployee)
+  if (employee === "me") {
+    const requester = req.user && req.user.id;
+    if (requester) {
+      query.$or = [{ employee: requester }, { againstEmployee: requester }];
+    }
+  } else if (employee) {
+    query.employee = employee;
+  }
 
   const pageNumber = Math.max(parseInt(page), 1);
   const limitNumber = Math.max(parseInt(limit), 1);
@@ -74,7 +84,6 @@ const getComplaints = catchErrors(async (req, res) => {
 
 const createComplaint = catchErrors(async (req, res) => {
   const {
-    employee,
     againstEmployee,
     complainType,
     complaintDetails,
@@ -83,17 +92,22 @@ const createComplaint = catchErrors(async (req, res) => {
     remarks,
   } = req.body;
 
-  if (!employee || !complainType || !complaintDetails || !complainSubject)
+  // Employee should come from authenticated token rather than client-supplied body
+  const employeeId = req.user && req.user.id;
+  if (!employeeId || !complainType || !complaintDetails || !complainSubject)
     throw new Error("All required fields are required");
 
   let documentUrl = null;
   if (req.file) {
-    // Store public URL for the uploaded document
-    documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    // Store public URL for the uploaded document (server-origin)
+    documentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
   }
 
   const complaint = await Complaint.create({
-    employee,
+    employee: employeeId,
     againstEmployee: againstEmployee || null,
     complainType,
     complainSubject,
@@ -114,7 +128,7 @@ const createComplaint = catchErrors(async (req, res) => {
   }
 
   // Send notification to employee confirming complaint submission
-  const employeeData = await Employee.findById(employee);
+  const employeeData = await Employee.findById(employeeId);
   if (employeeData) {
     // Fire-and-forget notification/email
     sendFullNotification({
@@ -264,7 +278,10 @@ const updateComplaint = catchErrors(async (req, res) => {
   if (assignComplaint) complaint.assignComplaint = assignComplaint;
   if (remarks) complaint.remarks = remarks;
   if (req.file)
-    complaint.documentUrl = `${process.env.CLIENT_URL}/uploads/documents/${req.file.filename}`;
+    complaint.documentUrl = buildPublicUrl(
+      req,
+      `/uploads/documents/${req.file.filename}`
+    );
 
   await complaint.save();
 
@@ -294,9 +311,19 @@ const deleteComplaintById = catchErrors(async (req, res) => {
 
   if (!id) throw new Error("Complaint ID is required");
 
-  const complaint = await Complaint.findByIdAndDelete(id);
-
+  // Ensure the requester owns the complaint (employees may only delete their own complaints)
+  const complaint = await Complaint.findById(id);
   if (!complaint) throw new Error("Complaint not found");
+
+  const requesterId = req.user && req.user.id;
+  if (!requesterId) throw new Error("Unauthorized");
+
+  // If complaint owner doesn't match requester, forbid the delete
+  if (String(complaint.employee) !== String(requesterId)) {
+    throw new Error("You are not authorized to delete this complaint");
+  }
+
+  await Complaint.findByIdAndDelete(id);
 
   myCache.del("insights");
 
