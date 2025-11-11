@@ -136,6 +136,8 @@ export const getEmailTemplate = (templateName, data) => {
     attendanceAlert: attendanceAlertTemplate,
     resignationSubmitted: resignationSubmittedTemplate,
     resignationApproved: resignationApprovedTemplate,
+    resignationRejected: resignationRejectedTemplate,
+    resignationCompleted: resignationCompletedTemplate,
     performanceReview: performanceReviewTemplate,
     complaintUpdate: complaintUpdateTemplate,
     employeeOnboarding: employeeOnboardingTemplate,
@@ -495,6 +497,50 @@ const resignationApprovedTemplate = (data) => `
   <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
     <p style="color: #cccccc; margin: 4px 0;"><strong>Last Working Day:</strong> ${data.lastWorkingDay}</p>
   </div>
+`;
+
+/**
+ * Resignation Rejected Template
+ */
+const resignationRejectedTemplate = (data) => `
+  <h2 style="color: #EF4444; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Resignation Update</h2>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    We reviewed your resignation request and it has been <strong style="color: #EF4444;">rejected</strong>.
+  </p>
+  <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
+    ${
+      data.remarks
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Remarks:</strong> ${data.remarks}</p>`
+        : ""
+    }
+  </div>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Please contact HR for more details or to discuss next steps.</p>
+  <a href="${clientUrl}/resignation" style="display: inline-block; padding: 12px 28px; background-color: #EF4444; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">View Resignation</a>
+`;
+
+/**
+ * Resignation Completed Template
+ */
+const resignationCompletedTemplate = (data) => `
+  <h2 style="color: #10B981; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Resignation Completed</h2>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Dear <strong style="color: #007bff;">${
+    data.employeeName
+  }</strong>,</p>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">
+    Your resignation process has been marked as <strong style="color: #10B981;">completed</strong>. Thank you for your contributions.
+  </p>
+  <div style="background: #333; padding: 16px; border-radius: 8px; margin: 16px 0;">
+    ${
+      data.lastWorkingDay
+        ? `<p style="color: #cccccc; margin: 4px 0;"><strong>Last Working Day:</strong> ${data.lastWorkingDay}</p>`
+        : ""
+    }
+  </div>
+  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">If you need any documents (experience letter, relieving letter), please contact HR.</p>
+  <a href="${clientUrl}/resignation" style="display: inline-block; padding: 12px 28px; background-color: #10B981; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; margin: 24px 0;">View Resignation</a>
 `;
 
 /**
