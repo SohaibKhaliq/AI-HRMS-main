@@ -12,7 +12,6 @@ import { employeeResignationSchema } from "../../validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { FaCheck, FaEye, FaPlus } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 
 const Resignation = () => {
@@ -21,7 +20,6 @@ const Resignation = () => {
   const { resignations = [], loading } = useSelector(
     (state) => state.resignation || {}
   );
-  const navigate = useNavigate();
 
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -128,9 +126,12 @@ const Resignation = () => {
     endIndex
   );
 
-  // Check if current user has already submitted a resignation
-  const userHasResignation = resignations?.some(
-    (res) => res.employee?._id === user?._id
+  // Check if current user has an active/pending resignation
+  // Allow submitting if user has no resignations or all are Rejected/Completed
+  const userHasActiveResignation = resignations?.some(
+    (res) =>
+      res.employee?._id === user?._id &&
+      (res.status === "Pending" || res.status === "Approved")
   );
 
   const handleDocumentChange = (e) => {
@@ -271,7 +272,7 @@ const Resignation = () => {
                 View and manage your resignation requests
               </p>
             </div>
-            {!userHasResignation && (
+            {!userHasActiveResignation ? (
               <button
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
@@ -279,8 +280,33 @@ const Resignation = () => {
                 <FaPlus size={20} />
                 Submit Resignation
               </button>
+            ) : (
+              <div className="text-right">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm">
+                  <i className="fa-solid fa-circle-info"></i>
+                  <span>You have an active resignation pending</span>
+                </div>
+              </div>
             )}
           </div>
+
+          {/* Info Banner for Active Resignation */}
+          {userHasActiveResignation && (
+            <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <i className="fa-solid fa-triangle-exclamation text-amber-600 dark:text-amber-400 text-lg mt-0.5"></i>
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    Active Resignation in Progress
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    You can submit a new resignation request once your current
+                    resignation is either rejected or completed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Search and Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -406,8 +432,8 @@ const Resignation = () => {
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {resignations.length > 0
                               ? "No resignations match your current filters."
-                              : userHasResignation
-                              ? "You have submitted a resignation."
+                              : filteredResignations.length > 0
+                              ? "You have submitted resignations."
                               : "You haven't submitted any resignation yet."}
                           </p>
                         </div>
@@ -788,27 +814,6 @@ const Resignation = () => {
                     className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-lg"
                   >
                     Close
-                  </button>
-                  {/* Open Substitute Analysis with resigning employee prefilled */}
-                  <button
-                    onClick={() => {
-                      try {
-                        const empId = selectedResignation?.employee?._id;
-                        if (empId) {
-                          // navigate to substitute analysis and prefill employee
-                          navigate(`/substitute-analysis?employeeId=${empId}`);
-                        } else {
-                          toast.error(
-                            "No employee associated with this resignation"
-                          );
-                        }
-                      } catch (e) {
-                        console.error(e);
-                      }
-                    }}
-                    className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg"
-                  >
-                    Open Substitute Analysis
                   </button>
                 </div>
               </div>
