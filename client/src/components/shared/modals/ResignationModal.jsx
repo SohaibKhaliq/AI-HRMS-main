@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllEmployees } from "../../../services/employee.service";
 import { MdClose } from "react-icons/md";
+import { FaSearch } from "react-icons/fa";
 import { resignationSchema } from "../../../validations";
 import PropTypes from "prop-types";
+import toast from "react-hot-toast";
 
 const ResignationModal = ({
   isOpen,
@@ -12,6 +14,7 @@ const ResignationModal = ({
   onSubmit,
   action,
   employees: propEmployees,
+  navigate,
 }) => {
   const dispatch = useDispatch();
   const { employees: storeEmployees } = useSelector(
@@ -468,6 +471,25 @@ const ResignationModal = ({
             >
               {isViewMode ? "Close" : "Cancel"}
             </button>
+            {isViewMode && navigate && resignation?.employee?._id && (
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const empId = resignation.employee._id;
+                    navigate(`/substitute-analysis?employeeId=${empId}`);
+                    onClose();
+                  } catch (e) {
+                    console.error(e);
+                    toast.error("Failed to open substitute analysis");
+                  }
+                }}
+                className="px-6 py-2 text-white bg-amber-500 hover:bg-amber-600 rounded-lg font-medium transition flex items-center gap-2"
+              >
+                <FaSearch />
+                Find Substitute
+              </button>
+            )}
             {!isViewMode && (
               <button
                 type="submit"
@@ -492,4 +514,5 @@ ResignationModal.propTypes = {
   onSubmit: PropTypes.func,
   action: PropTypes.string,
   employees: PropTypes.array,
+  navigate: PropTypes.func,
 };
