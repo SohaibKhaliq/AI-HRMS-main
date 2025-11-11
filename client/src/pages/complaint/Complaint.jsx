@@ -5,7 +5,11 @@ import { complaintTypes } from "../../constants";
 import { complaintSchema } from "../../validations";
 import { useSelector, useDispatch } from "react-redux";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createComplaint, getComplaints, deleteComplaint } from "../../services/complaint.service";
+import {
+  createComplaint,
+  getComplaints,
+  deleteComplaint,
+} from "../../services/complaint.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 import { FiSearch, FiEye, FiTrash2, FiPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -28,6 +32,7 @@ const Complaint = () => {
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [attachment, setAttachment] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -50,14 +55,17 @@ const Complaint = () => {
         page: currentPage,
         limit: pageSize,
         status: statusFilter || undefined,
+        employee: "me",
       })
     );
-  }, [dispatch, currentPage, pageSize, statusFilter]);
+  }, [dispatch, currentPage, pageSize, statusFilter, user?._id]);
 
   // Filter complaints by search and type
   const filteredComplaints = complaints.filter((complaint) => {
-    // Only show current user's complaints
-    if (complaint.employee?._id !== user?._id) return false;
+    // Show complaints where current user is the reporter OR the subject (againstEmployee)
+    const isReporter = complaint.employee?._id === user?._id;
+    const isAgainst = complaint.againstEmployee?._id === user?._id;
+    if (!isReporter && !isAgainst) return false;
 
     const subject = complaint.complainSubject || "";
     const searchLower = searchQuery.toLowerCase();
@@ -68,16 +76,29 @@ const Complaint = () => {
   });
 
   const onSubmit = (data) => {
-    const complaintData = {
-      ...data,
-      employee: user._id,
-    };
+    // Build FormData when an attachment is present
+    let payload = data;
+    if (attachment) {
+      const fd = new FormData();
+      fd.append("complainType", data.complainType);
+      fd.append("complainSubject", data.complainSubject);
+      fd.append("complaintDetails", data.complaintDetails);
+      if (data.assignComplaint)
+        fd.append("assignComplaint", data.assignComplaint);
+      if (data.remarks) fd.append("remarks", data.remarks);
+      fd.append("document", attachment);
+      payload = fd;
+    } else {
+      // include employee id for backward compatibility (server now uses req.user)
+      payload = { ...data, employee: user._id };
+    }
 
-    dispatch(createComplaint(complaintData))
+    dispatch(createComplaint(payload))
       .unwrap()
       .then(() => {
         reset();
         setShowModal(false);
+        setAttachment(null);
         toast.success("Complaint submitted successfully!");
         // Refetch complaints
         dispatch(
@@ -85,6 +106,7 @@ const Complaint = () => {
             page: currentPage,
             limit: pageSize,
             status: statusFilter || undefined,
+            employee: user?._id,
           })
         );
       })
@@ -92,6 +114,11 @@ const Complaint = () => {
         console.error("Error creating complaint:", error);
         toast.error("Failed to submit complaint");
       });
+  };
+
+  const handleFileChange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    setAttachment(f || null);
   };
 
   const handleViewComplaint = (complaint) => {
@@ -110,6 +137,7 @@ const Complaint = () => {
               page: currentPage,
               limit: pageSize,
               status: statusFilter || undefined,
+              employee: user?._id,
             })
           );
         })
@@ -120,7 +148,13 @@ const Complaint = () => {
     }
   };
 
-  const statusOptions = ["Pending", "In Progress", "Resolved", "Closed", "Escalated"];
+  const statusOptions = [
+    "Pending",
+    "In Progress",
+    "Resolved",
+    "Closed",
+    "Escalated",
+  ];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -170,7 +204,10 @@ const Complaint = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Search Bar */}
             <div className="relative">
-              <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+              <FiSearch
+                className="absolute left-3 top-3 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search by subject..."
@@ -262,7 +299,11 @@ const Complaint = () => {
                         {new Date(complaint.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            complaint.status
+                          )}`}
+                        >
                           {complaint.status}
                         </span>
                       </td>
@@ -277,7 +318,9 @@ const Complaint = () => {
                           </button>
                           {complaint.status === "Pending" && (
                             <button
-                              onClick={() => handleDeleteComplaint(complaint._id)}
+                              onClick={() =>
+                                handleDeleteComplaint(complaint._id)
+                              }
                               className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition"
                               title="Delete"
                             >
@@ -290,7 +333,10 @@ const Complaint = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                    <td
+                      colSpan="6"
+                      className="px-4 py-8 text-center text-gray-500"
+                    >
                       No complaints found
                     </td>
                   </tr>
@@ -336,7 +382,9 @@ const Complaint = () => {
                 {currentPage}
               </span>
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               >
@@ -372,7 +420,9 @@ const Complaint = () => {
                     <select
                       {...register("complainType")}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                        errors.complainType ? "border-red-500" : "border-gray-300"
+                        errors.complainType
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       disabled={loading}
                     >
@@ -398,7 +448,9 @@ const Complaint = () => {
                       placeholder="Brief description of the issue"
                       {...register("complainSubject")}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                        errors.complainSubject ? "border-red-500" : "border-gray-300"
+                        errors.complainSubject
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       disabled={loading}
                     />
@@ -418,7 +470,9 @@ const Complaint = () => {
                       rows="5"
                       {...register("complaintDetails")}
                       className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                        errors.complaintDetails ? "border-red-500" : "border-gray-300"
+                        errors.complaintDetails
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       disabled={loading}
                     ></textarea>
@@ -427,6 +481,18 @@ const Complaint = () => {
                         {errors.complaintDetails.message}
                       </p>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Attachment (optional)
+                    </label>
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      className="w-full"
+                      disabled={loading}
+                    />
                   </div>
 
                   <div className="flex gap-3 mt-6">
@@ -481,35 +547,49 @@ const Complaint = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Type</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Type
+                      </p>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
                         {selectedComplaint.complainType}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedComplaint.status)}`}>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Status
+                      </p>
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          selectedComplaint.status
+                        )}`}
+                      >
                         {selectedComplaint.status}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Subject</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Subject
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedComplaint.complainSubject}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Details</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Details
+                    </p>
                     <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
                       {selectedComplaint.complaintDetails}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Submitted On</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Submitted On
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-gray-100">
                       {new Date(selectedComplaint.createdAt).toLocaleString()}
                     </p>
@@ -528,7 +608,9 @@ const Complaint = () => {
 
                   {selectedComplaint.assignComplaint && (
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Assigned To</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Assigned To
+                      </p>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
                         {selectedComplaint.assignComplaint.name}
                       </p>
