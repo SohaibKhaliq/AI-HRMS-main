@@ -261,7 +261,8 @@ const feedbackSchema = z.object({
 });
 
 const complaintSchema = z.object({
-  employee: z.string().min(1, "* Complainant is required"),
+  // employee is set server-side from auth; make optional on client forms
+  employee: z.string().optional(),
   againstEmployee: z.string().optional().or(z.literal("")),
   complainType: z
     .string()
@@ -293,8 +294,11 @@ const complaintSchema = z.object({
     .min(1, "* Complaint details is required")
     .min(10, "* Complaint details must be at least 10 characters")
     .max(1000, "* Complaint details must not exceed 1000 characters"),
+  // status will default to Pending on creation; validate when provided
   status: z
     .string()
+    .optional()
+    .default("Pending")
     .refine(
       (val) =>
         ["Pending", "In Progress", "Resolved", "Closed", "Escalated"].includes(
