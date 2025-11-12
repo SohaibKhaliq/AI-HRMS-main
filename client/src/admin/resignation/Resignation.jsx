@@ -420,14 +420,9 @@ const Resignation = () => {
                           `${emp?.firstName || ""} ${
                             emp?.lastName || ""
                           }`.trim();
-                        if (displayName)
-                          return `${displayName} (EMP ${
-                            emp?.employeeId || "--"
-                          })`;
-                        // Fallbacks
-                        return `EMP ${
-                          emp?.employeeId || (emp?._id ? emp._id : "--")
-                        }`;
+                        if (displayName) return displayName;
+                        // Fallback: hide numeric employeeId, show placeholder
+                        return "-";
                       })()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
