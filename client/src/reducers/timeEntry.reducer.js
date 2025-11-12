@@ -37,8 +37,12 @@ const timeEntrySlice = createSlice({
       .addCase(clockIn.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload || {};
-        // server returns { timeEntry } — fall back to data for older endpoints
-        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
+        // Prefer explicit `timeEntry` field from server. If present (even null) use it.
+        if (Object.prototype.hasOwnProperty.call(payload, "timeEntry")) {
+          state.activeEntry = payload.timeEntry;
+        } else {
+          state.activeEntry = payload.data ?? payload ?? null;
+        }
       })
       .addCase(clockIn.rejected, (state, action) => {
         state.loading = false;
@@ -76,7 +80,11 @@ const timeEntrySlice = createSlice({
       .addCase(startBreak.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload || {};
-        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
+        if (Object.prototype.hasOwnProperty.call(payload, "timeEntry")) {
+          state.activeEntry = payload.timeEntry;
+        } else {
+          state.activeEntry = payload.data ?? payload ?? null;
+        }
       })
       .addCase(startBreak.rejected, (state, action) => {
         state.loading = false;
@@ -91,7 +99,11 @@ const timeEntrySlice = createSlice({
       .addCase(endBreak.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload || {};
-        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
+        if (Object.prototype.hasOwnProperty.call(payload, "timeEntry")) {
+          state.activeEntry = payload.timeEntry;
+        } else {
+          state.activeEntry = payload.data ?? payload ?? null;
+        }
       })
       .addCase(endBreak.rejected, (state, action) => {
         state.loading = false;
@@ -106,7 +118,12 @@ const timeEntrySlice = createSlice({
       .addCase(getActiveTimeEntry.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload || {};
-        state.activeEntry = payload.timeEntry ?? payload.data ?? payload;
+        // If server explicitly returned `timeEntry` (even null) use it — this prevents treating the whole response object as an active entry
+        if (Object.prototype.hasOwnProperty.call(payload, "timeEntry")) {
+          state.activeEntry = payload.timeEntry;
+        } else {
+          state.activeEntry = payload.data ?? payload ?? null;
+        }
       })
       .addCase(getActiveTimeEntry.rejected, (state, action) => {
         state.loading = false;
