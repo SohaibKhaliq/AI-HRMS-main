@@ -4,6 +4,8 @@ import Employee from "../models/employee.model.js";
 import LeaveType from "../models/leaveType.model.js";
 import LeaveBalance from "../models/leaveBalance.model.js";
 import { getSubstitute } from "../predictions/index.js";
+import { enqueueAnalysisJob } from "../services/analysisQueue.service.js";
+import { broadcastNotification } from "../socket/index.js";
 import { catchErrors, formatDate, myCache } from "../utils/index.js";
 import { leaveRespond, notifySubstituteEmployee } from "../templates/index.js";
 import { createUpdate } from "./update.controller.js";
@@ -56,19 +58,16 @@ const getEmployeesOnLeave = catchErrors(async (req, res) => {
   })
     .populate({
       path: "employee",
-      select: "name employeeId department role",
+      select: "name employeeId department role shift",
       populate: [
-        {
-          path: "department",
-          select: "name",
-        },
-        {
-          path: "role",
-          select: "name",
-        },
+        { path: "department", select: "name" },
+        { path: "role", select: "name" },
       ],
     })
-    .populate("leaveType", "name")
+    .populate({
+      path: "leaveType",
+      select: "name",
+    })
     .populate("substitute", "name");
 
   return res.status(200).json({
@@ -385,28 +384,105 @@ const approveLeave = async (leave, employee) => {
   // Get shift name (handle both populated object and string)
   const shiftName = employee.shift?.name || employee.shift || "Morning";
 
-  const substituteData = await getSubstitute({
-    department: employee.department,
-    shift: shiftName,
-  });
+  // Do NOT auto-assign substitute here. Instead, enqueue a substitute analysis job
+  // and notify admins so they can review and assign the substitute manually.
+  let subsMsg = "Substitute will be assigned by admin";
 
-  let subsMsg = "";
-  if (substituteData.availability) {
-    leave.substitute = substituteData.id;
-    subsMsg = "Substitute assigned";
+  try {
+    // Build payload for substitute analysis (prefer department/skills from employee)
+    const payload = {
+      targetEmployeeId: String(leave.employee),
+      topK: 5,
+      scope: {},
+    };
 
-    await notifySubstituteEmployee({
-      name: employee.name,
-      shift: shiftName,
-      duration: leave.duration,
-      email: substituteData.email,
-      subsName: substituteData.name,
-      toDate: formatDate(leave.toDate),
-      department: employee.department.name,
-      fromDate: formatDate(leave.fromDate),
-    });
-  } else {
-    subsMsg = "Substitute not found";
+    const empFull = await Employee.findById(payload.targetEmployeeId)
+      .select("department skills")
+      .lean();
+    if (empFull) {
+      if (empFull.department) payload.scope.department = empFull.department;
+      if (Array.isArray(empFull.skills) && empFull.skills.length)
+        payload.requiredSkills = empFull.skills;
+    }
+
+    // Enqueue background analysis job to compute substitute candidates
+    const job = await enqueueAnalysisJob(
+      "substitute",
+      String(leave._id),
+      payload
+    );
+
+    // Mark leave as requiring admin-assigned substitute
+    leave.substituteRequested = true;
+    leave.substituteRequestedAt = new Date();
+
+    // Broadcast a simple analysis:progress event so UIs can react to the new job
+    try {
+      broadcastNotification("analysis:progress", {
+        job: {
+          id: job._id,
+          status: job.status || "pending",
+          type: job.type,
+          refId: job.refId,
+        },
+      });
+    } catch (e) {
+      console.warn(
+        "Failed to broadcast analysis job event:",
+        e && e.message ? e.message : e
+      );
+    }
+
+    // Notify admins to assign substitute (create in-app notifications)
+    try {
+      const admins = await Employee.find({ admin: true }).select(
+        "_id name email"
+      );
+      if (admins && admins.length > 0) {
+        await createBulkNotifications(
+          admins.map((a) => a._id),
+          {
+            title: "Substitute Assignment Required",
+            message: `${
+              employee?.name || "An employee"
+            } has an approved leave. Please assign a substitute.`,
+            type: "leave",
+            priority: "high",
+            link: `/admin/leave`,
+            metadata: { leaveId: leave._id },
+          }
+        );
+
+        // Real-time notify online admins
+        admins.forEach((admin) => {
+          try {
+            sendNotificationToUser(admin._id.toString(), "notification", {
+              title: "Substitute Assignment Required",
+              message: `${
+                employee?.name || "An employee"
+              } has an approved leave. Please assign a substitute.`,
+              type: "leave",
+              priority: "high",
+              link: `/admin/leave`,
+              createdAt: new Date(),
+              metadata: { leaveId: leave._id },
+            });
+          } catch (socketErr) {
+            // ignore socket errors
+          }
+        });
+      }
+    } catch (notifyErr) {
+      console.warn(
+        "Non-fatal: admin notification for substitute assignment failed:",
+        notifyErr && notifyErr.message ? notifyErr.message : notifyErr
+      );
+    }
+  } catch (enqueueErr) {
+    console.error(
+      "Failed to enqueue substitute analysis job:",
+      enqueueErr && enqueueErr.message ? enqueueErr.message : enqueueErr
+    );
   }
 
   await leave.save();
