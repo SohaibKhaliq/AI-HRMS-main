@@ -320,6 +320,124 @@ const getAllTimeEntries = catchErrors(async (req, res) => {
   });
 });
 
+const getAutoClosedEntries = catchErrors(async (req, res) => {
+  // Admin-only: list entries that were auto-closed by the system
+  const query = {
+    $or: [{ autoClosed: true }, { notes: /\[Auto\]/i }],
+  };
+
+  const timeEntries = await TimeEntry.find(query)
+    .populate("employee", "name employeeId")
+    .populate("approvedBy", "name")
+    .sort({ date: -1 })
+    .lean();
+
+  // Post-process same as other listing helpers
+  const now = new Date();
+  const processed = timeEntries.map((entry) => {
+    try {
+      const clockIn = entry.clockIn ? new Date(entry.clockIn) : null;
+      const clockOut = entry.clockOut ? new Date(entry.clockOut) : null;
+      const endTime = clockOut || now;
+
+      if (clockIn) {
+        const totalMs = endTime - clockIn;
+        entry.totalHours = totalMs / (1000 * 60 * 60);
+      } else {
+        entry.totalHours = entry.totalHours || 0;
+      }
+
+      let breakMs = 0;
+      if (entry.breaks && entry.breaks.length > 0) {
+        entry.breaks.forEach((b) => {
+          const bStart = b.startTime ? new Date(b.startTime) : null;
+          const bEnd = b.endTime ? new Date(b.endTime) : null;
+          if (bStart) {
+            const be = bEnd || now;
+            if (be > bStart) breakMs += be - bStart;
+          }
+        });
+      }
+      entry.breakHours = breakMs / (1000 * 60 * 60);
+
+      entry.workHours = Math.max(
+        0,
+        (entry.totalHours || 0) - (entry.breakHours || 0)
+      );
+      return entry;
+    } catch (e) {
+      return entry;
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Auto-closed time entries fetched successfully",
+    timeEntries: processed,
+  });
+});
+
+const reopenTimeEntry = catchErrors(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new Error("Time entry ID is required");
+
+  const adminId = req.employee?._id || req.user?.id;
+
+  const timeEntry = await TimeEntry.findById(id);
+  if (!timeEntry) throw new Error("Time entry not found");
+
+  // Clear clockOut and mark as reopened
+  timeEntry.clockOut = null;
+  timeEntry.autoClosed = false;
+  timeEntry.reopenedBy = adminId;
+  timeEntry.reopenedAt = new Date();
+  timeEntry.notes =
+    (timeEntry.notes || "") +
+    `\n[Reopened by admin ${adminId} at ${new Date().toISOString()}]`;
+
+  await timeEntry.save();
+
+  const populated = await TimeEntry.findById(timeEntry._id)
+    .populate("employee", "name email")
+    .populate("approvedBy", "name");
+
+  // Clear cache and notify employee
+  try {
+    const empId = populated.employee?._id || populated.employee;
+    if (empId) myCache.del(`timeEntries-${empId}`);
+  } catch (e) {
+    /* ignore cache failures */
+  }
+
+  try {
+    const empId = populated.employee?._id || populated.employee;
+    const emp = empId ? await Employee.findById(empId) : null;
+    if (emp) {
+      await sendFullNotification({
+        employee: emp,
+        title: "Time Entry Reopened",
+        message: `Your time entry for ${new Date(
+          populated.date
+        ).toLocaleDateString()} was reopened by an administrator. Please review and update if needed.`,
+        type: "time-tracking",
+        priority: "medium",
+        link: "/time-tracking",
+      });
+    }
+  } catch (e) {
+    console.warn(
+      "Non-fatal: failed to notify employee about reopen",
+      e?.message || e
+    );
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Time entry reopened successfully",
+    timeEntry: populated,
+  });
+});
+
 const getTimeEntryById = catchErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new Error("Time entry ID is required");
@@ -627,4 +745,6 @@ export {
   approveTimeEntry,
   deleteTimeEntry,
   getActiveClockIn,
+  getAutoClosedEntries,
+  reopenTimeEntry,
 };
