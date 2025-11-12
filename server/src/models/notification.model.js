@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: [
+        "promotion",
         "leave",
         "attendance",
         "payroll",
