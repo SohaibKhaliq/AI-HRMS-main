@@ -73,6 +73,15 @@ const leaveSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Flag to indicate admins need to assign a substitute (set when leave is approved)
+    substituteRequested: {
+      type: Boolean,
+      default: false,
+    },
+    substituteRequestedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
