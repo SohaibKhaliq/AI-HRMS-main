@@ -278,6 +278,9 @@ const Complaint = () => {
                     Subject
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Against
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                     Date
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
@@ -307,6 +310,16 @@ const Complaint = () => {
                         <div className="max-w-xs truncate">
                           {complaint.complainSubject}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                        {complaint.againstEmployee ? (
+                          complaint.againstEmployee.name ||
+                          (complaint.againstEmployee.firstName || "") +
+                            " " +
+                            (complaint.againstEmployee.lastName || "")
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                         {new Date(complaint.createdAt).toLocaleDateString()}
@@ -347,7 +360,7 @@ const Complaint = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="px-4 py-8 text-center text-gray-500"
                     >
                       No complaints found
