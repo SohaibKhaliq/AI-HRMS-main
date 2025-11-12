@@ -165,3 +165,33 @@ export const rejectTimeEntry = createAsyncThunk(
     }
   }
 );
+
+// Get auto-closed time entries (admin)
+export const getAutoClosedTimeEntries = createAsyncThunk(
+  "timeEntry/getAutoClosed",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/time-entries/auto-closed`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch auto-closed entries"
+      );
+    }
+  }
+);
+
+// Reopen an auto-closed time entry (admin)
+export const reopenTimeEntry = createAsyncThunk(
+  "timeEntry/reopen",
+  async ({ id }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(`/time-entries/${id}/reopen`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to reopen time entry"
+      );
+    }
+  }
+);
