@@ -13,6 +13,7 @@ import { setFetchFlag } from "../../reducers/leave.reducer";
 import { leaveHead, leaveRequestButtons } from "../../constants";
 import FetchError from "../../components/shared/error/FetchError";
 import RemarksModal from "../../components/shared/modals/RemarksModal";
+import SubstituteModal from "../../components/shared/modals/SubstituteModal";
 import NoDataMessage from "../../components/shared/error/NoDataMessage";
 import FilterButton from "../../components/shared/buttons/FilterButton";
 
@@ -26,6 +27,8 @@ function LeaveRequest() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [toggleRemarkModal, setToggleRemarkModal] = useState(false);
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [currentLeaveId, setCurrentLeaveId] = useState(null);
 
   const handleReviewFilter = (filter) => {
     dispatch(setFetchFlag(true));
@@ -94,14 +97,11 @@ function LeaveRequest() {
           <table className="min-w-full text-left table-auto border-collapse text-sm whitespace-nowrap">
             <thead>
               <tr className="bg-headLight dark:bg-head text-primary">
-                {leaveHead.map((header, i) => {
-                  if (header === "Actions" && status !== "Pending") return null;
-                  return (
-                    <th key={i} className="py-3 px-4 border-b border-gray-500">
-                      {header}
-                    </th>
-                  );
-                })}
+                {leaveHead.map((header, i) => (
+                  <th key={i} className="py-3 px-4 border-b border-gray-500">
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="text-[0.83rem]">
@@ -149,22 +149,45 @@ function LeaveRequest() {
                     <td className="py-3 px-4 border-b border-gray-500">
                       {leave.duration} days
                     </td>
-                    {status === "Pending" && (
-                      <td className="py-3 px-4 border-b border-gray-500 flex justify-center space-x-2 items-center">
-                        <FaCheckCircle
-                          size={20}
-                          title="Approve"
-                          onClick={() => handleApprove(leave._id)}
-                          className="text-green-500 cursor-pointer hover:text-green-600"
-                        />
-                        <FaTimesCircle
-                          size={20}
-                          title="Reject"
-                          onClick={() => handleReject(leave._id)}
-                          className="text-red-500 cursor-pointer hover:text-red-600"
-                        />
-                      </td>
-                    )}
+                    <td className="py-3 px-4 border-b border-gray-500 flex justify-center items-center">
+                      {status === "Pending" && (
+                        <div className="flex justify-center space-x-2 items-center">
+                          <FaCheckCircle
+                            size={20}
+                            title="Approve"
+                            onClick={() => handleApprove(leave._id)}
+                            className="text-green-500 cursor-pointer hover:text-green-600"
+                          />
+                          <FaTimesCircle
+                            size={20}
+                            title="Reject"
+                            onClick={() => handleReject(leave._id)}
+                            className="text-red-500 cursor-pointer hover:text-red-600"
+                          />
+                        </div>
+                      )}
+
+                      {status === "Approved" && (
+                        <button
+                          onClick={() => {
+                            // debug: ensure the click handler fires
+                            console.log(
+                              "Assign Substitute clicked for leave:",
+                              leave._id
+                            );
+                            setCurrentLeaveId(leave._id);
+                            setShowSubModal(true);
+                          }}
+                          className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                        >
+                          Assign Substitute
+                        </button>
+                      )}
+
+                      {status !== "Pending" && status !== "Approved" && (
+                        <span>--</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
             </tbody>
@@ -192,6 +215,17 @@ function LeaveRequest() {
         <RemarksModal
           onClose={() => setToggleRemarkModal(false)}
           isConfirm={remarkConfirmation}
+        />
+      )}
+
+      {showSubModal && (
+        <SubstituteModal
+          leaveId={currentLeaveId}
+          onClose={() => setShowSubModal(false)}
+          onAssigned={() => {
+            setShowSubModal(false);
+            dispatch(setFetchFlag(true));
+          }}
         />
       )}
     </>
