@@ -3,19 +3,38 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { assignSustitute } from "../../../services/leave.service";
 import { getAllEmployees } from "../../../services/employee.service";
+import axiosInstance from "../../../axios/axiosInstance";
 
-const SubstituteModal = ({ onClose, leaveId }) => {
+const SubstituteModal = ({ onClose, leaveId, onAssigned }) => {
   const dispatch = useDispatch();
   const { employees } = useSelector((state) => state.employee);
 
   const [employee, setEmployee] = useState("");
+  const [candidates, setCandidates] = useState([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    dispatch(assignSustitute({ leaveId, employee }));
+    try {
+      const resultAction = await dispatch(
+        assignSustitute({ leaveId, employee })
+      );
 
-    onClose();
+      // If parent provided a callback, call it after successful assignment
+      if (
+        resultAction &&
+        resultAction.payload &&
+        typeof onAssigned === "function"
+      ) {
+        onAssigned(resultAction.payload);
+      }
+    } catch (e) {
+      // ignore - notifications handled by thunk
+      console.warn("assign substitute failed", e);
+    } finally {
+      onClose();
+    }
   };
 
   useEffect(() => {
@@ -23,8 +42,24 @@ const SubstituteModal = ({ onClose, leaveId }) => {
     dispatch(getAllEmployees({ currentPage: 1, filters: {} }));
   }, [dispatch]);
 
+  const fetchCandidates = async () => {
+    if (!leaveId) return;
+    setLoadingCandidates(true);
+    try {
+      const { data } = await axiosInstance.get(
+        `/leaves/${leaveId}/substitute-candidates`
+      );
+      setCandidates(data.candidates || []);
+    } catch (err) {
+      console.error("Failed to fetch substitute candidates", err);
+      setCandidates([]);
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-40 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex justify-center items-center">
       <form
         id="modal"
         onSubmit={handleSubmit}
@@ -42,6 +77,40 @@ const SubstituteModal = ({ onClose, leaveId }) => {
         </div>
 
         <div className="w-full relative">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm text-gray-600">Suggested Candidates</h4>
+            <button
+              type="button"
+              onClick={fetchCandidates}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              {loadingCandidates ? "Loading..." : "Fetch Candidates"}
+            </button>
+          </div>
+          {candidates && candidates.length > 0 && (
+            <div className="mb-3 max-h-40 overflow-auto border border-gray-200 rounded p-2">
+              {candidates.map((c) => (
+                <div
+                  key={c.employeeId}
+                  className="flex items-center justify-between py-1"
+                >
+                  <div className="text-sm">
+                    {c.name}{" "}
+                    <span className="text-xs text-gray-400">({c.score})</span>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setEmployee(c.employeeId)}
+                      className="text-xs px-2 py-1 bg-green-500 text-white rounded"
+                    >
+                      Select
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <i className="fa fa-building-columns text-sm icon absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600"></i>
           <select
             id="select"
@@ -79,4 +148,5 @@ export default SubstituteModal;
 SubstituteModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   leaveId: PropTypes.string,
+  onAssigned: PropTypes.func,
 };
