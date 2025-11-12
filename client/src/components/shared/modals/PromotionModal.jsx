@@ -50,6 +50,18 @@ const PromotionModal = ({ action, onClose, promotion }) => {
     }
   }, [action, promotion]);
 
+  // When an employee is selected, auto-fill the previous designation if available
+  useEffect(() => {
+    if (!formData.employee) return;
+    const emp = employees?.find((e) => e._id === formData.employee);
+    if (emp) {
+      const prevDesigId = emp.designation?._id || emp.designation || "";
+      if (prevDesigId && prevDesigId !== formData.previousDesignation) {
+        setFormData((prev) => ({ ...prev, previousDesignation: prevDesigId }));
+      }
+    }
+  }, [formData.employee, employees, formData.previousDesignation]);
+
   const isView = action === "view";
 
   const handleChange = (e) => {
