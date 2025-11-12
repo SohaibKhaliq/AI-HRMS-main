@@ -316,6 +316,63 @@ const getAllEmployees = catchErrors(async (req, res) => {
   });
 });
 
+// Public-facing employee list for authenticated employees (minimal fields)
+const getPublicEmployees = catchErrors(async (req, res) => {
+  const { role, name, department, status, page = 1, limit = 50 } = req.query;
+
+  const cacheKey = `publicEmployees:${role || "all"}:${name || "all"}:${
+    department || "all"
+  }:${status || "all"}:page${page}:limit${limit}`;
+  const cached = myCache.get(cacheKey);
+  if (cached) {
+    return res.status(200).json({
+      success: true,
+      message: "Employees fetched successfully (cache)",
+      ...cached,
+    });
+  }
+
+  const query = {};
+  if (role) query.role = role;
+  if (status && status !== "On Leave") query.status = status;
+  if (department) query.department = department;
+  if (name) query.name = { $regex: name, $options: "i" };
+
+  const pageNumber = Math.max(parseInt(page), 1);
+  const limitNumber = Math.max(parseInt(limit), 1);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const employees = await Employee.find(query)
+    .select("name employeeId profilePicture designation role department")
+    .populate("designation", "name")
+    .populate("role", "name")
+    .populate("department", "name")
+    .skip(skip)
+    .limit(limitNumber)
+    .lean();
+
+  const totalEmployees = await Employee.countDocuments(query);
+  const totalPages = Math.ceil(totalEmployees / limitNumber);
+
+  const responseData = {
+    employees,
+    pagination: {
+      currentPage: pageNumber,
+      totalPages,
+      totalEmployees,
+      limit: limitNumber,
+    },
+  };
+
+  myCache.set(cacheKey, responseData);
+
+  return res.status(200).json({
+    success: true,
+    message: "Employees fetched successfully",
+    ...responseData,
+  });
+});
+
 const getEmployeeById = catchErrors(async (req, res) => {
   const { id } = req.params;
 
@@ -558,3 +615,5 @@ export {
   bulkCreateEmployees,
   changeEmployeePassword,
 };
+
+export { getPublicEmployees };
