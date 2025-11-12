@@ -6,6 +6,7 @@ import {
   getAllEmployees,
   getEmployeeById,
   bulkUploadEmployees,
+  getPublicEmployees,
 } from "../services/employee.service";
 
 const initialState = {
@@ -117,6 +118,24 @@ const employeeSlice = createSlice({
         );
       })
       .addCase(deleteEmployee.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Public employees list for employee-facing UI
+    builder
+      .addCase(getPublicEmployees.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getPublicEmployees.fulfilled, (state, action) => {
+        state.loading = false;
+        state.fetch = false;
+        // API returns { employees, pagination }
+        state.employees = action.payload.employees || [];
+        state.pagination = action.payload.pagination || null;
+      })
+      .addCase(getPublicEmployees.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
