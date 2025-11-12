@@ -146,7 +146,10 @@ const AdminApp = () => {
             <Route path="/leave-types" element={<LeaveType />} />
             <Route path="/document-categories" element={<DocumentCategory />} />
             <Route path="/time-tracking" element={<AdminTimeTracking />} />
-            <Route path="/time-tracking/auto-closed" element={<AutoClockouts />} />
+            <Route
+              path="/time-tracking/auto-closed"
+              element={<AutoClockouts />}
+            />
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
