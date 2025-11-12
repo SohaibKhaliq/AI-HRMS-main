@@ -43,6 +43,21 @@ const timeEntrySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Mark entries that were closed automatically by the system
+    autoClosed: {
+      type: Boolean,
+      default: false,
+    },
+    // Audit fields for manual reopen by admin
+    reopenedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      default: null,
+    },
+    reopenedAt: {
+      type: Date,
+      default: null,
+    },
     overtimeHours: {
       type: Number,
       default: 0,
