@@ -43,6 +43,7 @@ import {
 } from "./routes/index.routes.js";
 import { warmup as analysisWarmup } from "./services/analysisService.js";
 import { scheduleDailyResignationCompletionJob } from "./services/resignationScheduler.service.js";
+import { scheduleAutoClockOut } from "./services/autoClockout.service.js";
 import { swaggerUi, swaggerSpec } from "./doc/index.js";
 
 // ========================================
@@ -348,6 +349,25 @@ connectDB()
             console.warn(
               "Could not schedule resignation completion job:",
               schedErr && schedErr.message ? schedErr.message : schedErr
+            );
+          }
+
+          // Schedule periodic auto clock-out job to auto close open time entries when shift ends
+          try {
+            const intervalMs = parseInt(
+              process.env.AUTO_CLOCKOUT_INTERVAL_MS || String(1000 * 60 * 5),
+              10
+            ); // default 5 minutes
+            scheduleAutoClockOut(intervalMs);
+            console.log(
+              "Scheduled auto clock-out job (intervalMs=",
+              intervalMs,
+              ")"
+            );
+          } catch (autoErr) {
+            console.warn(
+              "Could not schedule auto clock-out job:",
+              autoErr && autoErr.message ? autoErr.message : autoErr
             );
           }
         } catch (err) {
