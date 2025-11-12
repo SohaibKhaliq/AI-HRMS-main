@@ -12,6 +12,8 @@ import {
   approveTimeEntry,
   deleteTimeEntry,
   getActiveClockIn,
+  getAutoClosedEntries,
+  reopenTimeEntry,
 } from "../controllers/timeEntry.controller.js";
 
 const router = express.Router();
@@ -23,8 +25,10 @@ router.post("/break/end", verifyEmployeeToken, endBreak);
 router.get("/active", verifyEmployeeToken, getActiveClockIn);
 router.get("/my", verifyEmployeeToken, getMyTimeEntries);
 router.get("/", verifyAdminToken, getAllTimeEntries);
+router.get("/auto-closed", verifyAdminToken, getAutoClosedEntries);
 router.get("/:id", verifyEmployeeToken, getTimeEntryById);
 router.patch("/:id", verifyAdminToken, updateTimeEntry);
+router.patch("/:id/reopen", verifyAdminToken, reopenTimeEntry);
 router.patch("/:id/approve", verifyAdminToken, approveTimeEntry);
 router.delete("/:id", verifyAdminToken, deleteTimeEntry);
 
