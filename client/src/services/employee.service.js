@@ -31,6 +31,35 @@ export const getAllEmployees = createAsyncThunk(
   }
 );
 
+// Fetch minimal public employee list for authenticated employees (used in dropdowns)
+export const getPublicEmployees = createAsyncThunk(
+  "employee/getPublicEmployees",
+  async (payload = {}, { rejectWithValue }) => {
+    const { currentPage = 1, filters = {}, limit = 50 } = payload || {};
+    const { department, role, status, name } = filters || {};
+
+    try {
+      const queryParams = new URLSearchParams({
+        name: name || "",
+        role: role || "",
+        status: status || "",
+        department: department || "",
+        page: currentPage,
+        limit,
+      }).toString();
+
+      const { data } = await axiosInstance.get(
+        `/employees/list?${queryParams}`
+      );
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data.message || "Failed to fetch public employees"
+      );
+    }
+  }
+);
+
 // Fetch employee by ID
 export const getEmployeeById = createAsyncThunk(
   "employee/getEmployeeById",
