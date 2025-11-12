@@ -58,6 +58,7 @@ const DocumentCategory = lazy(() =>
 const AdminTimeTracking = lazy(() =>
   import("../admin/timeTracking/AdminTimeTracking")
 );
+const AutoClockouts = lazy(() => import("../admin/timeTracking/AutoClockouts"));
 const CalendarView = lazy(() => import("../pages/calendar/CalendarView"));
 const SubstituteAnalysisPage = lazy(() =>
   import("../admin/analysis/SubstituteAnalysisPage")
@@ -145,6 +146,7 @@ const AdminApp = () => {
             <Route path="/leave-types" element={<LeaveType />} />
             <Route path="/document-categories" element={<DocumentCategory />} />
             <Route path="/time-tracking" element={<AdminTimeTracking />} />
+            <Route path="/time-tracking/auto-closed" element={<AutoClockouts />} />
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
