@@ -28,6 +28,7 @@ const Promotion = () => {
   const [action, setAction] = useState("");
   const [modalOpen, setModalOpen] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -76,11 +77,23 @@ const Promotion = () => {
     return result;
   }, [promotions, searchQuery, statusFilter, dateFrom, dateTo]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  // Apply sort order (newest/oldest)
+  const sorted = useMemo(() => {
+    const copy = [...(filtered || [])];
+    copy.sort((a, b) => {
+      const da = new Date(a.createdAt || a.promotionDate || 0).getTime();
+      const db = new Date(b.createdAt || b.promotionDate || 0).getTime();
+      if (sortOrder === "oldest") return da - db;
+      return db - da;
+    });
+    return copy;
+  }, [filtered, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const pageData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, currentPage, pageSize]);
+    return sorted.slice(start, start + pageSize);
+  }, [sorted, currentPage, pageSize]);
 
   const openCreate = () => {
     setAction("create");
@@ -157,6 +170,20 @@ const Promotion = () => {
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={50}>50</option>
+                </select>
+              </div>
+              <div className="bg-white border border-gray-200 rounded p-2 flex items-center gap-2">
+                <span className="text-sm text-gray-600 mr-1">Order:</span>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => {
+                    setSortOrder(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="text-sm bg-transparent outline-none"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
                 </select>
               </div>
               <button
