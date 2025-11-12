@@ -296,7 +296,7 @@ const Promotion = () => {
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
-                      {p.employee?.name} (EMP {p.employee?.employeeId})
+                      {p.employee?.name || "-"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
                       {p.previousDesignation?.name || "-"}
