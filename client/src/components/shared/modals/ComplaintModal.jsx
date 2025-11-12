@@ -4,7 +4,14 @@ import { MdClose } from "react-icons/md";
 import { complaintSchema } from "../../../validations";
 import ValidatedInput from "../../ui/ValidatedInput";
 
-const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees = [], onSubmit }) => {
+const ComplaintModal = ({
+  isOpen,
+  onClose,
+  complaint = null,
+  action,
+  employees = [],
+  onSubmit,
+}) => {
   const [documentFile, setDocumentFile] = useState(null);
   const [documentPreview, setDocumentPreview] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
@@ -44,7 +51,8 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
     if (complaint && isOpen) {
       setFormData({
         employee: complaint.employee?._id || complaint.employee || "",
-        againstEmployee: complaint.againstEmployee?._id || complaint.againstEmployee || "",
+        againstEmployee:
+          complaint.againstEmployee?._id || complaint.againstEmployee || "",
         complainType: complaint.complainType || "",
         complainSubject: complaint.complainSubject || "",
         complaintDetails: complaint.complaintDetails || "",
@@ -166,7 +174,11 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white dark:bg-gray-800">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {action === "create" ? "Add New Complaint" : action === "edit" ? "Edit Complaint" : "View Complaint"}
+            {action === "create"
+              ? "Add New Complaint"
+              : action === "edit"
+              ? "Edit Complaint"
+              : "View Complaint"}
           </h2>
           <button
             onClick={onClose}
@@ -190,15 +202,20 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.employee ? "border-red-500" : "border-gray-300"
+                  validationErrors.employee
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
                 required
               >
                 <option value="">Select Complainant</option>
                 {employees?.map((emp) => {
-                  const empName = emp.name || `${emp.firstName} ${emp.lastName}`;
+                  const empName =
+                    emp.name || `${emp.firstName} ${emp.lastName}`;
                   return (
                     <option key={emp._id} value={emp._id}>
                       {empName}
@@ -207,7 +224,9 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 })}
               </select>
               {validationErrors.employee && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.employee}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.employee}
+                </p>
               )}
             </div>
 
@@ -222,12 +241,15 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
               >
                 <option value="">Select Employee</option>
                 {employees?.map((emp) => {
-                  const empName = emp.name || `${emp.firstName} ${emp.lastName}`;
+                  const empName =
+                    emp.name || `${emp.firstName} ${emp.lastName}`;
                   return (
                     <option key={emp._id} value={emp._id}>
                       {empName} ({emp.employeeId})
@@ -248,9 +270,13 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border ${
-                  validationErrors.complainType ? "border-red-500" : "border-gray-300"
+                  validationErrors.complainType
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
                 required
               >
@@ -262,7 +288,9 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 ))}
               </select>
               {validationErrors.complainType && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.complainType}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.complainType}
+                </p>
               )}
             </div>
 
@@ -277,7 +305,9 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 onChange={handleChange}
                 disabled={isViewMode}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
               >
                 {statusOptions.map((status) => (
@@ -299,17 +329,21 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 validationOptions={{
                   fieldName: "Subject",
                   minLength: 5,
-                  maxLength: 150
+                  maxLength: 150,
                 }}
                 label="Subject"
                 disabled={isViewMode}
                 required
                 className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
               />
               {validationErrors.complainSubject && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.complainSubject}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.complainSubject}
+                </p>
               )}
             </div>
 
@@ -324,20 +358,30 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 validationOptions={{
                   fieldName: "Complaint details",
                   minLength: 10,
-                  maxLength: 1000
+                  maxLength: 1000,
                 }}
                 label="Complaint Details"
                 disabled={isViewMode}
                 required
                 className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
               />
               <div className="flex justify-between items-start">
                 {validationErrors.complaintDetails && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.complaintDetails}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.complaintDetails}
+                  </p>
                 )}
-                <p className={`text-xs mt-1 ${formData.complaintDetails.length > 900 ? "text-red-500" : "text-gray-500"}`}>
+                <p
+                  className={`text-xs mt-1 ${
+                    formData.complaintDetails.length > 900
+                      ? "text-red-500"
+                      : "text-gray-500"
+                  }`}
+                >
                   {formData.complaintDetails.length}/1000
                 </p>
               </div>
@@ -356,7 +400,9 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 rows="2"
                 placeholder="Additional remarks"
                 className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isViewMode ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-700"
+                  isViewMode
+                    ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-white dark:bg-gray-700"
                 } dark:border-gray-600 dark:text-white`}
               />
             </div>
@@ -366,9 +412,17 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Upload Supporting Document
               </label>
-              <div className={`border-2 border-dashed rounded-lg p-4 ${
-                validationErrors.document ? "border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 bg-gray-50 dark:bg-gray-700/50"
-              } ${isViewMode ? "" : "hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"}`}>
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 ${
+                  validationErrors.document
+                    ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                    : "border-gray-300 bg-gray-50 dark:bg-gray-700/50"
+                } ${
+                  isViewMode
+                    ? ""
+                    : "hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                }`}
+              >
                 {documentPreview ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-center gap-2">
@@ -388,11 +442,15 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                     )}
                   </div>
                 ) : (
-                  <label className={`block ${isViewMode ? "" : "cursor-pointer"}`}>
+                  <label
+                    className={`block ${isViewMode ? "" : "cursor-pointer"}`}
+                  >
                     <div className="flex flex-col items-center gap-2 text-gray-500">
                       <i className="fa-solid fa-cloud-arrow-up text-2xl text-gray-400"></i>
                       <span className="text-sm">
-                        {isViewMode ? "No document uploaded" : "Click to upload or drag and drop"}
+                        {isViewMode
+                          ? "No document uploaded"
+                          : "Click to upload or drag and drop"}
                       </span>
                       <span className="text-xs text-gray-400">
                         PDF, DOC, DOCX, JPG, PNG (max 5MB)
@@ -411,7 +469,9 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
                 )}
               </div>
               {validationErrors.document && (
-                <p className="text-red-500 text-xs mt-1">{validationErrors.document}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.document}
+                </p>
               )}
             </div>
           </div>
@@ -440,32 +500,34 @@ const ComplaintModal = ({ isOpen, onClose, complaint = null, action, employees =
   );
 };
 
-  ComplaintModal.propTypes = {
-    isOpen: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    complaint: PropTypes.shape({
-      _id: PropTypes.string,
-      employee: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.shape({ _id: PropTypes.string })
-      ]),
-      againstEmployee: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.shape({ _id: PropTypes.string })
-      ]),
-      complainType: PropTypes.string,
-      complainSubject: PropTypes.string,
-      complaintDetails: PropTypes.string,
-      status: PropTypes.string,
-      documentUrl: PropTypes.string,
-      remarks: PropTypes.string,
-    }),
-    action: PropTypes.oneOf(["create", "edit", "view"]).isRequired,
-    employees: PropTypes.arrayOf(PropTypes.shape({
+ComplaintModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  complaint: PropTypes.shape({
+    _id: PropTypes.string,
+    employee: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({ _id: PropTypes.string }),
+    ]),
+    againstEmployee: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({ _id: PropTypes.string }),
+    ]),
+    complainType: PropTypes.string,
+    complainSubject: PropTypes.string,
+    complaintDetails: PropTypes.string,
+    status: PropTypes.string,
+    documentUrl: PropTypes.string,
+    remarks: PropTypes.string,
+  }),
+  action: PropTypes.oneOf(["create", "edit", "view"]).isRequired,
+  employees: PropTypes.arrayOf(
+    PropTypes.shape({
       _id: PropTypes.string,
       name: PropTypes.string,
-    })),
-    onSubmit: PropTypes.func.isRequired,
-  };
+    })
+  ),
+  onSubmit: PropTypes.func.isRequired,
+};
 
 export default ComplaintModal;
