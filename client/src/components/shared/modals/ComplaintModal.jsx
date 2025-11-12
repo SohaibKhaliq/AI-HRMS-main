@@ -252,7 +252,7 @@ const ComplaintModal = ({
                     emp.name || `${emp.firstName} ${emp.lastName}`;
                   return (
                     <option key={emp._id} value={emp._id}>
-                      {empName} ({emp.employeeId})
+                      {empName}
                     </option>
                   );
                 })}
