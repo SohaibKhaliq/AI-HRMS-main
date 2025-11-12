@@ -131,7 +131,7 @@ const PromotionModal = ({ action, onClose, promotion }) => {
               <option value="">--- Select Employee ---</option>
               {employees?.map((e) => (
                 <option key={e._id} value={e._id}>
-                  {e.name} (EMP {e.employeeId})
+                  {e.name}
                 </option>
               ))}
             </select>
