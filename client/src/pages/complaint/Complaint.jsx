@@ -10,6 +10,7 @@ import {
   getComplaints,
   deleteComplaint,
 } from "../../services/complaint.service";
+import { getPublicEmployees } from "../../services/employee.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
 import { FiSearch, FiEye, FiTrash2, FiPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -48,6 +49,10 @@ const Complaint = () => {
     resolver: zodResolver(complaintSchema),
   });
 
+  const { employees } = useSelector(
+    (state) => state.employee || { employees: [] }
+  );
+
   // Fetch complaints on mount and when filters change
   useEffect(() => {
     dispatch(
@@ -58,6 +63,10 @@ const Complaint = () => {
         employee: "me",
       })
     );
+    // ensure employee list is available for against-selector (use public minimal endpoint)
+    if (!employees || employees.length === 0) {
+      dispatch(getPublicEmployees({ currentPage: 1, filters: {} }));
+    }
   }, [dispatch, currentPage, pageSize, statusFilter, user?._id]);
 
   // Filter complaints by search and type
@@ -83,6 +92,8 @@ const Complaint = () => {
       fd.append("complainType", data.complainType);
       fd.append("complainSubject", data.complainSubject);
       fd.append("complaintDetails", data.complaintDetails);
+      if (data.againstEmployee)
+        fd.append("againstEmployee", data.againstEmployee);
       if (data.assignComplaint)
         fd.append("assignComplaint", data.assignComplaint);
       if (data.remarks) fd.append("remarks", data.remarks);
@@ -90,7 +101,9 @@ const Complaint = () => {
       payload = fd;
     } else {
       // include employee id for backward compatibility (server now uses req.user)
+      // include againstEmployee only when provided (make it optional)
       payload = { ...data, employee: user._id };
+      if (!payload.againstEmployee) delete payload.againstEmployee;
     }
 
     dispatch(createComplaint(payload))
@@ -106,7 +119,7 @@ const Complaint = () => {
             page: currentPage,
             limit: pageSize,
             status: statusFilter || undefined,
-            employee: user?._id,
+            employee: "me",
           })
         );
       })
@@ -137,7 +150,7 @@ const Complaint = () => {
               page: currentPage,
               limit: pageSize,
               status: statusFilter || undefined,
-              employee: user?._id,
+              employee: "me",
             })
           );
         })
@@ -481,6 +494,29 @@ const Complaint = () => {
                         {errors.complaintDetails.message}
                       </p>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Against Employee (optional)
+                    </label>
+                    <select
+                      {...register("againstEmployee")}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white border-gray-300`}
+                      disabled={loading}
+                    >
+                      <option value="">Select Employee</option>
+                      {employees?.map((emp) => {
+                        const name =
+                          emp.name ||
+                          `${emp.firstName || ""} ${emp.lastName || ""}`.trim();
+                        return (
+                          <option key={emp._id} value={emp._id}>
+                            {name}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
 
                   <div>
