@@ -12,6 +12,7 @@ import {
 } from "../../services/complaint.service";
 import { getPublicEmployees } from "../../services/employee.service";
 import ButtonLoader from "../../components/shared/loaders/ButtonLoader";
+import { Link } from "react-router-dom";
 import { FiSearch, FiEye, FiTrash2, FiPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
 
@@ -67,7 +68,7 @@ const Complaint = () => {
     if (!employees || employees.length === 0) {
       dispatch(getPublicEmployees({ currentPage: 1, filters: {} }));
     }
-  }, [dispatch, currentPage, pageSize, statusFilter, user?._id]);
+  }, [dispatch, currentPage, pageSize, statusFilter, user?._id, employees]);
 
   // Filter complaints by search and type
   const filteredComplaints = complaints.filter((complaint) => {
@@ -313,10 +314,44 @@ const Complaint = () => {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                         {complaint.againstEmployee ? (
-                          complaint.againstEmployee.name ||
-                          (complaint.againstEmployee.firstName || "") +
-                            " " +
-                            (complaint.againstEmployee.lastName || "")
+                          (() => {
+                            const emp = complaint.againstEmployee;
+                            const name =
+                              emp.name ||
+                              `${emp.firstName || ""} ${
+                                emp.lastName || ""
+                              }`.trim();
+                            const role =
+                              emp.designation?.name || emp.role?.name || "";
+                            const profileUrl = `/admin/employee/${emp._id}`;
+
+                            return (
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={emp.profilePicture || "/unknown.jpeg"}
+                                  alt={name}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                                <div className="truncate">
+                                  {user?.admin ? (
+                                    <Link
+                                      to={profileUrl}
+                                      className="font-medium text-blue-600 hover:underline"
+                                    >
+                                      {name}
+                                    </Link>
+                                  ) : (
+                                    <span className="font-medium">{name}</span>
+                                  )}
+                                  {role && (
+                                    <div className="text-xs text-gray-500 truncate">
+                                      {role}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
