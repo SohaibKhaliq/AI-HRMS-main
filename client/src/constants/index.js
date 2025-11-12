@@ -52,6 +52,7 @@ const sidebarLinks = [
     iconClass: "far fa-clock",
     childrens: [
       { name: "Time Tracking", link: "/time-tracking" },
+      { name: "Auto-Clockouts", link: "/time-tracking/auto-closed" },
       { name: "Shifts", link: "/shifts" },
     ],
   },
