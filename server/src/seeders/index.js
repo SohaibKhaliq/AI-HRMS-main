@@ -212,6 +212,9 @@ const startHrmsApplication = async () => {
       role: role._id,
       department: department._id,
       dateOfJoining: "2021-03-15T00:00:00.000Z",
+      gender: "Female",
+      martialStatus: "Single",
+      employmentType: "Full-Time",
       status: "Active",
       salary: 50000,
     });
@@ -234,6 +237,9 @@ const startHrmsApplication = async () => {
       role: role._id,
       department: department._id,
       dateOfJoining: "2019-08-01T00:00:00.000Z",
+      gender: "Male",
+      martialStatus: "Married",
+      employmentType: "Full-Time",
       status: "Active",
       salary: 45000,
     });
@@ -312,6 +318,9 @@ const startHrmsApplication = async () => {
       role: role._id,
       department: department._id,
       dateOfJoining: "2022-01-10T00:00:00.000Z",
+      gender: "Female",
+      martialStatus: "Single",
+      employmentType: "Part-Time",
       status: "Active",
       salary: 40000,
     });
@@ -329,27 +338,12 @@ const startHrmsApplication = async () => {
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
     });
 
-    await Employee.create({
-      employeeId: "002",
-      name: "Omar Malik",
-      dob: "1988-11-02T00:00:00.000Z",
-      email: "omar.malik@example.com",
-      password: "$2b$10$k.1v4SeBsR.UYT4chI/O8OTkK5CO.MilaR8yCACtodqTZKm429rWG",
-      profilePicture: "https://metrohrms.netlify.app/unknown.jpeg",
-      phoneNumber: "+923009998877",
-      address: {
-        street: "Street 2",
-        city: "Karachi",
-        state: "Sindh",
-        postalCode: "75500",
-        country: "Pakistan",
-      },
-      role: role._id,
-      department: department._id,
-      dateOfJoining: "2019-08-01T00:00:00.000Z",
+    // don't create a duplicate employee with the same employeeId/email/phone (unique constraints)
+    // update existing Omar to be inactive instead of creating a duplicate
+    await Employee.findByIdAndUpdate(emp2._id, {
       status: "Inactive",
-      salary: 45000,
     });
+    
 
     console.log("HRMS is ready to run, Have a nice day.");
   } catch (error) {
