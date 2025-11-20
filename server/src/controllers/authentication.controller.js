@@ -107,6 +107,7 @@ const startLogin = catchErrors(async (req, res) => {
     success: true,
     message: "OTP sent to your registered email. Please enter the OTP to continue.",
     employeeId: employee._id,
+    authority,
   });
 });
 
