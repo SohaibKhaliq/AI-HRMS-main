@@ -5,13 +5,14 @@ import { useForm } from "react-hook-form";
 import { authenticationSchema } from "../validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../services/authentication.service";
+import toast from "react-hot-toast";
+import { login, verifyOtp, resendOtp as resendOtpService } from "../services/authentication.service";
 import ButtonLoader from "../components/shared/loaders/ButtonLoader";
 
 const Login = () => {
   const dispatch = useDispatch();
 
-  const { loading, loginError } = useSelector((state) => state.authentication);
+  const { loading, loginError, otpStep } = useSelector((state) => state.authentication);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -27,6 +28,23 @@ const Login = () => {
 
   const onSubmit = (credentials) => {
     dispatch(login(credentials));
+  };
+
+  const [otp, setOtp] = useState("");
+
+  const handleOtpSubmit = (e) => {
+    e.preventDefault();
+    const rememberVal = localStorage.getItem("remember") === "true";
+    dispatch(verifyOtp({ employeeId: otpStep.employeeId, code: otp, remember: rememberVal }));
+  };
+
+  const handleResend = async () => {
+    try {
+      await resendOtpService(otpStep.employeeId);
+      toast.success("OTP resent. Check your email.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
+    }
   };
 
   return (
@@ -67,8 +85,34 @@ const Login = () => {
             <form
               id="refill"
               className="flex flex-col items-center gap-2 pb-8"
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={otpStep.required ? handleOtpSubmit : handleSubmit(onSubmit)}
             >
+              {otpStep.required && (
+                <div className="w-[85%] mt-3">
+                  <p className="text-sm text-gray-700 mb-2">Enter the OTP we sent to your email</p>
+                  <div className="w-full relative">
+                    <i className="fa-solid fa-key text-sm absolute left-4 pl-1 top-1/2 transform -translate-y-1/2 text-gray-700"></i>
+                    <input
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      type="text"
+                      placeholder="Enter OTP"
+                      className="w-full bg-[#EFEFEF] text-sm sm:text-center p-[16px] rounded-full focus:outline focus:outline-2 focus:outline-gray-700 font-[500] pl-12"
+                    />
+                  </div>
+                  <div className="flex gap-3 mt-3">
+                    <button
+                      type="submit"
+                      className="px-6 py-2 rounded-full bg-green-500 text-white"
+                    >
+                      Verify OTP
+                    </button>
+                    <button type="button" onClick={handleResend} className="px-6 py-2 rounded-full bg-gray-200">
+                      Resend
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="w-[85%] relative">
                 <i
                   className={`fa fa-building text-sm icon absolute left-5  transform -translate-y-1/2 text-gray-700

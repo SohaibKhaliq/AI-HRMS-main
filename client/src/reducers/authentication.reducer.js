@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   login,
+  verifyOtp,
   logout,
   logoutAll,
   resetPassword,
@@ -18,6 +19,10 @@ const initialState = {
     : JSON.parse(sessionStorage.getItem("loggedInUser")) || null,
   loading: false,
   loginError: null,
+  otpStep: {
+    required: false,
+    employeeId: null,
+  },
   forgetPasswordError: null,
   updatePasswordError: null,
   resetPasswordError: null,
@@ -45,10 +50,32 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(login.fulfilled, (state, action) => {
+        // On startLogin success we will get employeeId and message
         state.loading = false;
-        state.user = action.payload;
+        // When the backend returns an employee object, treat it like a full login
+        if (action.payload && action.payload._id) {
+          state.user = action.payload;
+        } else {
+          state.otpStep.required = true;
+          state.otpStep.employeeId = action.payload?.employeeId || null;
+        }
         state.loginError = null;
       })
+            // Verify OTP
+            .addCase(verifyOtp.pending, (state) => {
+              state.loading = true;
+            })
+            .addCase(verifyOtp.fulfilled, (state, action) => {
+              state.loading = false;
+              state.user = action.payload;
+              state.otpStep.required = false;
+              state.otpStep.employeeId = null;
+              state.loginError = null;
+            })
+            .addCase(verifyOtp.rejected, (state, action) => {
+              state.loading = false;
+              state.loginError = action.payload;
+            })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.user = null;
