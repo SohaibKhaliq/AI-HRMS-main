@@ -128,24 +128,47 @@ const createEmployee = catchErrors(async (req, res) => {
     admin,
   } = req.body;
 
-  if (
-    !employeeId ||
-    !name ||
-    !dob ||
-    !email ||
-    !password ||
-    !phoneNumber ||
-    !address ||
-    !department ||
-    !role ||
-    !dateOfJoining ||
-    !gender ||
-    !martialStatus ||
-    !employmentType ||
-    !shift ||
-    !salary
-  ) {
-    throw new Error("Please provide all required fields.");
+  // Validate required fields and return a clear field-specific error for UX
+  const requiredFields = [
+    ["employeeId", employeeId],
+    ["name", name],
+    ["dob", dob],
+    ["email", email],
+    ["password", password],
+    ["phoneNumber", phoneNumber],
+    ["address", address],
+    ["department", department],
+    ["role", role],
+    ["dateOfJoining", dateOfJoining],
+    ["gender", gender],
+    ["martialStatus", martialStatus],
+    ["employmentType", employmentType],
+    ["shift", shift],
+    ["salary", salary],
+  ];
+
+  for (const [fieldName, value] of requiredFields) {
+    if (value === undefined || value === null || value === "" || (typeof value === "object" && Object.keys(value).length === 0)) {
+      return res.status(400).json({
+        success: false,
+        message: `${fieldName} is required`,
+        field: fieldName,
+      });
+    }
+  }
+
+  // If address is present, validate subfields
+  if (address) {
+    const addressFields = ["street", "city", "state", "postalCode", "country"];
+    for (const f of addressFields) {
+      if (!address[f] || String(address[f]).trim() === "") {
+        return res.status(400).json({
+          success: false,
+          message: `address.${f} is required`,
+          field: `address.${f}`,
+        });
+      }
+    }
   }
 
   // Check if email already exists
