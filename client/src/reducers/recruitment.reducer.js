@@ -7,6 +7,7 @@ import {
   updateApplication,
   inviteForInterview,
   createJobApplication,
+  getHiringMetrics,
 } from "../services/recruitment.service";
 
 const initialState = {
@@ -101,6 +102,19 @@ const recruitmentSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+        // Handling the getHiringMetrics action
+        .addCase(getHiringMetrics.pending, (state) => {
+          state.reportsLoading = true;
+        })
+        .addCase(getHiringMetrics.fulfilled, (state, action) => {
+          state.reportsLoading = false;
+          state.hiringMetrics = action.payload.metrics;
+        })
+        .addCase(getHiringMetrics.rejected, (state, action) => {
+          state.reportsLoading = false;
+          state.error = action.payload;
+        })
 
       // Handling the getJobApplicants action
       .addCase(getJobApplicants.pending, (state) => {
