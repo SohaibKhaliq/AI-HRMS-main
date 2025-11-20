@@ -1,6 +1,9 @@
 import express from "express";
 import {
   logout,
+  startLogin,
+  verifyOtp,
+  resendOtp,
   login,
   logoutAll,
   resetPassword,
@@ -16,7 +19,9 @@ import {
 
 const router = express.Router();
 
-router.post("/login", loginLimiter, login);
+router.post("/login", loginLimiter, startLogin);
+router.post("/login/verify", loginLimiter, verifyOtp);
+router.post("/login/resend", loginLimiter, resendOtp);
 router.patch("/reset/password", resetPassword);
 router.post("/forget/password", forgetPassword);
 router.get("/logout", verifyEmployeeToken, logout);
