@@ -26,15 +26,50 @@ const AddEmployee = () => {
     handleSubmit,
     reset,
     setValue,
+    setError,
     watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(createEmployeeSchema),
   });
 
-  const onSubmit = (data) => {
-    dispatch(addEmployee(data));
-    reset();
+  const onSubmit = async (data) => {
+    const resultAction = await dispatch(addEmployee(data));
+
+    // If action is fulfilled, clear the form; otherwise, show server errors without clearing
+    if (addEmployee.fulfilled.match(resultAction)) {
+      reset();
+    } else {
+      // If server sent specific field, set field-level error
+      const payload = resultAction.payload;
+      if (payload && payload.field) {
+        // Map server field names to friendly labels where possible
+        const friendly = {
+          employeeId: "Employee ID",
+          name: "Full Name",
+          dob: "Date of Birth",
+          email: "Email",
+          phoneNumber: "Phone Number",
+          department: "Department",
+          role: "Role",
+          dateOfJoining: "Date Of Joining",
+          gender: "Gender",
+          martialStatus: "Marital Status",
+          employmentType: "Employment Type",
+          shift: "Shift",
+          salary: "Salary",
+          "address.street": "Street",
+          "address.city": "City",
+          "address.state": "State",
+          "address.postalCode": "Postal Code",
+          "address.country": "Country",
+        };
+
+        const label = friendly[payload.field] || payload.field;
+        const message = payload.message || `${label} is required`;
+        setError(payload.field, { type: "server", message });
+      }
+    }
   };
 
   useEffect(() => {
