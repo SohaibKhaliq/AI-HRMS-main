@@ -7,7 +7,8 @@ import * as bcrypt from "bcrypt";
 import { catchErrors, generateQrCode } from "../utils/index.js";
 import Session from "../models/session.model.js";
 import Employee from "../models/employee.model.js";
-import { passwordRecovery, resetPasswordSuccess } from "../templates/index.js";
+import OTP from "../models/otp.model.js";
+import { passwordRecovery, resetPasswordSuccess, sendLoginOTP } from "../templates/index.js";
 
 const login = catchErrors(async (req, res) => {
   const { employeeId, password, authority, remember } = req.body;
@@ -66,6 +67,135 @@ const login = catchErrors(async (req, res) => {
       authority: authority.toLowerCase(),
     },
   });
+});
+
+// Start MFA login - send OTP to user email
+const startLogin = catchErrors(async (req, res) => {
+  const { employeeId, password, authority } = req.body;
+
+  if (!employeeId || !password || !authority)
+    throw new Error("Please provide all fields");
+
+  const employee = await Employee.findOne({ employeeId }).select("name email password admin");
+
+  if (!employee) throw new Error("Invalid credentials, try again with the correct credentials");
+
+  if (authority.toLowerCase() === "admin" && !employee.admin)
+    throw new Error("Unauthorize access");
+
+  const comparePassword = await bcrypt.compare(password, employee.password);
+  if (!comparePassword)
+    throw new Error("Invalid credentials, try again with the correct credentials");
+
+  // Remove previous OTPs
+  await OTP.deleteMany({ employeeId: employee._id });
+
+  // Create code and save as hashed
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+  const codeHash = await bcrypt.hash(code, 10);
+
+  const otp = await OTP.create({
+    employeeId: employee._id,
+    codeHash,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+  });
+
+  // Send code via email
+  await sendLoginOTP({ email: employee.email, name: employee.name, code });
+
+  return res.status(200).json({
+    success: true,
+    message: "OTP sent to your registered email. Please enter the OTP to continue.",
+    employeeId: employee._id,
+  });
+});
+
+// Verify OTP and finalize login
+const verifyOtp = catchErrors(async (req, res) => {
+  const { employeeId, code, authority, remember } = req.body;
+
+  if (!employeeId || !code) throw new Error("EmployeeId and OTP are required");
+
+  const employee = await Employee.findById(employeeId)
+    .populate("department", "name")
+    .populate("role", "name")
+    .populate("shift", "name startTime endTime graceTime");
+
+  if (!employee) throw new Error("Employee not found");
+
+  if (authority && authority.toLowerCase() === "admin" && !employee.admin)
+    throw new Error("Unauthorize access");
+
+  const otp = await OTP.findOne({ employeeId }).sort({ createdAt: -1 });
+  if (!otp) throw new Error("No OTP request found. Please request a new code.");
+
+  if (otp.expiresAt < new Date()) {
+    await OTP.deleteMany({ employeeId });
+    throw new Error("OTP expired. Please request a new code.");
+  }
+
+  const valid = await bcrypt.compare(code, otp.codeHash);
+  if (!valid) {
+    otp.attempts = (otp.attempts || 0) + 1;
+    await otp.save();
+    if (otp.attempts >= 5) {
+      await OTP.deleteMany({ employeeId });
+      throw new Error("Too many invalid attempts. Please request a new OTP.");
+    }
+
+    throw new Error("Invalid OTP. Please check and try again.");
+  }
+
+  // OTP valid - remove otp entry
+  await OTP.deleteMany({ employeeId });
+
+  const token = jwt.sign(
+    { employeeId: employee._id, authority: authority || "employee" },
+    process.env.JWT_SECRET,
+    { expiresIn: remember ? "10d" : "1d" }
+  );
+
+  await Session.create({ userId: employee._id, authority: authority || "employee", token });
+
+  await employee.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Logged in successfully",
+    token,
+    remember,
+    user: {
+      _id: employee._id,
+      employeeId: employee.employeeId,
+      name: employee.name,
+      email: employee.email,
+      department: employee.department,
+      position: employee.role,
+      shift: employee.shift,
+      profilePicture: employee.profilePicture,
+      authority: (authority || "employee").toLowerCase(),
+    },
+  });
+});
+
+// Resend OTP
+const resendOtp = catchErrors(async (req, res) => {
+  const { employeeId } = req.body;
+  if (!employeeId) throw new Error("Employee Id is required");
+
+  const employee = await Employee.findById(employeeId).select("name email");
+  if (!employee) throw new Error("Employee not found");
+
+  // Remove previous OTPs
+  await OTP.deleteMany({ employeeId });
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+  const codeHash = await bcrypt.hash(code, 10);
+
+  await OTP.create({ employeeId, codeHash, expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+  await sendLoginOTP({ email: employee.email, name: employee.name, code });
+
+  return res.status(200).json({ success: true, message: "OTP resent successfully" });
 });
 
 const updatePassword = catchErrors(async (req, res) => {
@@ -219,6 +349,9 @@ const checkResetPasswordValidity = catchErrors(async (req, res) => {
 });
 
 export {
+  startLogin,
+  verifyOtp,
+  resendOtp,
   login,
   logout,
   logoutAll,
