@@ -126,6 +126,19 @@ export const getJobApplicants = createAsyncThunk(
   }
 );
 
+// Get hiring metrics
+export const getHiringMetrics = createAsyncThunk(
+  "recruitment/getHiringMetrics",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.get(`/recruitment/reports/hiring`);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 // Create Job
 export const inviteForInterview = createAsyncThunk(
   "recruitment/inviteForInterview",
