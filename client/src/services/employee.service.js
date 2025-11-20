@@ -85,10 +85,8 @@ export const addEmployee = createAsyncThunk(
       toast.success(data.message);
       return data.employee;
     } catch (error) {
-      toast.error(error.response?.data.message || error.message);
-      return rejectWithValue(
-        error.response?.data.message || "Failed to create employee"
-      );
+      toast.error(error.response?.data?.message || error.message);
+      return rejectWithValue(error.response?.data || { message: error.message });
     }
   }
 );
