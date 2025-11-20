@@ -12,6 +12,7 @@ import { jobOpeningHead, recruitmentButtons } from "../../constants";
 import NoDataMessage from "../../components/shared/error/NoDataMessage";
 import FilterButton from "../../components/shared/buttons/FilterButton";
 import JobOpeningModal from "../../components/shared/modals/JobOpeningModal";
+import HiringReports from "../../pages/recruitment/HiringReports";
 
 function JobOpenings() {
   const dispatch = useDispatch();
@@ -26,6 +27,13 @@ function JobOpenings() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [uiState, setUiState] = useState({
+    filter: {
+      status: "",
+      deadline: "",
+    },
+    showReports: false,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -146,6 +154,13 @@ function JobOpenings() {
               filter={filter}
             />
           ))}
+
+          <button
+            onClick={() => setUiState((prev) => ({ ...prev, showReports: !prev.showReports }))}
+            className="bg-white border border-gray-200 text-sm px-4 py-2 rounded-full"
+          >
+            Hiring Reports
+          </button>
         </div>
 
         <div id="overflow" className="overflow-x-auto">
@@ -281,6 +296,7 @@ function JobOpenings() {
             action={action}
           />
         )}
+        {uiState.showReports && <HiringReports />}
       </section>
     </>
   );
