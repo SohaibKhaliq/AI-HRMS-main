@@ -80,6 +80,8 @@ const authenticationSchema = z.object({
     .regex(/^\d{3}$/, "* Employee ID must be exactly 3 digits"),
   password: z.string().min(6, "* Password must be at least 6 characters"),
   remember: z.boolean().optional(),
+  // OTP is a 6 digit numeric code optional during initial login
+  otp: z.string().regex(/^\d{6}$/, "* OTP must be 6 digits").optional(),
 });
 
 const forgetPasswordSchema = z.object({
