@@ -7,9 +7,39 @@ export const login = createAsyncThunk(
   "auth/loginAdmin",
   async (credentials, { rejectWithValue }) => {
     try {
+      // Start MFA flow - sends OTP to email
       const { data } = await axiosInstance.post("/auth/login", credentials);
+
+      // If server returned a user, the login is complete (no OTP required)
+      if (data.user) {
+        if (data.remember) {
+          localStorage.setItem("session", data.token);
+          localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+        } else {
+          sessionStorage.setItem("session", data.token);
+          sessionStorage.setItem("loggedInUser", JSON.stringify(data.user));
+        }
+        localStorage.setItem("remember", data.remember);
+        toast.success(data.message);
+        return data.user;
+      }
+
+      // Otherwise, server started OTP flow and returned employeeId
+      toast.success(data.message);
+      return { employeeId: data.employeeId };
+    } catch (error) {
+      return rejectWithValue(error.response?.data.message || error.message);
+    }
+  }
+);
+
+// Verify OTP
+export const verifyOtp = createAsyncThunk(
+  "auth/verifyOtp",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/auth/login/verify", credentials);
       if (data.remember) {
-        console.log("Run");
         localStorage.setItem("session", data.token);
         localStorage.setItem("loggedInUser", JSON.stringify(data.user));
       } else {
@@ -24,6 +54,16 @@ export const login = createAsyncThunk(
     }
   }
 );
+
+// Resend OTP
+export const resendOtp = async (employeeId) => {
+  try {
+    const { data } = await axiosInstance.post("/auth/login/resend", { employeeId });
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 // Forget Password
 export const forgetPassword = createAsyncThunk(
