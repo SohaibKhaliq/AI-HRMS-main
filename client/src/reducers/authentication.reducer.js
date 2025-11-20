@@ -22,6 +22,7 @@ const initialState = {
   otpStep: {
     required: false,
     employeeId: null,
+    authority: null,
   },
   forgetPasswordError: null,
   updatePasswordError: null,
@@ -58,6 +59,7 @@ const authSlice = createSlice({
         } else {
           state.otpStep.required = true;
           state.otpStep.employeeId = action.payload?.employeeId || null;
+          state.otpStep.authority = action.payload?.authority || null;
         }
         state.loginError = null;
       })
@@ -80,6 +82,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.loginError = action.payload;
+        state.otpStep.required = false;
+        state.otpStep.employeeId = null;
+        state.otpStep.authority = null;
       })
 
       // Handling Forget Password
