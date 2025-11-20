@@ -109,13 +109,13 @@ const Attendance = () => {
               className="overflow-auto bg-gray-100 dark:bg-secondary shadow rounded-lg"
               style={{ maxHeight: "calc(100vh - 400px)" }}
             >
-              <table className="min-w-full table-auto text-sm whitespace-nowrap">
-                <thead>
-                  <tr className="bg-headLight dark:bg-head sticky top-0 text-primary">
+              <table className="min-w-full text-left table-auto border-collapse text-sm whitespace-nowrap">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-headLight dark:bg-head text-primary">
                     {checkAttendanceHead.map((header, i) => (
                       <th
                         key={i}
-                        className="py-3 px-4 border-b border-gray-500"
+                        className="py-3 px-4 border-b border-secondary text-left"
                       >
                         {header}
                       </th>
@@ -129,20 +129,23 @@ const Attendance = () => {
                         key={item._id}
                         className="dark:even:bg-gray-800 odd:bg-gray-200 dark:odd:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
                       >
-                        <td className="py-3 px-4 border-b border-gray-500">
+                        <td className="py-3 px-4 border-b border-secondary">
                           EMP {item.employee?.employeeId || "N/A"}
                         </td>
-                        <td className="py-3 px-4 border-b border-gray-500">
+                        <td className="py-3 px-4 border-b border-secondary">
                           {item.employee?.name || "N/A"}
                         </td>
-                        <td className="py-3 px-4 border-b border-gray-500">
+                        <td className="py-3 px-4 border-b border-secondary">
                           {item.employee?.department?.name || "N/A"}
                         </td>
-                        <td className="py-3 px-4 border-b border-gray-500">
+                        <td className="py-3 px-4 border-b border-secondary">
+                          {item.employee?.role?.name || "N/A"}
+                        </td>
+                        <td className="py-3 px-4 border-b border-secondary">
                           {formatDate(item.date)}
                         </td>
                         <td
-                          className={`py-3 px-4 border-b border-gray-500 font-semibold ${
+                          className={`py-3 px-4 border-b border-secondary font-semibold ${
                             item.status === "Present"
                               ? "text-green-500"
                               : "text-red-500"
