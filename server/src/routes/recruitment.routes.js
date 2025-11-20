@@ -7,6 +7,7 @@ import {
   updateJobStatus,
   getJobApplications,
   inviteForInterview,
+  getHiringMetrics,
   updateApplicationStatus,
 } from "../controllers/recruitment.controller.js";
 import { categories, types, locations } from "../controllers/jobmeta.controller.js";
@@ -48,5 +49,8 @@ router.post(
   verifyAdminToken,
   inviteForInterview
 );
+
+// Hiring metrics
+router.get("/reports/hiring", verifyAdminToken, getHiringMetrics);
 
 export default router;
