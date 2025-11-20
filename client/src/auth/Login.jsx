@@ -35,7 +35,14 @@ const Login = () => {
   const handleOtpSubmit = (e) => {
     e.preventDefault();
     const rememberVal = localStorage.getItem("remember") === "true";
-    dispatch(verifyOtp({ employeeId: otpStep.employeeId, code: otp, remember: rememberVal }));
+    dispatch(
+      verifyOtp({
+        employeeId: otpStep.employeeId,
+        code: otp,
+        remember: rememberVal,
+        authority: otpStep.authority,
+      })
+    );
   };
 
   const handleResend = async () => {
