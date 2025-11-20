@@ -5,6 +5,7 @@ import {
   inviteForInterviewMail,
   thankYouForApplying,
 } from "../templates/index.js";
+import mongoose from "mongoose";
 
 const createJob = catchErrors(async (req, res) => {
   const postedBy = req.user.id;
@@ -134,6 +135,51 @@ const getJobById = catchErrors(async (req, res) => {
     success: true,
     job,
   });
+});
+
+const getHiringMetrics = catchErrors(async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  const start = startDate ? new Date(startDate) : sixMonthsAgo;
+  const end = endDate ? new Date(endDate) : now;
+
+  const metrics = await Recruitment.aggregate([
+    { $unwind: "$applicants" },
+    { $match: { "applicants.appliedAt": { $gte: start, $lte: end } } },
+    {
+      $project: {
+        month: { $dateToString: { format: "%Y-%m", date: "$applicants.appliedAt" } },
+        status: "$applicants.status",
+      },
+    },
+    {
+      $group: {
+        _id: { month: "$month", status: "$status" },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.month",
+        counts: { $push: { status: "$_id.status", count: "$count" } },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  const transformed = metrics.map((m) => {
+    const result = { month: m._id };
+    m.counts.forEach((c) => {
+      result[c.status] = c.count;
+    });
+    result.total = (result.Applied || 0) + (result.UnderReview || 0) + (result.Interview || 0) + (result.Rejected || 0) + (result.Hired || 0);
+    return result;
+  });
+
+  return res.status(200).json({ success: true, metrics: transformed });
 });
 
 const updateJobStatus = catchErrors(async (req, res) => {
@@ -327,5 +373,6 @@ export {
   createApplicant,
   getJobApplications,
   inviteForInterview,
+  getHiringMetrics,
   updateApplicationStatus,
 };
