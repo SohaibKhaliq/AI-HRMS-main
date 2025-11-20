@@ -323,7 +323,7 @@ const colors = [
   { bg: "bg-green-500", darkBg: "dark:bg-green-600" },
 ];
 
-const checkAttendanceHead = ["EMP ID", "Name", "Department", "Date", "Status"];
+const checkAttendanceHead = ["EMP ID", "Name", "Department", "Position", "Date", "Status"];
 
 const complaintHead = [
   "Emp ID",
