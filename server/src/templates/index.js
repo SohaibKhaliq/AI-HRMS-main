@@ -231,6 +231,27 @@ async function inviteForInterviewMail({
   await sendMail(message);
 }
 
+async function sendLoginOTP({ email, name, code }) {
+  const message = {
+    email,
+    subject: "Metro HRMS - Your Login OTP",
+    html: `
+      <div style="font-family: 'Poppins', system-ui; max-width: 480px; width: 100%; margin: 40px auto; background: #2c2c2c; padding: 32px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); text-align: center;">
+        <img src="${process.env.CLIENT_URL}/metro.png" alt="Metro Cash & Carry Logo" style="width: 120px; margin-bottom: 24px; max-width: 100%; height: auto;">
+        <div style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Metro Cash & Carry</div>
+        <h2 style="color: #ffffff; font-weight: 500; font-size: 22px; margin-bottom: 16px;">Your Login Code</h2>
+        <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin: 8px 0;">Hello <strong style="color: #007bff;">${name}</strong>,</p>
+        <p style="color: #cccccc; font-size: 14px; margin: 8px 0;">Use the following one-time code to complete your login. This code will expire in <strong>10 minutes</strong>.</p>
+        <div style="padding: 14px; margin: 16px auto; display:inline-block; background: #111827; color: #fff; font-size:22px; border-radius: 8px; font-weight: 700; letter-spacing: 6px;">${code}</div>
+        <p style="font-size: 13px; color: #999999; margin-top: 16px;">If you did not attempt to login, please contact the IT support.</p>
+        <div style="width: 100%; height: 1px; background: #444444; margin: 24px 0;"></div>
+        <p style="margin-top: 24px; font-size: 12px; color: #999999;">Metro HRMS &copy; 2025. All Rights Reserved.</p>
+    </div>
+    `,
+  };
+
+  await sendMail(message);
+}
 async function thankYouForApplying({ email, candidateName, jobTitle }) {
   const message = {
     email,
@@ -272,4 +293,5 @@ export {
   resetPasswordSuccess,
   inviteForInterviewMail,
   notifySubstituteEmployee,
+  sendLoginOTP,
 };
