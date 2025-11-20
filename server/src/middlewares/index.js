@@ -34,11 +34,19 @@ const loginLimiter = rateLimit({
 const verifyEmployeeToken = catchErrors(async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
 
-  if (!token) throw new Error("Unauthorized access");
+  if (!token) {
+    const err = new Error("Unauthorized access");
+    err.status = 401;
+    throw err;
+  }
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-  if (!decoded.employeeId) throw new Error("Unauthorized access");
+  if (!decoded.employeeId) {
+    const err = new Error("Unauthorized access");
+    err.status = 401;
+    throw err;
+  }
 
   const session = await Session.findOne({
     userId: decoded.employeeId,
@@ -46,7 +54,11 @@ const verifyEmployeeToken = catchErrors(async (req, res, next) => {
     token,
   });
 
-  if (!session) throw new Error("Session expired, please login again");
+  if (!session) {
+    const err = new Error("Session expired, please login again");
+    err.status = 401;
+    throw err;
+  }
 
   req.user = {
     id: decoded.employeeId,
@@ -64,7 +76,11 @@ const verifyEmployeeToken = catchErrors(async (req, res, next) => {
 const verifyAdminToken = catchErrors(async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
 
-  if (!token) throw new Error("Unauthorized access");
+  if (!token) {
+    const err = new Error("Unauthorized access");
+    err.status = 401;
+    throw err;
+  }
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -74,11 +90,19 @@ const verifyAdminToken = catchErrors(async (req, res, next) => {
     token,
   });
 
-  if (!session) throw new Error("Session expired, please login again");
+  if (!session) {
+    const err = new Error("Session expired, please login again");
+    err.status = 401;
+    throw err;
+  }
 
   const user = await Employee.findById(decoded.employeeId);
 
-  if (!user || !user.admin) throw new Error("Unauthorized access");
+  if (!user || !user.admin) {
+    const err = new Error("Unauthorized access");
+    err.status = 403;
+    throw err;
+  }
 
   req.user = {
     id: decoded.employeeId,
@@ -93,10 +117,13 @@ const verifyAdminToken = catchErrors(async (req, res, next) => {
 });
 
 const verifyCornJob = catchErrors(async (req, res, next) => {
-  const token = req.headers.secret.trim();
+  const token = req.headers.secret ? String(req.headers.secret).trim() : null;
 
-  if (!token || token !== process.env.CRON_SECRET)
-    throw new Error("Unauthorized access");
+  if (!token || token !== process.env.CRON_SECRET) {
+    const err = new Error("Unauthorized access");
+    err.status = 401;
+    throw err;
+  }
 
   next();
 });

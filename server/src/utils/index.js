@@ -108,8 +108,14 @@ const deleteUploadedFile = async (urlOrPath) => {
 const catchErrors = (fn) => {
   return (req, res, next) => {
     fn(req, res, next).catch((err) => {
-      console.error("❌ Error caught:", err);
-      console.error("Stack trace:", err.stack);
+      // For client errors (4xx), log only a concise message to avoid unnecessary stack noise
+      const status = err.status || err.statusCode || 500;
+      if (status >= 400 && status < 500) {
+        console.warn("⚠️ Client error:", err.message || err);
+      } else {
+        console.error("❌ Error caught:", err);
+        console.error("Stack trace:", err.stack);
+      }
 
       // Handle MongoDB duplicate key errors (E11000)
       if (err.code === 11000 || err.message?.includes("E11000")) {
@@ -164,7 +170,8 @@ const catchErrors = (fn) => {
       }
 
       // Pass to next error handler
-      next(err.message);
+      // Ensure the original Error object is passed so status codes and stack remain available
+      next(err);
     });
   };
 };
