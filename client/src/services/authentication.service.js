@@ -24,9 +24,9 @@ export const login = createAsyncThunk(
         return data.user;
       }
 
-      // Otherwise, server started OTP flow and returned employeeId
+      // Otherwise, server started OTP flow and returned employeeId + authority
       toast.success(data.message);
-      return { employeeId: data.employeeId };
+      return { employeeId: data.employeeId, authority: data.authority || credentials.authority };
     } catch (error) {
       return rejectWithValue(error.response?.data.message || error.message);
     }
